@@ -20,8 +20,16 @@ export const Utils = {
         return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' });
     },
 
+    formatDateTimeShort(dateStr) {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return d.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    },
+
     today() {
-        return new Date().toISOString().split('T')[0];
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16); // Returns YYYY-MM-DDTHH:mm
     },
 
     getMonthRange(offset = 0) {

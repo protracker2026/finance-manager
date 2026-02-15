@@ -1,76 +1,92 @@
-/* === Design System Variables === */
+/* === Design System Variables (Minimal Dark Theme) === */
 :root {
-  /* Colors - Dark Theme */
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-tertiary: #1a1a2e;
-  --bg-card: #16162a;
-  --bg-card-hover: #1e1e3a;
-  --bg-input: #1a1a2e;
-  --bg-modal: #12121aee;
+    /* Colors - Minimal Dark Theme */
+    --bg-primary: #09090b;
+    /* Deep black-gray */
+    --bg-secondary: #121217;
+    /* Slightly lighter for sidebar/nav */
+    --bg-tertiary: #1c1c24;
+    /* Lighter gray for interactive elements */
+    --bg-card: #121217;
+    /* Matches secondary for seamless look or slightly distinct */
+    --bg-card-hover: #1c1c24;
+    --bg-input: #1c1c24;
+    --bg-modal: rgba(18, 18, 23, 0.95);
 
-  /* Accent Colors */
-  --accent-primary: #6c5ce7;
-  --accent-primary-hover: #7d6ff0;
-  --accent-secondary: #00cec9;
-  --accent-success: #00b894;
-  --accent-warning: #fdcb6e;
-  --accent-danger: #e17055;
-  --accent-info: #74b9ff;
+    /* Accent Colors - Refined & Desaturated */
+    --accent-primary: #6366f1;
+    /* Indigo */
+    --accent-primary-hover: #818cf8;
+    --accent-secondary: #06b6d4;
+    /* Cyan */
+    --accent-success: #10b981;
+    /* Emerald */
+    --accent-warning: #f59e0b;
+    /* Amber */
+    --accent-danger: #ef4444;
+    /* Red */
+    --accent-info: #3b82f6;
+    /* Blue */
 
-  /* Text Colors */
-  --text-primary: #e8e8f0;
-  --text-secondary: #a0a0b8;
-  --text-tertiary: #6c6c88;
-  --text-accent: #a29bfe;
-  --text-success: #55efc4;
-  --text-danger: #ff7675;
-  --text-warning: #ffeaa7;
+    /* Text Colors - High Readability */
+    --text-primary: #f4f4f5;
+    /* Almost white */
+    --text-secondary: #a1a1aa;
+    /* Neutral gray */
+    --text-tertiary: #71717a;
+    /* Darker gray */
+    --text-accent: #818cf8;
+    /* Soft indigo */
+    --text-success: #34d399;
+    --text-danger: #f87171;
+    --text-warning: #fbbf24;
 
-  /* Border */
-  --border-color: #2a2a44;
-  --border-color-hover: #3a3a58;
-  --border-radius-sm: 6px;
-  --border-radius: 10px;
-  --border-radius-lg: 16px;
-  --border-radius-xl: 20px;
-  --border-radius-full: 50%;
+    /* Border - Subtle & Clean */
+    --border-color: #27272a;
+    /* Dark gray border */
+    --border-color-hover: #3f3f46;
+    --border-radius-sm: 6px;
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    --border-radius-full: 50%;
 
-  /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.15);
+    /* Shadows - Minimal, No Colored Glows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-glow: none;
+    /* Removed neon glow */
 
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
+    /* Spacing */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
 
-  /* Typography */
-  --font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.8125rem;
-  --font-size-base: 0.9375rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.5rem;
-  --font-size-2xl: 2rem;
-  --font-size-3xl: 2.5rem;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
+    /* Typography */
+    --font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 2rem;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
 
-  /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-base: 250ms ease;
+    --transition-slow: 400ms ease;
 
-  /* Layout */
-  --sidebar-width: 260px;
-  --header-height: 64px;
+    /* Layout */
+    --sidebar-width: 260px;
+    --header-height: 64px;
 }

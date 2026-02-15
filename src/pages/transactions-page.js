@@ -5,10 +5,10 @@ import { Utils } from '../modules/utils.js';
 let currentFilters = {};
 
 export async function renderTransactionsPage(container) {
-    const categories = await TransactionModule.getCategories();
-    const { start, end } = Utils.getMonthRange();
+  const categories = await TransactionModule.getCategories();
+  const { start, end } = Utils.getMonthRange();
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="page-header">
       <div>
         <h2>รายรับ - รายจ่าย</h2>
@@ -24,19 +24,24 @@ export async function renderTransactionsPage(container) {
     <div id="txnSummaryCards"></div>
 
     <!-- Filters -->
+    <!-- Filters -->
     <div class="filter-bar">
-      <input type="date" class="form-input" id="filterStartDate" value="${start}" style="width:auto">
-      <span style="color:var(--text-tertiary)">ถึง</span>
-      <input type="date" class="form-input" id="filterEndDate" value="${end}" style="width:auto">
-      <select class="form-select" id="filterType" style="width:auto;min-width:120px">
-        <option value="">ทุกประเภท</option>
-        <option value="income">รายรับ</option>
-        <option value="expense">รายจ่าย</option>
-      </select>
-      <select class="form-select" id="filterCategory" style="width:auto;min-width:140px">
-        <option value="">ทุกหมวดหมู่</option>
-        ${categories.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('')}
-      </select>
+      <div class="filter-group">
+        <input type="date" class="form-input" id="filterStartDate" value="${start}" style="width:auto">
+        <span style="color:var(--text-tertiary)">-</span>
+        <input type="date" class="form-input" id="filterEndDate" value="${end}" style="width:auto">
+      </div>
+      <div class="filter-group selects">
+        <select class="form-select" id="filterType" style="width:auto;min-width:120px">
+          <option value="">ทุกประเภท</option>
+          <option value="income">รายรับ</option>
+          <option value="expense">รายจ่าย</option>
+        </select>
+        <select class="form-select" id="filterCategory" style="width:auto;min-width:140px">
+          <option value="">ทุกหมวดหมู่</option>
+          ${categories.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('')}
+        </select>
+      </div>
       <div class="search-input" style="flex:1;min-width:150px">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" class="form-input" id="filterSearch" placeholder="ค้นหา..." style="padding-left:36px">
@@ -63,14 +68,26 @@ export async function renderTransactionsPage(container) {
               <button type="button" class="tab-btn" data-type="income">รายรับ</button>
             </div>
             <input type="hidden" id="txnType" value="expense">
+            <div class="form-group">
+                <label class="form-label">หมายเหตุ (ชื่อรายการ)</label>
+                <input type="text" class="form-input" id="txnNote" placeholder="ระบุชื่อรายการ...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">จำนวน</label>
+                <input type="number" class="form-input" id="txnQuantity" step="1" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">ราคาต่อหน่วย</label>
+                <input type="number" class="form-input" id="txnUnitPrice" step="0.01" min="0" placeholder="0.00">
+            </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">จำนวนเงิน (บาท)</label>
+                <label class="form-label">รวมเป็นเงิน (บาท)</label>
                 <input type="number" class="form-input" id="txnAmount" step="0.01" min="0" required>
               </div>
               <div class="form-group">
-                <label class="form-label">วันที่</label>
-                <input type="date" class="form-input" id="txnDate" value="${Utils.today()}" required>
+                <label class="form-label">วันที่ & เวลา</label>
+                <input type="datetime-local" class="form-input" id="txnDate" value="${Utils.today()}" required>
               </div>
             </div>
             <div class="form-group">
@@ -79,159 +96,255 @@ export async function renderTransactionsPage(container) {
                 <option value="">เลือกหมวดหมู่</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">หมายเหตุ</label>
-              <textarea class="form-textarea" id="txnNote" rows="2" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
-            </div>
           </form>
         </div>
-        <div class="modal-footer">
-          <button class="btn" id="txnCancelBtn">ยกเลิก</button>
-          <button class="btn btn-primary" id="txnSaveBtn">บันทึก</button>
+        <div class="modal-footer" style="flex-wrap: wrap; row-gap: 8px;">
+          <button class="btn btn-danger" id="txnDeleteBtn" style="display:none; margin-right: auto;">ลบ</button>
+          <div style="width: 100%; display: flex; gap: 8px; justify-content: flex-end;">
+            <button class="btn" id="txnCancelBtn">ยกเลิก</button>
+            <button class="btn" id="txnSaveNextBtn">บันทึก & ต่อ</button>
+            <button class="btn btn-primary" id="txnSaveBtn">บันทึก</button>
+          </div>
         </div>
       </div>
     </div>
   `;
 
-    // Setup event listeners
-    setupTransactionEvents();
-    currentFilters = { startDate: start, endDate: end };
-    await refreshTransactions();
+  // Setup event listeners
+  setupTransactionEvents();
+  currentFilters = { startDate: start, endDate: end };
+  await refreshTransactions();
 }
 
 function setupTransactionEvents() {
-    // Open modal
-    document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
+  // Open modal
+  document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
 
-    // Close modal
-    document.getElementById('txnModalClose').addEventListener('click', closeTxnModal);
-    document.getElementById('txnCancelBtn').addEventListener('click', closeTxnModal);
-    document.getElementById('txnModal').addEventListener('click', (e) => {
-        if (e.target.id === 'txnModal') closeTxnModal();
+  // Close modal
+  document.getElementById('txnModalClose').addEventListener('click', closeTxnModal);
+  document.getElementById('txnCancelBtn').addEventListener('click', closeTxnModal);
+  document.getElementById('txnModal').addEventListener('click', (e) => {
+    if (e.target.id === 'txnModal') closeTxnModal();
+  });
+
+  // Type tabs
+  document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('txnType').value = btn.dataset.type;
+      updateCategoryOptions(btn.dataset.type);
     });
+  });
 
-    // Type tabs
-    document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('txnType').value = btn.dataset.type;
-            updateCategoryOptions(btn.dataset.type);
-        });
-    });
+  // Save
+  // Save
+  document.getElementById('txnSaveBtn').addEventListener('click', () => saveTxn(true));
+  // Save & Next
+  document.getElementById('txnSaveNextBtn').addEventListener('click', () => saveTxn(false));
 
-    // Save
-    document.getElementById('txnSaveBtn').addEventListener('click', saveTxn);
+  // Delete from modal
+  document.getElementById('txnDeleteBtn').addEventListener('click', async () => {
+    const id = document.getElementById('txnId').value;
+    if (id && confirm('คุณต้องการลบรายการนี้?')) {
+      await TransactionModule.delete(parseInt(id));
+      Utils.showToast('ลบรายการสำเร็จ', 'success');
+      closeTxnModal();
+      refreshTransactions();
+    }
+  });
 
-    // Filters
-    ['filterStartDate', 'filterEndDate', 'filterType', 'filterCategory'].forEach(id => {
-        document.getElementById(id).addEventListener('change', applyFilters);
-    });
-    document.getElementById('filterSearch').addEventListener('input', debounce(applyFilters, 300));
+  // Filters
+  ['filterStartDate', 'filterEndDate', 'filterType', 'filterCategory'].forEach(id => {
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+  document.getElementById('filterSearch').addEventListener('input', debounce(applyFilters, 300));
+
+  // Auto-calculate amount
+  const calculateTotal = () => {
+    const price = parseFloat(document.getElementById('txnUnitPrice').value) || 0;
+    const qty = parseFloat(document.getElementById('txnQuantity').value) || 0;
+    if (price > 0 && qty > 0) {
+      document.getElementById('txnAmount').value = (price * qty).toFixed(2);
+    }
+  };
+  document.getElementById('txnUnitPrice').addEventListener('input', calculateTotal);
+  document.getElementById('txnQuantity').addEventListener('input', calculateTotal);
 }
 
 function debounce(fn, ms) {
-    let timer;
-    return function (...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), ms);
-    };
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
 }
 
 async function openTxnModal(txn = null) {
-    const modal = document.getElementById('txnModal');
-    const title = document.getElementById('txnModalTitle');
+  const modal = document.getElementById('txnModal');
+  const title = document.getElementById('txnModalTitle');
 
-    if (txn) {
-        title.textContent = 'แก้ไขรายการ';
-        document.getElementById('txnId').value = txn.id;
-        document.getElementById('txnAmount').value = txn.amount;
-        document.getElementById('txnDate').value = txn.date;
-        document.getElementById('txnNote').value = txn.note || '';
+  if (txn) {
+    title.textContent = 'แก้ไขรายการ';
+    document.getElementById('txnId').value = txn.id;
+    document.getElementById('txnAmount').value = txn.amount;
+    document.getElementById('txnUnitPrice').value = txn.unitPrice || '';
+    document.getElementById('txnQuantity').value = txn.quantity || 1;
+    // Ensure datetime string format
+    document.getElementById('txnDate').value = txn.date.includes('T') ? txn.date.slice(0, 16) : txn.date + 'T12:00';
+    document.getElementById('txnNote').value = txn.note || '';
 
-        // Set type tab
-        document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.type === txn.type);
-        });
-        document.getElementById('txnType').value = txn.type;
-        await updateCategoryOptions(txn.type);
-        document.getElementById('txnCategory').value = txn.category;
-    } else {
-        title.textContent = 'เพิ่มรายการ';
-        document.getElementById('txnId').value = '';
-        document.getElementById('txnAmount').value = '';
-        document.getElementById('txnDate').value = Utils.today();
-        document.getElementById('txnNote').value = '';
-        document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.type === 'expense');
-        });
-        document.getElementById('txnType').value = 'expense';
-        await updateCategoryOptions('expense');
-    }
+    // Set type tab
+    document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === txn.type);
+    });
+    document.getElementById('txnType').value = txn.type;
+    await updateCategoryOptions(txn.type);
+    document.getElementById('txnType').value = txn.type;
+    await updateCategoryOptions(txn.type);
+    document.getElementById('txnCategory').value = txn.category;
+    document.getElementById('txnDeleteBtn').style.display = 'block';
+  } else {
+    title.textContent = 'เพิ่มรายการ';
+    document.getElementById('txnId').value = '';
+    document.getElementById('txnAmount').value = '';
+    document.getElementById('txnUnitPrice').value = '';
+    document.getElementById('txnQuantity').value = '1';
+    document.getElementById('txnDate').value = Utils.today();
+    document.getElementById('txnNote').value = '';
+    document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === 'expense');
+    });
+    document.getElementById('txnType').value = 'expense';
 
-    modal.classList.add('active');
+    // Restore last used values if available
+    const lastDate = localStorage.getItem('lastTxnDate');
+    const lastType = localStorage.getItem('lastTxnType');
+    const lastCat = localStorage.getItem('lastTxnCat_' + (lastType || 'expense'));
+
+    if (lastDate) document.getElementById('txnDate').value = lastDate;
+
+    const typeToUse = lastType || 'expense';
+    document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === typeToUse);
+    });
+    document.getElementById('txnType').value = typeToUse;
+    await updateCategoryOptions(typeToUse);
+
+    if (lastCat) document.getElementById('txnCategory').value = lastCat;
+
+    document.getElementById('txnDeleteBtn').style.display = 'none';
+  }
+
+  modal.classList.add('active');
 }
 
 function closeTxnModal() {
-    document.getElementById('txnModal').classList.remove('active');
+  document.getElementById('txnModal').classList.remove('active');
 }
 
 async function updateCategoryOptions(type) {
-    const cats = await TransactionModule.getCategories(type);
-    const select = document.getElementById('txnCategory');
-    select.innerHTML = `<option value="">เลือกหมวดหมู่</option>` +
-        cats.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('');
+  const cats = await TransactionModule.getCategories(type);
+  const select = document.getElementById('txnCategory');
+  select.innerHTML = `<option value="">เลือกหมวดหมู่</option>` +
+    cats.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('');
 }
 
-async function saveTxn() {
-    const id = document.getElementById('txnId').value;
-    const data = {
-        type: document.getElementById('txnType').value,
-        amount: document.getElementById('txnAmount').value,
-        date: document.getElementById('txnDate').value,
-        category: document.getElementById('txnCategory').value,
-        note: document.getElementById('txnNote').value
-    };
+async function saveTxn(closeModal = true) {
+  const id = document.getElementById('txnId').value;
+  const data = {
+    type: document.getElementById('txnType').value,
+    amount: parseFloat(document.getElementById('txnAmount').value),
+    unitPrice: document.getElementById('txnUnitPrice').value ? parseFloat(document.getElementById('txnUnitPrice').value) : null,
+    quantity: document.getElementById('txnQuantity').value ? parseFloat(document.getElementById('txnQuantity').value) : 1,
+    date: document.getElementById('txnDate').value,
+    category: document.getElementById('txnCategory').value,
+    category: document.getElementById('txnCategory').value,
+    note: document.getElementById('txnNote').value
+  };
 
-    if (!data.amount || !data.date || !data.category) {
-        Utils.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
-        return;
+  // Persist for next time
+  if (data.date) localStorage.setItem('lastTxnDate', data.date);
+  if (data.type) localStorage.setItem('lastTxnType', data.type);
+  if (data.category) localStorage.setItem('lastTxnCat_' + data.type, data.category);
+
+  if (!data.amount || !data.date || !data.category) {
+    Utils.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
+    return;
+  }
+
+  try {
+    if (id) {
+      await TransactionModule.update(parseInt(id), data);
+      Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
+    } else {
+      await TransactionModule.add(data);
+
+      // Show Receipt Popup for new entries
+      const dateObj = new Date(data.date);
+      // Format as DD/MM/YY HH:MM
+      const dateStr = dateObj.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
+      if (document.getElementById('receiptDate')) {
+        document.getElementById('receiptDate').textContent = dateStr;
+      }
+      if (document.getElementById('receiptCategory')) {
+        document.getElementById('receiptCategory').textContent = data.note ? data.note : data.category;
+      }
+
+      const sign = data.type === 'income' ? '+' : '-';
+      const amountEl = document.getElementById('receiptAmount');
+      if (amountEl) {
+        amountEl.textContent = `${sign}${new Intl.NumberFormat('th-TH', { style: 'decimal', minimumFractionDigits: 2 }).format(data.amount)} ฿`;
+        amountEl.style.color = data.type === 'income' ? 'var(--accent-success)' : 'var(--accent-danger)';
+      }
+
+      // Only show popup if closing modal, otherwise it might be annoying when adding multiple
+      if (closeModal) {
+        const popup = document.getElementById('receiptPopup');
+        if (popup) popup.classList.add('active');
+      } else {
+        Utils.showToast('บันทึกสำเร็จ', 'success');
+      }
     }
 
-    try {
-        if (id) {
-            await TransactionModule.update(parseInt(id), data);
-            Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
-        } else {
-            await TransactionModule.add(data);
-            Utils.showToast('เพิ่มรายการสำเร็จ', 'success');
-        }
-        closeTxnModal();
-        await refreshTransactions();
-    } catch (e) {
-        Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+    if (closeModal) {
+      closeTxnModal();
+    } else {
+      // Reset form for next entry
+      document.getElementById('txnId').value = '';
+      document.getElementById('txnAmount').value = '';
+      document.getElementById('txnUnitPrice').value = '';
+      document.getElementById('txnQuantity').value = '1';
+      document.getElementById('txnNote').value = '';
+      // Keep Date and Type and Category as they are likely similar
+      document.getElementById('txnNote').focus();
     }
+    await refreshTransactions();
+  } catch (e) {
+    Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+  }
 }
 
 function applyFilters() {
-    currentFilters = {
-        startDate: document.getElementById('filterStartDate').value,
-        endDate: document.getElementById('filterEndDate').value,
-        type: document.getElementById('filterType').value,
-        category: document.getElementById('filterCategory').value,
-        search: document.getElementById('filterSearch').value
-    };
-    refreshTransactions();
+  currentFilters = {
+    startDate: document.getElementById('filterStartDate').value,
+    endDate: document.getElementById('filterEndDate').value,
+    type: document.getElementById('filterType').value,
+    category: document.getElementById('filterCategory').value,
+    search: document.getElementById('filterSearch').value
+  };
+  refreshTransactions();
 }
 
 async function refreshTransactions() {
-    const txns = await TransactionModule.getAll(currentFilters);
-    const summary = await TransactionModule.getSummary(currentFilters.startDate, currentFilters.endDate);
+  const txns = await TransactionModule.getAll(currentFilters);
+  const summary = await TransactionModule.getSummary(currentFilters.startDate, currentFilters.endDate);
 
-    // Update summary cards
-    const summaryEl = document.getElementById('txnSummaryCards');
-    if (summaryEl) {
-        summaryEl.innerHTML = `
+  // Update summary cards
+  const summaryEl = document.getElementById('txnSummaryCards');
+  if (summaryEl) {
+    summaryEl.innerHTML = `
       <div class="stats-grid">
         <div class="stat-card income">
           <div class="stat-label">รายรับ</div>
@@ -247,16 +360,16 @@ async function refreshTransactions() {
         </div>
       </div>
     `;
-    }
+  }
 
-    // Update table
-    const tableEl = document.getElementById('transactionsTable');
-    if (txns.length === 0) {
-        tableEl.innerHTML = `<div class="empty-state"><p>ไม่พบรายการ</p></div>`;
-        return;
-    }
+  // Update table
+  const tableEl = document.getElementById('transactionsTable');
+  if (txns.length === 0) {
+    tableEl.innerHTML = `<div class="empty-state"><p>ไม่พบรายการ</p></div>`;
+    return;
+  }
 
-    tableEl.innerHTML = `
+  tableEl.innerHTML = `
     <table class="data-table">
       <thead>
         <tr>
@@ -270,18 +383,27 @@ async function refreshTransactions() {
       </thead>
       <tbody>
         ${txns.map(t => `
-          <tr>
-            <td>${Utils.formatDateShort(t.date)}</td>
-            <td><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
-            <td>${t.category}</td>
-            <td>${t.note || '-'}</td>
-            <td class="amount ${t.type}" style="text-align:right">${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</td>
-            <td style="text-align:center">
+          <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}" style="user-select:none; -webkit-user-select:none;">
+            <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
+            <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
+            <td data-label="หมวดหมู่">
+                ${t.note ? t.note : t.category}
+                ${(t.quantity && t.quantity > 1) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice || (t.amount / t.quantity))}</span>` : ''}
+            </td>
+            <td data-label="หมายเหตุ">${t.note || '-'}</td>
+            <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</td>
+            <td data-label="จัดการ" style="text-align:center">
               <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข">✏️</button>
               <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ">🗑️</button>
             </td>
           </tr>
         `).join('')}
+        <tr class="receipt-footer">
+            <td colspan="4" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
+            <td colspan="2" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
+                ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+            </td>
+        </tr>
       </tbody>
     </table>
     <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
@@ -289,21 +411,59 @@ async function refreshTransactions() {
     </div>
   `;
 
-    // Attach row actions
-    tableEl.querySelectorAll('.edit-txn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
-            if (txn) openTxnModal(txn);
-        });
+  // Attach row actions
+  tableEl.querySelectorAll('.edit-txn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
+      if (txn) openTxnModal(txn);
     });
+  });
 
-    tableEl.querySelectorAll('.delete-txn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            if (confirm('คุณต้องการลบรายการนี้?')) {
-                await TransactionModule.delete(parseInt(btn.dataset.id));
-                Utils.showToast('ลบรายการสำเร็จ', 'success');
-                refreshTransactions();
-            }
-        });
+  tableEl.querySelectorAll('.delete-txn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (confirm('คุณต้องการลบรายการนี้?')) {
+        await TransactionModule.delete(parseInt(btn.dataset.id));
+        Utils.showToast('ลบรายการสำเร็จ', 'success');
+        refreshTransactions();
+      }
     });
+  });
+
+  // Long press to edit
+  let pressTimer;
+  tableEl.querySelectorAll('.txn-row').forEach(row => {
+    const startPress = (e) => {
+      // Check if clicked ON a button, if so, ignore row long press
+      if (e.target.closest('button')) return;
+
+      pressTimer = setTimeout(() => {
+        const txn = txns.find(t => t.id === parseInt(row.dataset.id));
+        if (txn) {
+          // Vibrate if supported
+          if (navigator.vibrate) navigator.vibrate(50);
+          openTxnModal(txn);
+        }
+      }, 500);
+    };
+
+    const cancelPress = () => {
+      clearTimeout(pressTimer);
+    };
+
+    // Touch events
+    row.addEventListener('touchstart', startPress, { passive: true });
+    row.addEventListener('touchend', cancelPress);
+    row.addEventListener('touchmove', cancelPress);
+
+    // Mouse events (for desktop testing)
+    row.addEventListener('mousedown', startPress);
+    row.addEventListener('mouseup', cancelPress);
+    row.addEventListener('mouseleave', cancelPress);
+
+    // Prevent context menu on mobile long press
+    row.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      return false;
+    });
+  });
 }

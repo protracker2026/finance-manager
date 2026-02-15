@@ -28,13 +28,7 @@ async function init() {
         });
     });
 
-    // Mobile menu
-    const menuBtn = document.getElementById('mobileMenuBtn');
-    if (menuBtn) {
-        menuBtn.addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('open');
-        });
-    }
+
 
     // Initial route
     router.navigate();

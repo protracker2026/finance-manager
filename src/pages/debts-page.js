@@ -4,9 +4,9 @@ import { InterestEngine } from '../modules/interest.js';
 import { Utils } from '../modules/utils.js';
 
 export async function renderDebtsPage(container) {
-    const summary = await DebtModule.getDebtSummary();
+  const summary = await DebtModule.getDebtSummary();
 
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="page-header">
       <div>
         <h2>จัดการหนี้สิน</h2>
@@ -162,49 +162,49 @@ export async function renderDebtsPage(container) {
     </div>
   `;
 
-    setupDebtEvents();
-    await refreshDebts();
+  setupDebtEvents();
+  await refreshDebts();
 }
 
 function setupDebtEvents() {
-    document.getElementById('addDebtBtn').addEventListener('click', () => openDebtModal());
-    document.getElementById('debtModalClose').addEventListener('click', closeDebtModal);
-    document.getElementById('debtCancelBtn').addEventListener('click', closeDebtModal);
-    document.getElementById('debtModal').addEventListener('click', e => { if (e.target.id === 'debtModal') closeDebtModal(); });
-    document.getElementById('debtSaveBtn').addEventListener('click', saveDebt);
+  document.getElementById('addDebtBtn').addEventListener('click', () => openDebtModal());
+  document.getElementById('debtModalClose').addEventListener('click', closeDebtModal);
+  document.getElementById('debtCancelBtn').addEventListener('click', closeDebtModal);
+  document.getElementById('debtModal').addEventListener('click', e => { if (e.target.id === 'debtModal') closeDebtModal(); });
+  document.getElementById('debtSaveBtn').addEventListener('click', saveDebt);
 
-    document.getElementById('paymentModalClose').addEventListener('click', closePaymentModal);
-    document.getElementById('paymentCancelBtn').addEventListener('click', closePaymentModal);
-    document.getElementById('paymentModal').addEventListener('click', e => { if (e.target.id === 'paymentModal') closePaymentModal(); });
-    document.getElementById('paymentSaveBtn').addEventListener('click', savePayment);
+  document.getElementById('paymentModalClose').addEventListener('click', closePaymentModal);
+  document.getElementById('paymentCancelBtn').addEventListener('click', closePaymentModal);
+  document.getElementById('paymentModal').addEventListener('click', e => { if (e.target.id === 'paymentModal') closePaymentModal(); });
+  document.getElementById('paymentSaveBtn').addEventListener('click', savePayment);
 
-    document.getElementById('detailModalClose').addEventListener('click', closeDetailModal);
-    document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeDetailModal(); });
+  document.getElementById('detailModalClose').addEventListener('click', closeDetailModal);
+  document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeDetailModal(); });
 }
 
 function openDebtModal(debt = null) {
-    const modal = document.getElementById('debtModal');
-    if (debt) {
-        document.getElementById('debtModalTitle').textContent = 'แก้ไขหนี้';
-        document.getElementById('debtId').value = debt.id;
-        document.getElementById('debtName').value = debt.name;
-        document.getElementById('debtType').value = debt.type;
-        document.getElementById('debtInterestType').value = debt.interestType;
-        document.getElementById('debtPrincipal').value = debt.principal;
-        document.getElementById('debtCurrentBalance').value = debt.currentBalance;
-        document.getElementById('debtRate').value = debt.annualRate;
-        document.getElementById('debtTerm').value = debt.termMonths || '';
-        document.getElementById('debtMonthlyPayment').value = debt.monthlyPayment || '';
-        document.getElementById('debtMinPayment').value = debt.minPayment || '';
-        document.getElementById('debtStartDate').value = debt.startDate;
-        document.getElementById('debtNote').value = debt.note || '';
-    } else {
-        document.getElementById('debtModalTitle').textContent = 'เพิ่มหนี้';
-        document.getElementById('debtId').value = '';
-        document.getElementById('debtForm').reset();
-        document.getElementById('debtStartDate').value = Utils.today();
-    }
-    modal.classList.add('active');
+  const modal = document.getElementById('debtModal');
+  if (debt) {
+    document.getElementById('debtModalTitle').textContent = 'แก้ไขหนี้';
+    document.getElementById('debtId').value = debt.id;
+    document.getElementById('debtName').value = debt.name;
+    document.getElementById('debtType').value = debt.type;
+    document.getElementById('debtInterestType').value = debt.interestType;
+    document.getElementById('debtPrincipal').value = debt.principal;
+    document.getElementById('debtCurrentBalance').value = debt.currentBalance;
+    document.getElementById('debtRate').value = debt.annualRate;
+    document.getElementById('debtTerm').value = debt.termMonths || '';
+    document.getElementById('debtMonthlyPayment').value = debt.monthlyPayment || '';
+    document.getElementById('debtMinPayment').value = debt.minPayment || '';
+    document.getElementById('debtStartDate').value = debt.startDate;
+    document.getElementById('debtNote').value = debt.note || '';
+  } else {
+    document.getElementById('debtModalTitle').textContent = 'เพิ่มหนี้';
+    document.getElementById('debtId').value = '';
+    document.getElementById('debtForm').reset();
+    document.getElementById('debtStartDate').value = Utils.today();
+  }
+  modal.classList.add('active');
 }
 
 function closeDebtModal() { document.getElementById('debtModal').classList.remove('active'); }
@@ -212,92 +212,92 @@ function closePaymentModal() { document.getElementById('paymentModal').classList
 function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
 
 async function saveDebt() {
-    const id = document.getElementById('debtId').value;
-    const data = {
-        name: document.getElementById('debtName').value,
-        type: document.getElementById('debtType').value,
-        interestType: document.getElementById('debtInterestType').value,
-        principal: document.getElementById('debtPrincipal').value,
-        currentBalance: document.getElementById('debtCurrentBalance').value || document.getElementById('debtPrincipal').value,
-        annualRate: document.getElementById('debtRate').value,
-        termMonths: document.getElementById('debtTerm').value,
-        monthlyPayment: document.getElementById('debtMonthlyPayment').value,
-        minPayment: document.getElementById('debtMinPayment').value,
-        startDate: document.getElementById('debtStartDate').value,
-        note: document.getElementById('debtNote').value
-    };
+  const id = document.getElementById('debtId').value;
+  const data = {
+    name: document.getElementById('debtName').value,
+    type: document.getElementById('debtType').value,
+    interestType: document.getElementById('debtInterestType').value,
+    principal: document.getElementById('debtPrincipal').value,
+    currentBalance: document.getElementById('debtCurrentBalance').value || document.getElementById('debtPrincipal').value,
+    annualRate: document.getElementById('debtRate').value,
+    termMonths: document.getElementById('debtTerm').value,
+    monthlyPayment: document.getElementById('debtMonthlyPayment').value,
+    minPayment: document.getElementById('debtMinPayment').value,
+    startDate: document.getElementById('debtStartDate').value,
+    note: document.getElementById('debtNote').value
+  };
 
-    if (!data.name || !data.principal || !data.annualRate) {
-        Utils.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
-        return;
-    }
+  if (!data.name || !data.principal || !data.annualRate) {
+    Utils.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
+    return;
+  }
 
-    try {
-        if (id) {
-            await DebtModule.update(parseInt(id), data);
-            Utils.showToast('แก้ไขหนี้สำเร็จ', 'success');
-        } else {
-            await DebtModule.add(data);
-            Utils.showToast('เพิ่มหนี้สำเร็จ', 'success');
-        }
-        closeDebtModal();
-        await refreshDebts();
-    } catch (e) {
-        Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+  try {
+    if (id) {
+      await DebtModule.update(parseInt(id), data);
+      Utils.showToast('แก้ไขหนี้สำเร็จ', 'success');
+    } else {
+      await DebtModule.add(data);
+      Utils.showToast('เพิ่มหนี้สำเร็จ', 'success');
     }
+    closeDebtModal();
+    await refreshDebts();
+  } catch (e) {
+    Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+  }
 }
 
 function openPaymentModal(debt) {
-    document.getElementById('paymentDebtId').value = debt.id;
-    document.getElementById('paymentDebtName').textContent = debt.name;
-    document.getElementById('paymentAmount').value = debt.monthlyPayment || debt.minPayment || '';
-    document.getElementById('paymentDate').value = Utils.today();
-    document.getElementById('paymentNote').value = '';
-    document.getElementById('paymentModal').classList.add('active');
+  document.getElementById('paymentDebtId').value = debt.id;
+  document.getElementById('paymentDebtName').textContent = debt.name;
+  document.getElementById('paymentAmount').value = debt.monthlyPayment || debt.minPayment || '';
+  document.getElementById('paymentDate').value = Utils.today();
+  document.getElementById('paymentNote').value = '';
+  document.getElementById('paymentModal').classList.add('active');
 }
 
 async function savePayment() {
-    const debtId = parseInt(document.getElementById('paymentDebtId').value);
-    const data = {
-        amount: document.getElementById('paymentAmount').value,
-        date: document.getElementById('paymentDate').value,
-        note: document.getElementById('paymentNote').value
-    };
+  const debtId = parseInt(document.getElementById('paymentDebtId').value);
+  const data = {
+    amount: document.getElementById('paymentAmount').value,
+    date: document.getElementById('paymentDate').value,
+    note: document.getElementById('paymentNote').value
+  };
 
-    if (!data.amount || !data.date) {
-        Utils.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
-        return;
-    }
+  if (!data.amount || !data.date) {
+    Utils.showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
+    return;
+  }
 
-    try {
-        await DebtModule.recordPayment(debtId, data);
-        Utils.showToast('บันทึกการชำระสำเร็จ', 'success');
-        closePaymentModal();
-        await refreshDebts();
-    } catch (e) {
-        Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
-    }
+  try {
+    await DebtModule.recordPayment(debtId, data);
+    Utils.showToast('บันทึกการชำระสำเร็จ', 'success');
+    closePaymentModal();
+    await refreshDebts();
+  } catch (e) {
+    Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+  }
 }
 
 async function showDebtDetail(debt) {
-    const payments = await DebtModule.getPayments(debt.id);
-    const paid = debt.principal - debt.currentBalance;
-    const paidPct = Utils.percentage(paid, debt.principal);
+  const payments = await DebtModule.getPayments(debt.id);
+  const paid = debt.principal - debt.currentBalance;
+  const paidPct = Utils.percentage(paid, debt.principal);
 
-    // Generate schedule
-    let scheduleHtml = '';
-    if (debt.monthlyPayment > 0) {
-        let result;
-        if (debt.interestType === 'daily_accrual') {
-            result = InterestEngine.generateDailyAccrualSchedule(
-                debt.currentBalance, debt.annualRate, debt.monthlyPayment, debt.startDate);
-        } else {
-            result = InterestEngine.generateAmortizationSchedule(
-                debt.currentBalance, debt.annualRate, debt.monthlyPayment);
-        }
+  // Generate schedule
+  let scheduleHtml = '';
+  if (debt.monthlyPayment > 0) {
+    let result;
+    if (debt.interestType === 'daily_accrual') {
+      result = InterestEngine.generateDailyAccrualSchedule(
+        debt.currentBalance, debt.annualRate, debt.monthlyPayment, debt.startDate);
+    } else {
+      result = InterestEngine.generateAmortizationSchedule(
+        debt.currentBalance, debt.annualRate, debt.monthlyPayment);
+    }
 
-        const scheduleRows = result.schedule.slice(0, 60);
-        scheduleHtml = `
+    const scheduleRows = result.schedule.slice(0, 60);
+    scheduleHtml = `
       <h4 style="margin: var(--space-lg) 0 var(--space-md); color: var(--text-accent);">📋 ตารางผ่อนชำระ (คาดการณ์)</h4>
       <div style="margin-bottom: var(--space-md); padding: var(--space-md); background: var(--bg-tertiary); border-radius: var(--border-radius);">
         <div class="summary-row">
@@ -327,11 +327,11 @@ async function showDebtDetail(debt) {
           <tbody>
             ${scheduleRows.map(s => `
               <tr>
-                <td>${s.month}</td>
-                <td>${Utils.formatCurrency(s.payment)}</td>
-                <td style="color:var(--text-warning)">${Utils.formatCurrency(s.interest)}</td>
-                <td style="color:var(--text-success)">${Utils.formatCurrency(s.principal)}</td>
-                <td>${Utils.formatCurrency(s.balance)}</td>
+                <td data-label="งวด">${s.month}</td>
+                <td data-label="ค่างวด">${Utils.formatCurrency(s.payment)}</td>
+                <td data-label="ดอกเบี้ย" style="color:var(--text-warning)">${Utils.formatCurrency(s.interest)}</td>
+                <td data-label="เงินต้น" style="color:var(--text-success)">${Utils.formatCurrency(s.principal)}</td>
+                <td data-label="ยอดคงเหลือ">${Utils.formatCurrency(s.balance)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -339,12 +339,12 @@ async function showDebtDetail(debt) {
       </div>
       ${result.schedule.length > 60 ? `<p style="color:var(--text-tertiary);font-size:var(--font-size-xs);margin-top:var(--space-sm);">แสดง 60 งวดแรกจากทั้งหมด ${result.schedule.length} งวด</p>` : ''}
     `;
-    }
+  }
 
-    // Payment history
-    let paymentHtml = '';
-    if (payments.length > 0) {
-        paymentHtml = `
+  // Payment history
+  let paymentHtml = '';
+  if (payments.length > 0) {
+    paymentHtml = `
       <h4 style="margin: var(--space-lg) 0 var(--space-md); color: var(--text-accent);">💰 ประวัติการชำระ</h4>
       <table class="data-table">
         <thead>
@@ -353,20 +353,20 @@ async function showDebtDetail(debt) {
         <tbody>
           ${payments.map(p => `
             <tr>
-              <td>${Utils.formatDateShort(p.date)}</td>
-              <td style="text-align:right;font-family:var(--font-mono)">${Utils.formatCurrency(p.amount)}</td>
-              <td style="text-align:right;font-family:var(--font-mono);color:var(--text-warning)">${Utils.formatCurrency(p.interestPortion)}</td>
-              <td style="text-align:right;font-family:var(--font-mono);color:var(--text-success)">${Utils.formatCurrency(p.principalPortion)}</td>
-              <td style="text-align:right;font-family:var(--font-mono)">${Utils.formatCurrency(p.balanceAfter)}</td>
+              <td data-label="วันที่">${Utils.formatDateShort(p.date)}</td>
+              <td data-label="ยอดชำระ" style="text-align:right;font-family:var(--font-mono)">${Utils.formatCurrency(p.amount)}</td>
+              <td data-label="ดอกเบี้ย" style="text-align:right;font-family:var(--font-mono);color:var(--text-warning)">${Utils.formatCurrency(p.interestPortion)}</td>
+              <td data-label="เงินต้น" style="text-align:right;font-family:var(--font-mono);color:var(--text-success)">${Utils.formatCurrency(p.principalPortion)}</td>
+              <td data-label="ยอดคงเหลือ" style="text-align:right;font-family:var(--font-mono)">${Utils.formatCurrency(p.balanceAfter)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     `;
-    }
+  }
 
-    document.getElementById('detailTitle').textContent = debt.name;
-    document.getElementById('detailBody').innerHTML = `
+  document.getElementById('detailTitle').textContent = debt.name;
+  document.getElementById('detailBody').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);margin-bottom:var(--space-lg);">
       <div>
         <div class="summary-row"><span class="label">ประเภท</span><span class="value">${Utils.debtTypeName(debt.type)}</span></div>
@@ -394,22 +394,22 @@ async function showDebtDetail(debt) {
     ${scheduleHtml}
   `;
 
-    document.getElementById('detailModal').classList.add('active');
+  document.getElementById('detailModal').classList.add('active');
 }
 
 async function refreshDebts() {
-    const debts = await DebtModule.getAll();
-    const grid = document.getElementById('debtsGrid');
+  const debts = await DebtModule.getAll();
+  const grid = document.getElementById('debtsGrid');
 
-    if (debts.length === 0) {
-        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>ยังไม่มีหนี้สิน — เพิ่มหนี้เพื่อเริ่มติดตาม</p><button class="btn btn-primary" onclick="document.getElementById('addDebtBtn').click()">เพิ่มหนี้</button></div>`;
-        return;
-    }
+  if (debts.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>ยังไม่มีหนี้สิน — เพิ่มหนี้เพื่อเริ่มติดตาม</p><button class="btn btn-primary" onclick="document.getElementById('addDebtBtn').click()">เพิ่มหนี้</button></div>`;
+    return;
+  }
 
-    grid.innerHTML = debts.map(d => {
-        const paid = d.principal - d.currentBalance;
-        const paidPct = Utils.percentage(paid, d.principal);
-        return `
+  grid.innerHTML = debts.map(d => {
+    const paid = d.principal - d.currentBalance;
+    const paidPct = Utils.percentage(paid, d.principal);
+    return `
       <div class="debt-card" data-id="${d.id}">
         <div class="debt-card-header">
           <span class="debt-card-name">${d.name}</span>
@@ -441,43 +441,43 @@ async function refreshDebts() {
         </div>
       </div>
     `;
-    }).join('');
+  }).join('');
 
-    // Event listeners
-    grid.querySelectorAll('.pay-debt').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const debt = debts.find(d => d.id === parseInt(btn.dataset.id));
-            if (debt) openPaymentModal(debt);
-        });
+  // Event listeners
+  grid.querySelectorAll('.pay-debt').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const debt = debts.find(d => d.id === parseInt(btn.dataset.id));
+      if (debt) openPaymentModal(debt);
     });
+  });
 
-    grid.querySelectorAll('.detail-debt').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const debt = debts.find(d => d.id === parseInt(btn.dataset.id));
-            if (debt) showDebtDetail(debt);
-        });
+  grid.querySelectorAll('.detail-debt').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const debt = debts.find(d => d.id === parseInt(btn.dataset.id));
+      if (debt) showDebtDetail(debt);
     });
+  });
 
-    grid.querySelectorAll('.edit-debt').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const debt = debts.find(d => d.id === parseInt(btn.dataset.id));
-            if (debt) openDebtModal(debt);
-        });
+  grid.querySelectorAll('.edit-debt').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const debt = debts.find(d => d.id === parseInt(btn.dataset.id));
+      if (debt) openDebtModal(debt);
     });
+  });
 
-    grid.querySelectorAll('.delete-debt').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (confirm('คุณต้องการลบหนี้นี้และประวัติการชำระทั้งหมด?')) {
-                await DebtModule.delete(parseInt(btn.dataset.id));
-                Utils.showToast('ลบหนี้สำเร็จ', 'success');
-                // Reload the page to refresh summary too
-                const container = document.getElementById('app');
-                await renderDebtsPage(container);
-            }
-        });
+  grid.querySelectorAll('.delete-debt').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (confirm('คุณต้องการลบหนี้นี้และประวัติการชำระทั้งหมด?')) {
+        await DebtModule.delete(parseInt(btn.dataset.id));
+        Utils.showToast('ลบหนี้สำเร็จ', 'success');
+        // Reload the page to refresh summary too
+        const container = document.getElementById('app');
+        await renderDebtsPage(container);
+      }
     });
+  });
 }
