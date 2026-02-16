@@ -1,5 +1,6 @@
 // Transaction Module - CRUD & Summaries
 import { db } from '../db/database.js';
+import { SyncModule } from './sync.js';
 
 export const TransactionModule = {
     async getAll(filters = {}) {
@@ -16,7 +17,9 @@ export const TransactionModule = {
             results = results.filter(t => t.date >= filters.startDate);
         }
         if (filters.endDate) {
-            results = results.filter(t => t.date <= filters.endDate);
+            // If endDate is just 'YYYY-MM-DD', append time to make it inclusive
+            const end = filters.endDate.length === 10 ? filters.endDate + 'T23:59:59' : filters.endDate;
+            results = results.filter(t => t.date <= end);
         }
         if (filters.search) {
             const s = filters.search.toLowerCase();
@@ -29,29 +32,38 @@ export const TransactionModule = {
     },
 
     async add(transaction) {
-        return await db.transactions.add({
+        const id = await db.transactions.add({
             ...transaction,
             amount: parseFloat(transaction.amount),
             createdAt: new Date().toISOString()
         });
+        SyncModule.notifyDataChange();
+        return id;
     },
 
     async update(id, data) {
-        return await db.transactions.update(id, {
+        const result = await db.transactions.update(id, {
             ...data,
             amount: parseFloat(data.amount),
             updatedAt: new Date().toISOString()
         });
+        SyncModule.notifyDataChange();
+        return result;
     },
 
     async delete(id) {
-        return await db.transactions.delete(id);
+        const result = await db.transactions.delete(id);
+        SyncModule.notifyDataChange();
+        return result;
     },
 
     async getSummary(startDate, endDate) {
         let txns = await db.transactions.toArray();
         if (startDate) txns = txns.filter(t => t.date >= startDate);
-        if (endDate) txns = txns.filter(t => t.date <= endDate);
+        if (endDate) {
+            const end = endDate && endDate.length === 10 ? endDate + 'T23:59:59' : endDate;
+            txns = txns.filter(t => t.date <= end);
+        }
 
         const income = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
         const expense = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
@@ -81,10 +93,14 @@ export const TransactionModule = {
     },
 
     async addCategory(cat) {
-        return await db.categories.add(cat);
+        const result = await db.categories.add(cat);
+        SyncModule.notifyDataChange();
+        return result;
     },
 
     async deleteCategory(id) {
-        return await db.categories.delete(id);
+        const result = await db.categories.delete(id);
+        SyncModule.notifyDataChange();
+        return result;
     }
 };

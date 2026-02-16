@@ -1,45 +1,53 @@
 /* === Design System Variables (Minimal Dark Theme) === */
 :root {
-    /* Colors - Minimal Dark Theme */
-    --bg-primary: #09090b;
-    /* Deep black-gray */
-    --bg-secondary: #121217;
-    /* Slightly lighter for sidebar/nav */
-    --bg-tertiary: #1c1c24;
-    /* Lighter gray for interactive elements */
-    --bg-card: #121217;
-    /* Matches secondary for seamless look or slightly distinct */
-    --bg-card-hover: #1c1c24;
-    --bg-input: #1c1c24;
-    --bg-modal: rgba(18, 18, 23, 0.95);
+    /* Colors - Minimal "Dry" Theme (Zinc/Slate) */
+    --bg-primary: #18181b;
+    /* Zinc 950 */
+    --bg-secondary: #27272a;
+    /* Zinc 800 */
+    --bg-tertiary: #3f3f46;
+    /* Zinc 700 */
+    --bg-card: #27272a;
+    /* Zinc 800 */
+    --bg-card-hover: #3f3f46;
+    /* Zinc 700 */
+    --bg-input: #18181b;
+    /* Zinc 950 - Darker than modal for contrast */
+    --bg-modal: rgba(24, 24, 27, 0.95);
 
-    /* Accent Colors - Refined & Desaturated */
-    --accent-primary: #6366f1;
-    /* Indigo */
-    --accent-primary-hover: #818cf8;
-    --accent-secondary: #06b6d4;
-    /* Cyan */
-    --accent-success: #10b981;
-    /* Emerald */
-    --accent-warning: #f59e0b;
-    /* Amber */
-    --accent-danger: #ef4444;
-    /* Red */
-    --accent-info: #3b82f6;
-    /* Blue */
+    /* Accent Colors - Desaturated / Industrial */
+    --accent-primary: #52525b;
+    /* Zinc 600 (Neutral Gray) */
+    --accent-primary-hover: #71717a;
+    /* Zinc 500 */
+    --accent-secondary: #52525b;
+    /* Match primary for consistency */
 
-    /* Text Colors - High Readability */
-    --text-primary: #f4f4f5;
-    /* Almost white */
-    --text-secondary: #a1a1aa;
-    /* Neutral gray */
-    --text-tertiary: #71717a;
-    /* Darker gray */
-    --text-accent: #818cf8;
-    /* Soft indigo */
-    --text-success: #34d399;
-    --text-danger: #f87171;
-    --text-warning: #fbbf24;
+    /* Status - Earthy/Muted tones */
+    --accent-success: #15803d;
+    /* Green 700 */
+    --accent-warning: #b45309;
+    /* Amber 700 */
+    --accent-danger: #b91c1c;
+    /* Red 700 */
+    --accent-info: #1d4ed8;
+    /* Blue 700 */
+
+    /* Text Colors - High Visibility (White) */
+    --text-primary: #ffffff;
+    --text-secondary: #f4f4f5;
+    /* Zinc 100 */
+    --text-tertiary: #d4d4d8;
+    /* Zinc 300 */
+
+    /* Text Accents - Clear Colors for Income/Expense */
+    --text-accent: #ffffff;
+    --text-success: #22c55e;
+    /* Clear Green */
+    --text-danger: #ef4444;
+    /* Clear Red */
+    --text-warning: #f59e0b;
+    /* Clear Amber */
 
     /* Border - Subtle & Clean */
     --border-color: #27272a;
@@ -69,13 +77,20 @@
     /* Typography */
     --font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-    --font-size-xs: 0.75rem;
-    --font-size-sm: 0.875rem;
-    --font-size-base: 1rem;
-    --font-size-lg: 1.125rem;
-    --font-size-xl: 1.25rem;
-    --font-size-2xl: 1.5rem;
-    --font-size-3xl: 2rem;
+    --font-size-xs: 0.8125rem;
+    /* ~13px - Increased from 12px */
+    --font-size-sm: 0.9375rem;
+    /* 15px - Increased from 14px */
+    --font-size-base: 1.0625rem;
+    /* 17px - Increased from 16px */
+    --font-size-lg: 1.1875rem;
+    /* ~19px */
+    --font-size-xl: 1.375rem;
+    /* 22px */
+    --font-size-2xl: 1.75rem;
+    /* 28px */
+    --font-size-3xl: 2.25rem;
+    /* 36px */
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
@@ -89,4 +104,24 @@
     /* Layout */
     --sidebar-width: 260px;
     --header-height: 64px;
+}
+
+/* Response Scale for Smaller Mobile (iPhone 12/13/14 width ≈ 390px) */
+@media (max-width: 390px) {
+    :root {
+        --font-size-xs: 0.75rem;
+        /* 12px */
+        --font-size-sm: 0.875rem;
+        /* 14px */
+        --font-size-base: 1rem;
+        /* 16px */
+        --font-size-lg: 1.125rem;
+        /* 18px */
+        --font-size-xl: 1.25rem;
+        /* 20px */
+        --font-size-2xl: 1.5rem;
+        /* 24px */
+        --font-size-3xl: 1.875rem;
+        /* 30px */
+    }
 }

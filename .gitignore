@@ -1,0 +1,10 @@
+# Firebase config (contains secrets, auto-generated during deploy)
+src/modules/firebase-config.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp

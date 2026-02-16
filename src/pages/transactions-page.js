@@ -14,16 +14,30 @@ export async function renderTransactionsPage(container) {
         <h2>รายรับ - รายจ่าย</h2>
         <p class="subtitle">บันทึกและติดตามรายรับ-รายจ่ายของคุณ</p>
       </div>
-      <button class="btn btn-primary" id="addTransactionBtn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        เพิ่มรายการ
-      </button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" id="exportReceiptBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Export PDF
+        </button>
+        <button class="btn btn-primary" id="addTransactionBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            เพิ่มรายการ
+        </button>
+      </div>
     </div>
 
     <!-- Summary Cards -->
     <div id="txnSummaryCards"></div>
 
     <!-- Filters -->
+    <!-- Period Selector -->
+    <div style="display:flex; gap:10px; margin-bottom:10px; overflow-x:auto; padding-bottom:5px;">
+        <button class="btn btn-outline period-btn" data-period="today" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px;">วันนี้</button>
+        <button class="btn btn-outline period-btn" data-period="week" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px;">สัปดาห์นี้</button>
+        <button class="btn btn-primary period-btn active" data-period="month" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px;">เดือนนี้</button>
+        <button class="btn btn-outline period-btn" data-period="all" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px;">ทั้งหมด</button>
+    </div>
+
     <!-- Filters -->
     <div class="filter-bar">
       <div class="filter-group">
@@ -49,9 +63,14 @@ export async function renderTransactionsPage(container) {
     </div>
 
     <!-- Table -->
-    <div class="card">
+    <!-- Collapsible Transaction List -->
+    <details class="txn-list-details" id="txnListDetails">
+      <summary class="btn" style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding:var(--space-md);">
+        <span style="font-weight:bold;">📋 แสดงรายการทั้งหมด</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </summary>
       <div id="transactionsTable"></div>
-    </div>
+    </details>
 
     <!-- Modal -->
     <div class="modal-overlay" id="txnModal">
@@ -74,20 +93,20 @@ export async function renderTransactionsPage(container) {
             </div>
             <div class="form-group">
                 <label class="form-label">จำนวน</label>
-                <input type="number" class="form-input" id="txnQuantity" step="1" min="1" value="1">
+                <input type="number" class="form-input" id="txnQuantity" step="1" min="1" value="1" inputmode="numeric">
             </div>
             <div class="form-group">
                 <label class="form-label">ราคาต่อหน่วย</label>
-                <input type="number" class="form-input" id="txnUnitPrice" step="0.01" min="0" placeholder="0.00">
+                <input type="number" class="form-input" id="txnUnitPrice" step="0.01" min="0" placeholder="0.00" inputmode="decimal">
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">รวมเป็นเงิน (บาท)</label>
-                <input type="number" class="form-input" id="txnAmount" step="0.01" min="0" required>
+                <input type="number" class="form-input" id="txnAmount" step="0.01" min="0" required inputmode="decimal">
               </div>
               <div class="form-group">
-                <label class="form-label">วันที่ & เวลา</label>
-                <input type="datetime-local" class="form-input" id="txnDate" value="${Utils.today()}" required>
+                <label class="form-label">วันที่ (ว/ด/ป) & เวลา</label>
+                <input type="text" class="form-input" id="txnDate" required>
               </div>
             </div>
             <div class="form-group">
@@ -120,6 +139,19 @@ function setupTransactionEvents() {
   // Open modal
   document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
 
+  // Initialize Flatpickr
+  if (typeof flatpickr !== 'undefined') {
+    flatpickr("#txnDate", {
+      enableTime: true,
+      dateFormat: "d/m/Y H:i",
+      time_24hr: true,
+      locale: "th",
+      defaultDate: new Date()
+    });
+  } else {
+    console.warn("Flatpickr not loaded");
+  }
+
   // Close modal
   document.getElementById('txnModalClose').addEventListener('click', closeTxnModal);
   document.getElementById('txnCancelBtn').addEventListener('click', closeTxnModal);
@@ -135,6 +167,19 @@ function setupTransactionEvents() {
       document.getElementById('txnType').value = btn.dataset.type;
       updateCategoryOptions(btn.dataset.type);
     });
+  });
+
+  // Export PDF
+  document.getElementById('exportReceiptBtn').addEventListener('click', async () => {
+    const filters = {
+      startDate: document.getElementById('filterStartDate').value,
+      endDate: document.getElementById('filterEndDate').value,
+      type: document.getElementById('filterType').value,
+      category: document.getElementById('filterCategory').value,
+      search: document.getElementById('filterSearch').value
+    };
+    const txns = await TransactionModule.getAll(filters);
+    await Utils.exportToReceiptPDF(txns, filters.startDate, filters.endDate);
   });
 
   // Save
@@ -159,6 +204,31 @@ function setupTransactionEvents() {
     document.getElementById(id).addEventListener('change', applyFilters);
   });
   document.getElementById('filterSearch').addEventListener('input', debounce(applyFilters, 300));
+
+  // Period buttons
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Visual update
+      document.querySelectorAll('.period-btn').forEach(b => {
+        b.classList.remove('btn-primary', 'active');
+        b.classList.add('btn-outline');
+      });
+      btn.classList.remove('btn-outline');
+      btn.classList.add('btn-primary', 'active');
+
+      // Logic
+      const period = btn.dataset.period;
+      let r = {};
+      if (period === 'today') r = Utils.getTodayRange();
+      else if (period === 'week') r = Utils.getWeekRange();
+      else if (period === 'month') r = Utils.getMonthRange();
+      else if (period === 'all') r = { start: '', end: '' };
+
+      document.getElementById('filterStartDate').value = r.start || '';
+      document.getElementById('filterEndDate').value = r.end || '';
+      applyFilters();
+    });
+  });
 
   // Auto-calculate amount
   const calculateTotal = () => {
@@ -191,7 +261,9 @@ async function openTxnModal(txn = null) {
     document.getElementById('txnUnitPrice').value = txn.unitPrice || '';
     document.getElementById('txnQuantity').value = txn.quantity || 1;
     // Ensure datetime string format
-    document.getElementById('txnDate').value = txn.date.includes('T') ? txn.date.slice(0, 16) : txn.date + 'T12:00';
+    // document.getElementById('txnDate').value = txn.date.includes('T') ? txn.date.slice(0, 16) : txn.date + 'T12:00';
+    const fp = document.getElementById('txnDate')._flatpickr;
+    if (fp) fp.setDate(txn.date);
     document.getElementById('txnNote').value = txn.note || '';
 
     // Set type tab
@@ -210,7 +282,12 @@ async function openTxnModal(txn = null) {
     document.getElementById('txnAmount').value = '';
     document.getElementById('txnUnitPrice').value = '';
     document.getElementById('txnQuantity').value = '1';
-    document.getElementById('txnDate').value = Utils.today();
+    document.getElementById('txnQuantity').value = '1';
+    // document.getElementById('txnDate').value = Utils.today();
+    const fp = document.getElementById('txnDate')._flatpickr;
+    if (fp) fp.setDate(new Date());
+
+    document.getElementById('txnNote').value = '';
     document.getElementById('txnNote').value = '';
     document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.type === 'expense');
@@ -218,11 +295,12 @@ async function openTxnModal(txn = null) {
     document.getElementById('txnType').value = 'expense';
 
     // Restore last used values if available
-    const lastDate = localStorage.getItem('lastTxnDate');
+    // Do not restore lastDate to ensure it defaults to current time as requested
+    // const lastDate = localStorage.getItem('lastTxnDate');
     const lastType = localStorage.getItem('lastTxnType');
     const lastCat = localStorage.getItem('lastTxnCat_' + (lastType || 'expense'));
 
-    if (lastDate) document.getElementById('txnDate').value = lastDate;
+    // if (lastDate) document.getElementById('txnDate').value = lastDate;
 
     const typeToUse = lastType || 'expense';
     document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
@@ -252,13 +330,23 @@ async function updateCategoryOptions(type) {
 
 async function saveTxn(closeModal = true) {
   const id = document.getElementById('txnId').value;
+  // Parse date from Flatpickr format (DD/MM/YYYY HH:mm) to ISO
+  let dateStr = document.getElementById('txnDate').value;
+  const fp = document.getElementById('txnDate')._flatpickr;
+  if (fp && fp.selectedDates[0]) {
+    // Use the Date object directly from flatpickr
+    const d = fp.selectedDates[0];
+    // Adjust timezone offset to store local time as ISO
+    const offset = d.getTimezoneOffset() * 60000;
+    dateStr = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+  }
+
   const data = {
     type: document.getElementById('txnType').value,
     amount: parseFloat(document.getElementById('txnAmount').value),
     unitPrice: document.getElementById('txnUnitPrice').value ? parseFloat(document.getElementById('txnUnitPrice').value) : null,
     quantity: document.getElementById('txnQuantity').value ? parseFloat(document.getElementById('txnQuantity').value) : 1,
-    date: document.getElementById('txnDate').value,
-    category: document.getElementById('txnCategory').value,
+    date: dateStr,
     category: document.getElementById('txnCategory').value,
     note: document.getElementById('txnNote').value
   };
@@ -302,7 +390,10 @@ async function saveTxn(closeModal = true) {
       // Only show popup if closing modal, otherwise it might be annoying when adding multiple
       if (closeModal) {
         const popup = document.getElementById('receiptPopup');
-        if (popup) popup.classList.add('active');
+        if (popup) {
+          popup.classList.add('active');
+          setTimeout(() => popup.classList.remove('active'), 3000);
+        }
       } else {
         Utils.showToast('บันทึกสำเร็จ', 'success');
       }
@@ -338,38 +429,49 @@ function applyFilters() {
 }
 
 async function refreshTransactions() {
-  const txns = await TransactionModule.getAll(currentFilters);
-  const summary = await TransactionModule.getSummary(currentFilters.startDate, currentFilters.endDate);
+  try {
+    const txns = await TransactionModule.getAll(currentFilters);
+    const summary = await TransactionModule.getSummary(currentFilters.startDate, currentFilters.endDate);
 
-  // Update summary cards
-  const summaryEl = document.getElementById('txnSummaryCards');
-  if (summaryEl) {
-    summaryEl.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card income">
-          <div class="stat-label">รายรับ</div>
-          <div class="stat-value positive">${Utils.formatCurrency(summary.income)}</div>
+    // Update summary cards
+    const summaryEl = document.getElementById('txnSummaryCards');
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <div class="debt-summary-compact">
+          <div class="summary-main">
+            <div class="label">คงเหลือ (ตามช่วงเวลา)</div>
+            <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}" style="color: var(--text-${summary.balance >= 0 ? 'success' : 'danger'})">${Utils.formatCurrency(summary.balance)}</div>
+            <div class="sub-label">รายรับ - รายจ่าย</div>
+          </div>
+          
+          <div class="summary-divider"></div>
+ 
+          <div class="summary-metrics">
+            <div class="metric-item">
+              <span class="metric-label">รายรับทั้งหมด</span>
+              <span class="metric-value success" style="color:var(--text-success)">${Utils.formatCurrency(summary.income)}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">รายจ่ายทั้งหมด</span>
+              <span class="metric-value danger" style="color:var(--text-danger)">${Utils.formatCurrency(summary.expense)}</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">จำนวนรายการ</span>
+              <span class="metric-value">${txns.length} รายการ</span>
+            </div>
+          </div>
         </div>
-        <div class="stat-card expense">
-          <div class="stat-label">รายจ่าย</div>
-          <div class="stat-value negative">${Utils.formatCurrency(summary.expense)}</div>
-        </div>
-        <div class="stat-card balance">
-          <div class="stat-label">คงเหลือ</div>
-          <div class="stat-value ${summary.balance >= 0 ? 'positive' : 'negative'}">${Utils.formatCurrency(summary.balance)}</div>
-        </div>
-      </div>
-    `;
-  }
+      `;
+    }
 
-  // Update table
-  const tableEl = document.getElementById('transactionsTable');
-  if (txns.length === 0) {
-    tableEl.innerHTML = `<div class="empty-state"><p>ไม่พบรายการ</p></div>`;
-    return;
-  }
+    // Update table
+    const tableEl = document.getElementById('transactionsTable');
+    if (txns.length === 0) {
+      tableEl.innerHTML = `<div class="empty-state"><p>ไม่พบรายการ</p></div>`;
+      return;
+    }
 
-  tableEl.innerHTML = `
+    tableEl.innerHTML = `
     <table class="data-table">
       <thead>
         <tr>
@@ -411,59 +513,66 @@ async function refreshTransactions() {
     </div>
   `;
 
-  // Attach row actions
-  tableEl.querySelectorAll('.edit-txn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
-      if (txn) openTxnModal(txn);
+    // Attach row actions
+    tableEl.querySelectorAll('.edit-txn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
+        if (txn) openTxnModal(txn);
+      });
     });
-  });
 
-  tableEl.querySelectorAll('.delete-txn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (confirm('คุณต้องการลบรายการนี้?')) {
-        await TransactionModule.delete(parseInt(btn.dataset.id));
-        Utils.showToast('ลบรายการสำเร็จ', 'success');
-        refreshTransactions();
-      }
-    });
-  });
-
-  // Long press to edit
-  let pressTimer;
-  tableEl.querySelectorAll('.txn-row').forEach(row => {
-    const startPress = (e) => {
-      // Check if clicked ON a button, if so, ignore row long press
-      if (e.target.closest('button')) return;
-
-      pressTimer = setTimeout(() => {
-        const txn = txns.find(t => t.id === parseInt(row.dataset.id));
-        if (txn) {
-          // Vibrate if supported
-          if (navigator.vibrate) navigator.vibrate(50);
-          openTxnModal(txn);
+    tableEl.querySelectorAll('.delete-txn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (confirm('คุณต้องการลบรายการนี้?')) {
+          await TransactionModule.delete(parseInt(btn.dataset.id));
+          Utils.showToast('ลบรายการสำเร็จ', 'success');
+          refreshTransactions();
         }
-      }, 500);
-    };
-
-    const cancelPress = () => {
-      clearTimeout(pressTimer);
-    };
-
-    // Touch events
-    row.addEventListener('touchstart', startPress, { passive: true });
-    row.addEventListener('touchend', cancelPress);
-    row.addEventListener('touchmove', cancelPress);
-
-    // Mouse events (for desktop testing)
-    row.addEventListener('mousedown', startPress);
-    row.addEventListener('mouseup', cancelPress);
-    row.addEventListener('mouseleave', cancelPress);
-
-    // Prevent context menu on mobile long press
-    row.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      return false;
+      });
     });
-  });
+
+    // Long press to edit
+    let pressTimer;
+    tableEl.querySelectorAll('.txn-row').forEach(row => {
+      const startPress = (e) => {
+        // Check if clicked ON a button, if so, ignore row long press
+        if (e.target.closest('button')) return;
+
+        pressTimer = setTimeout(() => {
+          const txn = txns.find(t => t.id === parseInt(row.dataset.id));
+          if (txn) {
+            // Vibrate if supported
+            if (navigator.vibrate) navigator.vibrate(50);
+            openTxnModal(txn);
+          }
+        }, 500);
+      };
+
+      const cancelPress = () => {
+        clearTimeout(pressTimer);
+      };
+
+      // Touch events
+      row.addEventListener('touchstart', startPress, { passive: true });
+      row.addEventListener('touchend', cancelPress);
+      row.addEventListener('touchmove', cancelPress);
+
+      // Mouse events (for desktop testing)
+      row.addEventListener('mousedown', startPress);
+      row.addEventListener('mouseup', cancelPress);
+      row.addEventListener('mouseleave', cancelPress);
+
+      // Prevent context menu on mobile long press
+      row.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        return false;
+      });
+    });
+  } catch (e) {
+    console.error('Error refreshing transactions:', e);
+    const tableEl = document.getElementById('transactionsTable');
+    if (tableEl) {
+      tableEl.innerHTML = `<div class="empty-state"><p style="color:var(--text-danger)">โหลตข้อมูลไม่สำเร็จ: ${e.message}</p></div>`;
+    }
+  }
 }

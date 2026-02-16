@@ -74,9 +74,14 @@
     .data-table {
         background: #f5e6ca;
         /* Darker Eye-friendly paper color */
-        padding: 20px 15px;
+        padding: 24px 18px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        font-family: 'Courier New', Courier, monospace;
+        font-family: 'Inconsolata', 'Space Mono', 'Courier New', monospace;
+
+        /* Slimmer look */
+        max-width: 340px;
+        margin-left: auto;
+        margin-right: auto;
 
         /* Jagged Edge Top/Bottom */
         --mask:
@@ -104,15 +109,18 @@
     /* List Items */
     .data-table tr {
         background: transparent;
-        color: #333;
-        margin-bottom: 8px;
+        color: #000;
+        margin-bottom: 6px;
         padding: 0;
         border: none;
         display: flex;
         flex-wrap: wrap;
         align-items: baseline;
-        font-size: 0.95em;
-        line-height: 1.4;
+        font-size: 0.9em;
+        line-height: 1.3;
+        font-weight: 500;
+        /* Subtle ink-bleed simulator */
+        text-shadow: 0.2px 0.2px 0px rgba(0, 0, 0, 0.1);
     }
 
     /* Layout: [1] [Item Name .........] [Price] */
@@ -135,15 +143,24 @@
 
     .data-table td[data-label="หมวดหมู่"] {
         order: 1;
-        width: auto;
         flex-grow: 1;
         font-weight: normal;
         color: #333;
         text-transform: none;
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
-        margin-right: 10px;
+        margin-right: 5px;
+        display: flex;
+        align-items: baseline;
+    }
+
+    /* Leader Lines (Dots) */
+    .data-table td[data-label="หมวดหมู่"]::after {
+        content: "";
+        flex-grow: 1;
+        margin-left: 5px;
+        border-bottom: 1px dotted #999;
+        height: 1px;
     }
 
     .data-table td[data-label="จำนวน"],
@@ -225,6 +242,15 @@
     .data-table td::before {
         display: none;
     }
+
+    /* Fix text contrast on light receipt background */
+    .data-table .amount.income {
+        color: #15803d !important;
+    }
+
+    .data-table .amount.expense {
+        color: #b91c1c !important;
+    }
 }
 
 /* === Badges === */
@@ -239,12 +265,12 @@
 }
 
 .badge-income {
-    background: rgba(0, 184, 148, 0.15);
+    background: rgba(134, 239, 172, 0.1);
     color: var(--text-success);
 }
 
 .badge-expense {
-    background: rgba(225, 112, 85, 0.15);
+    background: rgba(252, 165, 165, 0.1);
     color: var(--text-danger);
 }
 
@@ -531,6 +557,24 @@
     background: var(--bg-card-hover);
 }
 
+/* Responsive Table Fixes for Small Screens */
+@media (max-width: 480px) {
+    .table-responsive table {
+        font-size: 12px !important;
+        min-width: 350px;
+        /* Force scroll but keep readable */
+    }
+
+    .amort-table th,
+    .amort-table td {
+        padding: 4px !important;
+    }
+
+    .receipt-content {
+        padding: 12px !important;
+    }
+}
+
 /* === Toast Notification === */
 .toast-container {
     position: fixed;
@@ -661,4 +705,335 @@
 .summary-row .value {
     font-family: var(--font-mono);
     font-weight: var(--font-weight-semibold);
+}
+
+/* === Collapsible Details === */
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+details summary {
+    list-style: none;
+    outline: none;
+}
+
+details.dashboard-details .toggle-icon,
+details.txn-list-details summary svg {
+    transition: transform 0.3s ease;
+}
+
+details[open].dashboard-details .toggle-icon,
+details[open].txn-list-details summary svg {
+    transform: rotate(180deg);
+}
+
+.dashboard-details summary:hover {
+    background: var(--bg-tertiary);
+}
+
+.txn-list-details summary.btn {
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-accent);
+}
+
+.txn-list-details summary.btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color-hover);
+}
+
+/* === Debt Summary & Redesign Styles === */
+.debt-summary-compact {
+    display: flex;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    align-items: center;
+    gap: var(--space-xl);
+}
+
+.summary-main {
+    flex: 1;
+}
+
+.summary-main .label {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.summary-main .value-huge {
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    font-family: var(--font-mono);
+    line-height: 1.1;
+}
+
+.summary-main .sub-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+.summary-divider {
+    width: 1px;
+    height: 60px;
+    background: var(--border-color);
+}
+
+.summary-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 200px;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--font-size-sm);
+}
+
+.metric-label {
+    color: var(--text-tertiary);
+}
+
+.metric-value {
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-mono);
+}
+
+@media (max-width: 768px) {
+    .debt-summary-compact {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-md);
+        padding: var(--space-md);
+    }
+
+    .summary-divider {
+        width: 100%;
+        height: 1px;
+    }
+
+    .summary-main .value-huge {
+        font-size: var(--font-size-2xl);
+    }
+}
+
+/* === Debt Groups & Items === */
+.debt-group {
+    margin-bottom: var(--space-lg);
+}
+
+.debt-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-sm);
+    padding-bottom: 4px;
+    border-bottom: 2px solid var(--bg-tertiary);
+}
+
+.debt-group-title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.debt-group-sum {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+}
+
+.debt-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: var(--space-sm);
+    overflow: hidden;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(8px);
+    position: relative;
+}
+
+.debt-item:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-card-hover);
+    transform: translateX(4px);
+}
+
+.debt-item-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    min-height: 70px;
+}
+
+.debt-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.debt-item-name {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-primary);
+}
+
+.debt-item-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: 2px;
+}
+
+.debt-item-balance {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.debt-item-balance .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    display: block;
+    margin-bottom: -2px;
+}
+
+.debt-item-balance .amount {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-accent);
+}
+
+.debt-item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.pay-debt {
+    padding: 8px 16px !important;
+    border-radius: 20px !important;
+    font-weight: var(--font-weight-bold) !important;
+    white-space: nowrap;
+}
+
+.debt-item-actions .btn-sm {
+    padding: 6px 14px;
+    font-size: var(--font-size-xs);
+}
+
+/* Detail Expanding Section */
+.debt-item-details {
+    background: var(--bg-primary);
+    padding: 0;
+    font-size: var(--font-size-sm);
+    border-top: 1px solid var(--border-color);
+}
+
+.debt-item-details[open] {
+    padding: var(--space-md);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-md);
+}
+
+.debt-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.debt-detail-item .label {
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    opacity: 0.8;
+}
+
+.debt-detail-item .value {
+    font-weight: var(--font-weight-medium);
+    font-family: var(--font-mono);
+}
+
+@media (max-width: 600px) {
+    .debt-item-main {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+        padding: var(--space-md);
+    }
+
+    .debt-item-balance {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding-top: var(--space-sm);
+        border-top: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .debt-item-actions {
+        margin-top: var(--space-xs);
+    }
+}
+
+/* === Dashboard & Global Overrides === */
+.dashboard-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.toggle-icon {
+    transition: transform 0.2s;
+    opacity: 0.5;
+}
+
+details[open] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Privacy Toggle Styles */
+#privacyToggle {
+    border: none;
+    background: transparent;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    transition: all 0.2s;
+}
+
+#privacyToggle:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.hidden-blur {
+    filter: blur(8px);
+    opacity: 0.5;
+    user-select: none;
+    pointer-events: none;
 }
