@@ -4,8 +4,8 @@ import { SyncModule } from './sync.js';
 
 export const TransactionModule = {
     async getAll(filters = {}) {
-        let collection = db.transactions.orderBy('date').reverse();
-        let results = await collection.toArray();
+        let results = await db.transactions.toArray();
+        results.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (filters.type) {
             results = results.filter(t => t.type === filters.type);
@@ -37,7 +37,7 @@ export const TransactionModule = {
             amount: parseFloat(transaction.amount),
             createdAt: new Date().toISOString()
         });
-        SyncModule.notifyDataChange();
+        // SyncModule.notifyDataChange();
         return id;
     },
 
@@ -47,13 +47,13 @@ export const TransactionModule = {
             amount: parseFloat(data.amount),
             updatedAt: new Date().toISOString()
         });
-        SyncModule.notifyDataChange();
+        // SyncModule.notifyDataChange();
         return result;
     },
 
     async delete(id) {
         const result = await db.transactions.delete(id);
-        SyncModule.notifyDataChange();
+        // SyncModule.notifyDataChange();
         return result;
     },
 
@@ -94,7 +94,7 @@ export const TransactionModule = {
 
     async addCategory(cat) {
         const result = await db.categories.add(cat);
-        SyncModule.notifyDataChange();
+        // SyncModule.notifyDataChange();
         return result;
     },
 

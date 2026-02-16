@@ -1,15 +1,169 @@
-// Database Layer using Dexie.js
-const db = new Dexie('FinanceDB');
+import { firebaseConfig } from '../modules/firebase-config.js';
 
-db.version(1).stores({
-    transactions: '++id, date, type, category, amount',
-    debts: '++id, name, type, interestType, status',
-    debtPayments: '++id, debtId, date, amount',
-    categories: '++id, name, type'
-});
+class MemoryCollection {
+    constructor(db, name) {
+        this.db = db;
+        this.name = name;
+        this.data = [];
+    }
 
-// Seed default categories
-async function seedCategories() {
+    async add(item) {
+        if (!this.db.dbRef) await this.db.ensureInit();
+
+        // Push to Firebase to generate ID
+        const ref = this.db.dbRef.child(this.name).push();
+        const newItem = { ...item, id: ref.key };
+
+        // Optimistic update
+        this.data.push(newItem);
+
+        // Save content
+        await ref.set(newItem);
+
+        return newItem.id;
+    }
+
+    async update(id, changes) {
+        if (!this.db.dbRef) await this.db.ensureInit();
+
+        const idx = this.data.findIndex(x => x.id === id);
+        if (idx !== -1) {
+            this.data[idx] = { ...this.data[idx], ...changes };
+            await this.db.dbRef.child(this.name).child(id).update(changes);
+            return 1;
+        }
+        return 0;
+    }
+
+    async delete(id) {
+        if (!this.db.dbRef) await this.db.ensureInit();
+
+        const idx = this.data.findIndex(x => x.id === id);
+        if (idx !== -1) {
+            this.data.splice(idx, 1);
+            await this.db.dbRef.child(this.name).child(id).remove();
+        }
+    }
+
+    async get(id) {
+        return this.data.find(x => x.id === id);
+    }
+
+    async toArray() {
+        // Return a copy to avoid mutation reference issues
+        return [...this.data];
+    }
+
+    // Helper to support legacy Dexie checks
+    async count() {
+        return this.data.length;
+    }
+
+    async bulkAdd(items) {
+        if (!this.db.dbRef) await this.db.ensureInit();
+
+        const updates = {};
+        items.forEach(item => {
+            const ref = this.db.dbRef.child(this.name).push();
+            const newItem = { ...item, id: ref.key };
+            updates[`${this.name}/${ref.key}`] = newItem;
+            this.data.push(newItem);
+        });
+
+        // Atomic update for bulk add
+        await this.db.dbRef.update(updates);
+    }
+
+    // Dummy methods to prevent crash if old code calls them
+    orderBy(field) {
+        console.warn('orderBy is deprecated in FirebaseDB adapter. Use array sort.');
+        return this;
+    }
+    reverse() {
+        return this;
+    }
+}
+
+class FirebaseDB {
+    constructor() {
+        this.app = null;
+        this.database = null;
+        this.dbRef = null;
+        this.initialized = false;
+        this.initPromise = null;
+
+        this.transactions = new MemoryCollection(this, 'transactions');
+        this.debts = new MemoryCollection(this, 'debts');
+        this.debtPayments = new MemoryCollection(this, 'debtPayments');
+        this.categories = new MemoryCollection(this, 'categories');
+    }
+
+    async init() {
+        if (this.initialized) return;
+        if (this.initPromise) return this.initPromise;
+
+        this.initPromise = (async () => {
+            console.log('Initializing Firebase Adapter...');
+
+            // Wait for Firebase global
+            if (typeof firebase === 'undefined') {
+                throw new Error('Firebase SDK not loaded');
+            }
+
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            this.database = firebase.database();
+
+            // Use global sync ID
+            const syncId = 'global_default_user';
+            this.dbRef = this.database.ref('users/' + syncId + '/data');
+
+            // Load initial data
+            await this.loadFromCloud();
+
+            // Setup Realtime Listener
+            this.dbRef.on('value', (snapshot) => {
+                this.updateLocalCache(snapshot.val());
+                window.dispatchEvent(new Event('data-synced'));
+            });
+
+            this.initialized = true;
+            console.log('Firebase Adapter Ready');
+        })();
+
+        return this.initPromise;
+    }
+
+    async ensureInit() {
+        if (!this.initialized) await this.init();
+    }
+
+    async loadFromCloud() {
+        const snapshot = await this.dbRef.once('value');
+        this.updateLocalCache(snapshot.val());
+    }
+
+    updateLocalCache(dataObj) {
+        dataObj = dataObj || {};
+        this.populate(this.transactions, dataObj.transactions);
+        this.populate(this.debts, dataObj.debts);
+        this.populate(this.debtPayments, dataObj.debtPayments);
+        this.populate(this.categories, dataObj.categories);
+    }
+
+    populate(collection, sourceData) {
+        collection.data = [];
+        if (sourceData) {
+            Object.values(sourceData).forEach(item => collection.data.push(item));
+        }
+    }
+}
+
+export const db = new FirebaseDB();
+
+export async function seedCategories() {
+    await db.ensureInit();
     const count = await db.categories.count();
     if (count === 0) {
         await db.categories.bulkAdd([
@@ -34,5 +188,3 @@ async function seedCategories() {
         ]);
     }
 }
-
-export { db, seedCategories };

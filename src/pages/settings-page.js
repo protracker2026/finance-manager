@@ -1,6 +1,5 @@
 import { Utils } from '../modules/utils.js';
 import { BackupModule } from '../modules/backup.js';
-import { SyncModule } from '../modules/sync.js';
 
 export async function renderSettingsPage(container) {
   container.innerHTML = `
@@ -149,43 +148,6 @@ export async function renderSettingsPage(container) {
     });
   }
 
-  // Cloud Sync Logic
-  const saveSyncBtn = container.querySelector('#saveSyncBtn');
-  const syncNowBtn = container.querySelector('#syncNowBtn');
-  const editSyncBtn = container.querySelector('#editSyncBtn');
-  const syncConfigForm = container.querySelector('#syncConfigForm');
-  const syncActions = container.querySelector('#syncActions');
-  const syncStatusBadge = container.querySelector('#syncStatusBadge');
 
-  if (saveSyncBtn) {
-    saveSyncBtn.addEventListener('click', () => {
-      const syncId = container.querySelector('#fbSyncId').value.trim();
-
-      if (!syncId) {
-        Utils.showToast('กรุณากรอก Sync ID', 'error');
-        return;
-      }
-
-      const success = SyncModule.saveConfig(syncId);
-      if (success) {
-        Utils.showToast('✅ เชื่อมต่อระบบ Cloud สำเร็จ', 'success');
-      }
-    });
-  }
-
-  if (syncNowBtn) {
-    syncNowBtn.addEventListener('click', async () => {
-      syncNowBtn.disabled = true;
-      syncNowBtn.innerHTML = '⌛ กำลังซิงค์...';
-      try {
-        await SyncModule.syncNow();
-        // Refresh page to show pulled data
-        setTimeout(() => window.location.reload(), 1500);
-      } catch (err) {
-        syncNowBtn.disabled = false;
-        syncNowBtn.innerHTML = '🔄 ซิงค์ข้อมูลเดี๋ยวนี้';
-      }
-    });
-  }
 
 }

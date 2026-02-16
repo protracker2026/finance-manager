@@ -5,17 +5,11 @@ import { renderDashboard } from './pages/dashboard.js';
 import { renderTransactionsPage } from './pages/transactions-page.js';
 import { renderDebtsPage } from './pages/debts-page.js';
 import { renderSettingsPage } from './pages/settings-page.js';
-import { SyncModule } from './modules/sync.js';
 
 async function init() {
-    // Seed default categories
+    // Initialize Database & Seed default categories
     await seedCategories();
 
-    // Initialize Cloud Sync (Silent)
-    if (SyncModule.init()) {
-        console.log('Firebase Sync initialized');
-        SyncModule.syncNow(true); // Silent sync on start
-    }
 
     // Initialize router
     const router = new Router({

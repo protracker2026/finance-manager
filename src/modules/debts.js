@@ -5,7 +5,8 @@ import { SyncModule } from './sync.js';
 
 export const DebtModule = {
     async getAll() {
-        return await db.debts.orderBy('name').toArray();
+        const debts = await db.debts.toArray();
+        return debts.sort((a, b) => a.name.localeCompare(b.name));
     },
 
     async getById(id) {
@@ -63,9 +64,15 @@ export const DebtModule = {
     },
 
     async delete(id) {
-        await db.debtPayments.where('debtId').equals(id).delete();
+        // Find and delete related payments
+        const payments = await db.debtPayments.toArray();
+        const related = payments.filter(p => p.debtId === id);
+        for (const p of related) {
+            await db.debtPayments.delete(p.id);
+        }
+
         const result = await db.debts.delete(id);
-        SyncModule.notifyDataChange();
+        // SyncModule.notifyDataChange(); // Handled by DB adapter now
         return result;
     },
 
@@ -134,11 +141,15 @@ export const DebtModule = {
     },
 
     async getPayments(debtId) {
-        return await db.debtPayments.where('debtId').equals(debtId).sortBy('date');
+        const all = await db.debtPayments.toArray();
+        return all
+            .filter(p => p.debtId === debtId)
+            .sort((a, b) => new Date(a.date) - new Date(b.date));
     },
 
     async getAllPayments() {
-        return await db.debtPayments.orderBy('date').reverse().toArray();
+        const all = await db.debtPayments.toArray();
+        return all.sort((a, b) => new Date(b.date) - new Date(a.date));
     },
 
     async getTotalDebt() {
