@@ -35,6 +35,18 @@ async function init() {
     router.navigate();
 }
 
+// Prevent pinch-to-zoom on mobile
+document.addEventListener('touchmove', function (e) {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Prevent gesture zoom on iOS Safari
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+}, { passive: false });
+
 // Start app
 document.addEventListener('DOMContentLoaded', init);
 
