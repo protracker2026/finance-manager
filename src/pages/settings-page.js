@@ -15,11 +15,11 @@ export async function renderSettingsPage(container) {
     </div>
 
     <div class="card" style="margin-bottom: var(--space-lg);">
-      <div style="display: flex; align-items: center; gap: var(--space-lg); margin-bottom: var(--space-lg);">
-        <div style="width: 80px; height: 80px; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; border: 2px solid var(--accent-primary);">
+      <div style="display: flex; align-items: center; gap: var(--space-lg); margin-bottom: var(--space-lg); flex-wrap: wrap;">
+        <div style="width: 80px; height: 80px; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; border: 2px solid var(--accent-primary); flex-shrink: 0;">
           👤
         </div>
-        <div>
+        <div style="min-width: 200px;">
           <h3 style="color: var(--text-accent); margin-bottom: 4px;">ผู้ใช้งาน</h3>
           <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">${userEmail}</p>
           <span class="badge badge-income" style="margin-top: 8px;">Basic Member</span>

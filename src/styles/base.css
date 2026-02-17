@@ -12,6 +12,8 @@ html {
     /* Increased from 16px for better legibility */
     scroll-behavior: smooth;
     touch-action: pan-x pan-y;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 body {
@@ -21,6 +23,9 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
 }
 
 a {
