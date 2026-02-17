@@ -3,6 +3,7 @@ import { TransactionModule } from '../modules/transactions.js';
 import { Utils } from '../modules/utils.js';
 
 let currentFilters = {};
+let currentDetailTxn = null;
 
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
@@ -127,6 +128,23 @@ export async function renderTransactionsPage(container) {
         </div>
       </div>
     </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="txnDetailModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>รายละเอียดรายการ</h3>
+          <button class="modal-close" id="txnDetailModalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="txnDetailBody">
+          <!-- Content injected via JS -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="txnDetailCloseBtn">ปิด</button>
+          <button class="btn btn-primary" id="txnDetailEditBtn">แก้ไข</button>
+        </div>
+      </div>
+    </div>
   `;
 
   // Setup event listeners
@@ -157,6 +175,29 @@ function setupTransactionEvents() {
   document.getElementById('txnCancelBtn').addEventListener('click', closeTxnModal);
   document.getElementById('txnModal').addEventListener('click', (e) => {
     if (e.target.id === 'txnModal') closeTxnModal();
+  });
+
+  // Detail Modal Events
+  document.getElementById('txnDetailModalClose').addEventListener('click', closeTxnDetailModal);
+  document.getElementById('txnDetailCloseBtn').addEventListener('click', closeTxnDetailModal);
+  document.getElementById('txnDetailModal').addEventListener('click', (e) => {
+    if (e.target.id === 'txnDetailModal') closeTxnDetailModal();
+  });
+
+  document.getElementById('txnDetailEditBtn').addEventListener('click', () => {
+    const btn = document.getElementById('txnDetailEditBtn');
+    const txnId = btn.dataset.id;
+    if (txnId) {
+      // Create a dummy object or fetch fresh from list?
+      // Since we populate detail from a txn object, we should have access to it or refetch
+      // Ideally we should pass the txn object. For now let's use global lookup or re-fetch logic if needed.
+      // But we can just use the ID to find in current list if available.
+      // Better yet, store current detail txn in a variable.
+      if (currentDetailTxn) {
+        closeTxnDetailModal();
+        openTxnModal(currentDetailTxn);
+      }
+    }
   });
 
   // Type tabs
@@ -319,6 +360,71 @@ async function openTxnModal(txn = null) {
 
 function closeTxnModal() {
   document.getElementById('txnModal').classList.remove('active');
+}
+
+function openTxnDetail(txn) {
+  currentDetailTxn = txn;
+  const modal = document.getElementById('txnDetailModal');
+  const body = document.getElementById('txnDetailBody');
+  const editBtn = document.getElementById('txnDetailEditBtn');
+
+  editBtn.dataset.id = txn.id;
+
+  // Format Date: "17 ก.พ. 2026 เวลา 23:45"
+  const dateObj = new Date(txn.date);
+  const dateStr = dateObj.toLocaleDateString('th-TH', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+
+  const sign = txn.type === 'income' ? '+' : '-';
+  const colorClass = txn.type === 'income' ? 'success' : 'danger';
+  const colorVar = txn.type === 'income' ? 'var(--text-success)' : 'var(--text-danger)';
+
+  body.innerHTML = `
+    <div style="text-align:center; margin-bottom:var(--space-lg);">
+      <div style="width:60px; height:60px; background:var(--bg-tertiary); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-md); font-size:28px;">
+        ${txn.type === 'income' ? '💰' : '💸'}
+      </div>
+      <h2 style="color:${colorVar}; margin:0; font-family:var(--font-mono);">${sign}${Utils.formatCurrency(txn.amount)}</h2>
+      <div style="color:var(--text-secondary); font-size:var(--font-size-sm); margin-top:4px;">${txn.note || txn.category}</div>
+    </div>
+
+    <div class="debt-group" style="margin-bottom:0;">
+      <div class="debt-item-details" open style="background:transparent; padding:0; display:flex; flex-direction:column; gap:var(--space-sm);">
+        <div class="debt-detail-item" style="flex-direction:row; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
+          <span class="label">วันที่ & เวลา</span>
+          <span class="value">${dateStr}</span>
+        </div>
+        <div class="debt-detail-item" style="flex-direction:row; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
+          <span class="label">ประเภท</span>
+          <span class="badge badge-${txn.type}">${txn.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span>
+        </div>
+        <div class="debt-detail-item" style="flex-direction:row; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
+          <span class="label">หมวดหมู่</span>
+          <span class="value">${txn.category}</span>
+        </div>
+        
+        ${(txn.quantity && txn.quantity > 1) ? `
+        <div class="debt-detail-item" style="flex-direction:row; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
+           <span class="label">รายละเอียดราคา</span>
+           <span class="value" style="font-size:var(--font-size-xs);">${txn.quantity} หน่วย x ${Utils.formatCurrency(txn.unitPrice || (txn.amount / txn.quantity))}</span>
+        </div>
+        ` : ''}
+
+        <div class="debt-detail-item" style="flex-direction:column; gap:4px; padding:8px 0;">
+          <span class="label">หมายเหตุ</span>
+          <span class="value" style="background:var(--bg-tertiary); padding:8px; border-radius:4px; min-height:40px; color:var(--text-secondary);">${txn.note || '-'}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+}
+
+function closeTxnDetailModal() {
+  document.getElementById('txnDetailModal').classList.remove('active');
 }
 
 async function updateCategoryOptions(type) {
@@ -543,7 +649,7 @@ async function refreshTransactions() {
           if (txn) {
             // Vibrate if supported
             if (navigator.vibrate) navigator.vibrate(50);
-            openTxnModal(txn);
+            openTxnDetail(txn);
           }
         }, 500);
       };
