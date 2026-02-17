@@ -599,7 +599,10 @@ async function refreshTransactions() {
                 ${(t.quantity && t.quantity > 1) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice || (t.amount / t.quantity))}</span>` : ''}
             </td>
             <td data-label="หมายเหตุ">${t.note || '-'}</td>
-            <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</td>
+            <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">
+                ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+                <div class="mobile-edit-overlay" data-id="${t.id}" title="แก้ไข"></div>
+            </td>
             <td data-label="จัดการ" style="text-align:center">
               <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข">✏️</button>
               <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ">🗑️</button>
@@ -622,6 +625,18 @@ async function refreshTransactions() {
     // Event Delegation for Table Actions
     tableEl.addEventListener('click', (e) => {
       const target = e.target;
+
+      // Handle Mobile Edit Overlay (Invisible Button)
+      if (target.classList.contains('mobile-edit-overlay')) {
+        e.stopPropagation();
+        const txnId = parseInt(target.dataset.id);
+        const txn = txns.find(t => t.id === txnId);
+        if (txn) {
+          if (navigator.vibrate) navigator.vibrate(50);
+          openTxnModal(txn);
+        }
+        return;
+      }
 
       // Handle Button Clicks (Edit/Delete)
       const btn = target.closest('button');

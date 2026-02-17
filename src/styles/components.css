@@ -58,13 +58,20 @@
 }
 
 /* === Mobile Table Card View === */
+.mobile-edit-overlay {
+    display: none;
+}
+
 @media (max-width: 768px) {
 
     .data-table,
     .data-table tbody,
     .data-table tr {
-        display: block;
+        display: flex;
+        flex-wrap: wrap;
         width: 100%;
+        position: relative;
+        /* For absolute positioning of edit overlay */
     }
 
     .data-table thead {
@@ -179,6 +186,20 @@
     .data-table td[data-label="หมายเหตุ"],
     .data-table td[data-label="จัดการ"] {
         display: none;
+    }
+
+    /* Invisible Edit Overlay at Top Right */
+    .mobile-edit-overlay {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 60px;
+        /* Adjust hit area size */
+        height: 50px;
+        z-index: 10;
+        cursor: pointer;
+        /* background: rgba(255, 0, 0, 0.2); Uncomment to debug position */
+        display: block;
     }
 
     /* Footer Section */
