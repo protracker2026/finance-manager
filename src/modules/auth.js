@@ -61,6 +61,20 @@ class AuthService {
         }
     }
 
+    async loginWithGoogle() {
+        try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const result = await this.auth.signInWithPopup(provider);
+            return { success: true, user: result.user };
+        } catch (error) {
+            console.error("Google Login Error:", error);
+            return {
+                success: false,
+                error: this.mapAuthError(error.code)
+            };
+        }
+    }
+
     async logout() {
         try {
             await this.auth.signOut();
@@ -98,6 +112,10 @@ class AuthService {
                 return 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
             case 'auth/operation-not-allowed':
                 return 'การเข้าสู่ระบบแบบนี้ยังไม่เปิดใช้งาน (กรุณาเปิด Email/Password ใน Firebase Console)';
+            case 'auth/popup-closed-by-user':
+                return 'ผู้ใช้ยกเลิกการเข้าสู่ระบบ';
+            case 'auth/cancelled-popup-request':
+                return 'มีหน้าต่าง Login เปิดอยู่แล้ว';
             default:
                 return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง (' + code + ')';
         }

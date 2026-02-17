@@ -41,6 +41,15 @@ export function renderLoginPage(container) {
                 <button type="submit" id="submitBtn" class="auth-btn btn-primary">เข้าสู่ระบบ</button>
             </form>
 
+            <!-- Google Login -->
+            <div style="margin-top: var(--space-md); text-align: center;">
+                <p style="color: var(--text-tertiary); font-size: var(--font-size-xs); margin-bottom: var(--space-md);">- หรือ -</p>
+                <button type="button" id="googleBtn" class="auth-btn btn-outline" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 18px; height: 18px;" alt="Google">
+                    ดำเนินการต่อด้วย Google
+                </button>
+            </div>
+
             <!-- Footer -->
             <div class="auth-footer">
                 <p id="toggleText" class="text-tertiary text-sm mb-2">ยังไม่มีบัญชีใช่หรือไม่?</p>
@@ -117,4 +126,25 @@ export function renderLoginPage(container) {
             errorBox.classList.add('visible');
         }
     });
+
+    // Handle Google Login
+    const googleBtn = container.querySelector('#googleBtn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+            // Show loading
+            loadingOverlay.classList.add('active');
+            errorBox.classList.remove('visible');
+
+            const result = await AuthModule.loginWithGoogle();
+
+            if (!result.success) {
+                // Hide loading only on error (success redirects)
+                loadingOverlay.classList.remove('active');
+
+                // Show error
+                errorMessage.textContent = result.error;
+                errorBox.classList.add('visible');
+            }
+        });
+    }
 }
