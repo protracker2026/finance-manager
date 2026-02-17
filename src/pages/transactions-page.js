@@ -637,41 +637,18 @@ async function refreshTransactions() {
       });
     });
 
-    // Long press to edit
-    let pressTimer;
+    // Click to view details
     tableEl.querySelectorAll('.txn-row').forEach(row => {
-      const startPress = (e) => {
-        // Check if clicked ON a button, if so, ignore row long press
+      row.addEventListener('click', (e) => {
+        // Check if clicked ON a button (edit/delete), if so, ignore row click
         if (e.target.closest('button')) return;
 
-        pressTimer = setTimeout(() => {
-          const txn = txns.find(t => t.id === parseInt(row.dataset.id));
-          if (txn) {
-            // Vibrate if supported
-            if (navigator.vibrate) navigator.vibrate(50);
-            openTxnDetail(txn);
-          }
-        }, 500);
-      };
-
-      const cancelPress = () => {
-        clearTimeout(pressTimer);
-      };
-
-      // Touch events
-      row.addEventListener('touchstart', startPress, { passive: true });
-      row.addEventListener('touchend', cancelPress);
-      row.addEventListener('touchmove', cancelPress);
-
-      // Mouse events (for desktop testing)
-      row.addEventListener('mousedown', startPress);
-      row.addEventListener('mouseup', cancelPress);
-      row.addEventListener('mouseleave', cancelPress);
-
-      // Prevent context menu on mobile long press
-      row.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        return false;
+        consttxn = txns.find(t => t.id === parseInt(row.dataset.id));
+        if (txn) {
+          // Vibrate if supported
+          if (navigator.vibrate) navigator.vibrate(30);
+          openTxnDetail(txn);
+        }
       });
     });
   } catch (e) {
