@@ -1,4 +1,5 @@
 import { Utils } from './utils.js';
+import { firebaseConfig } from './firebase-config.js';
 
 class AuthService {
     constructor() {
@@ -10,6 +11,10 @@ class AuthService {
         if (typeof firebase === 'undefined') {
             console.error('Firebase SDK not loaded');
             return;
+        }
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
 
         this.auth = firebase.auth();
