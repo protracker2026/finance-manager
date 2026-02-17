@@ -193,13 +193,17 @@
         position: absolute;
         top: 0;
         right: 0;
-        width: 60px;
-        /* Adjust hit area size */
-        height: 50px;
-        z-index: 10;
+        width: 70px;
+        /* Wider hit area */
+        height: 100%;
+        /* Cover full row height */
+        z-index: 100;
+        /* Ensure on top */
         cursor: pointer;
-        /* background: rgba(255, 0, 0, 0.2); Uncomment to debug position */
+        background: transparent;
+        /* Ensure touches register */
         display: block;
+        touch-action: manipulation;
     }
 
     /* Footer Section */
