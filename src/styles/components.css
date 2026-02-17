@@ -37,6 +37,7 @@
 
 .data-table tbody tr {
     transition: background var(--transition-fast);
+    cursor: pointer;
 }
 
 .data-table tbody tr:hover {

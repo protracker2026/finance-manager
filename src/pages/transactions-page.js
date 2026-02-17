@@ -591,7 +591,7 @@ async function refreshTransactions() {
       </thead>
       <tbody>
         ${txns.map(t => `
-          <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}" style="user-select:none; -webkit-user-select:none;">
+          <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
             <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
             <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
             <td data-label="หมวดหมู่">
@@ -619,37 +619,40 @@ async function refreshTransactions() {
     </div>
   `;
 
-    // Attach row actions
-    tableEl.querySelectorAll('.edit-txn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
-        if (txn) openTxnModal(txn);
-      });
-    });
+    // Event Delegation for Table Actions
+    tableEl.addEventListener('click', (e) => {
+      const target = e.target;
 
-    tableEl.querySelectorAll('.delete-txn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (confirm('คุณต้องการลบรายการนี้?')) {
-          await TransactionModule.delete(parseInt(btn.dataset.id));
-          Utils.showToast('ลบรายการสำเร็จ', 'success');
-          refreshTransactions();
+      // Handle Button Clicks (Edit/Delete)
+      const btn = target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('edit-txn')) {
+          e.stopPropagation();
+          const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
+          if (txn) openTxnModal(txn);
+          return;
         }
-      });
-    });
+        if (btn.classList.contains('delete-txn')) {
+          e.stopPropagation();
+          if (confirm('คุณต้องการลบรายการนี้?')) {
+            TransactionModule.delete(parseInt(btn.dataset.id)).then(() => {
+              Utils.showToast('ลบรายการสำเร็จ', 'success');
+              refreshTransactions();
+            });
+          }
+          return;
+        }
+      }
 
-    // Click to view details
-    tableEl.querySelectorAll('.txn-row').forEach(row => {
-      row.addEventListener('click', (e) => {
-        // Check if clicked ON a button (edit/delete), if so, ignore row click
-        if (e.target.closest('button')) return;
-
+      // Handle Row Click (View Details)
+      const row = target.closest('.txn-row');
+      if (row && !btn) {
         const txn = txns.find(t => t.id === parseInt(row.dataset.id));
         if (txn) {
-          // Vibrate if supported
           if (navigator.vibrate) navigator.vibrate(30);
           openTxnDetail(txn);
         }
-      });
+      }
     });
   } catch (e) {
     console.error('Error refreshing transactions:', e);
