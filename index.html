@@ -24,6 +24,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 
   <!-- Styles -->
@@ -31,10 +32,14 @@
   <link rel="stylesheet" href="./src/styles/base.css">
   <link rel="stylesheet" href="./src/styles/components.css">
   <link rel="stylesheet" href="./src/styles/receipt.css">
+  <link rel="stylesheet" href="./src/styles/login.css">
 </head>
 
 <body>
   <div class="app-layout">
+    <!-- Login Container -->
+    <div id="login-container" style="display: none;"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">

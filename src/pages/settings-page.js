@@ -1,7 +1,11 @@
 import { Utils } from '../modules/utils.js';
 import { BackupModule } from '../modules/backup.js';
+import { AuthModule } from '../modules/auth.js';
 
 export async function renderSettingsPage(container) {
+  const user = AuthModule.getCurrentUser();
+  const userEmail = user ? user.email : 'Guest User';
+
   container.innerHTML = `
     <div class="page-header">
       <div>
@@ -16,9 +20,9 @@ export async function renderSettingsPage(container) {
           👤
         </div>
         <div>
-          <h3 style="color: var(--text-accent); margin-bottom: 4px;">ผู้ใช้งานทดสอบ (Demo User)</h3>
-          <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">demo.user@example.com</p>
-          <span class="badge badge-income" style="margin-top: 8px;">Premium Member</span>
+          <h3 style="color: var(--text-accent); margin-bottom: 4px;">ผู้ใช้งาน</h3>
+          <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">${userEmail}</p>
+          <span class="badge badge-income" style="margin-top: 8px;">Basic Member</span>
         </div>
         <button class="btn btn-sm" style="margin-left: auto;">แก้ไขโปรไฟล์</button>
       </div>
@@ -29,16 +33,16 @@ export async function renderSettingsPage(container) {
         <div class="setting-item">
           <div class="setting-info">
             <span class="setting-label">รหัสผ่าน</span>
-            <span class="setting-value">เปลี่ยนรหัสผ่านล่าสุดเมื่อ 3 เดือนที่แล้ว</span>
+            <span class="setting-value">จัดการรหัสผ่านของคุณ</span>
           </div>
-          <button class="btn btn-sm">เปลี่ยน</button>
+          <button class="btn btn-sm" onclick="alert('ฟีเจอร์นี้ยังไม่เปิดใช้งาน')">เปลี่ยน</button>
         </div>
         <div class="setting-item">
           <div class="setting-info">
             <span class="setting-label">การยืนยันตัวตน 2 ขั้นตอน</span>
             <span class="setting-value">เพิ่มความปลอดภัยให้กับบัญชีของคุณ</span>
           </div>
-          <button class="btn btn-sm">ตั้งค่า</button>
+          <button class="btn btn-sm" onclick="alert('ฟีเจอร์นี้ยังไม่เปิดใช้งาน')">ตั้งค่า</button>
         </div>
       </div>
     </div>
@@ -77,7 +81,7 @@ export async function renderSettingsPage(container) {
     </div>
 
     <p style="text-align: center; font-size: var(--font-size-xs); color: var(--text-tertiary); margin-top: var(--space-xl);">
-      Finance Manager v2.0.4 (Beta)
+      Finance Manager v2.1.0 (Auth Enabled)
     </p>
 
     <style>
@@ -141,13 +145,16 @@ export async function renderSettingsPage(container) {
   }
 
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      if (confirm('คุณต้องการออกจากระบบหรือไม่? (นี่คือแอปตัวอย่าง ข้อมูลของคุณจะยังคงอยู่ในเครื่องนี้)')) {
-        Utils.showToast('ออกจากระบบเรียบร้อยแล้ว');
+    logoutBtn.addEventListener('click', async () => {
+      if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+        const result = await AuthModule.logout();
+        if (result.success) {
+          Utils.showToast('ออกจากระบบเรียบร้อยแล้ว');
+          // Check main.js for auth state listener to redirect
+        } else {
+          Utils.showToast('เกิดข้อผิดพลาดในการออกจากระบบ: ' + result.error, 'error');
+        }
       }
     });
   }
-
-
-
 }

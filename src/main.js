@@ -1,38 +1,65 @@
 // Main application entry
-import { seedCategories } from './db/database.js';
+import { seedCategories, db } from './db/database.js'; // Import db instance
 import { Router } from './router.js';
+import { AuthModule } from './modules/auth.js';
 import { renderDashboard } from './pages/dashboard.js';
 import { renderTransactionsPage } from './pages/transactions-page.js';
 import { renderDebtsPage } from './pages/debts-page.js';
 import { renderSettingsPage } from './pages/settings-page.js';
+import { renderLoginPage } from './pages/login-page.js';
 
-async function init() {
-    // Initialize Database & Seed default categories
-    await seedCategories();
+let router;
 
+async function init(user) {
+    if (user) {
+        console.log('User authenticated:', user.email);
 
-    // Initialize router
-    const router = new Router({
-        'dashboard': renderDashboard,
-        'transactions': renderTransactionsPage,
-        'debts': renderDebtsPage,
-        'settings': renderSettingsPage
-    });
+        // Hide Login
+        document.getElementById('login-container').classList.remove('active');
+        document.getElementById('login-container').style.display = 'none'; // Ensure hidden
 
-    // Nav click handlers
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const route = item.dataset.route;
-            router.navigate(route);
-            // Close mobile menu
-            document.querySelector('.sidebar').classList.remove('open');
-        });
-    });
+        // Initialize Database with User ID
+        await db.setUser(user.uid);
 
+        // Initialize Database & Seed default categories
+        await seedCategories();
 
+        // Initialize router if not exists
+        if (!router) {
+            router = new Router({
+                'dashboard': renderDashboard,
+                'transactions': renderTransactionsPage,
+                'debts': renderDebtsPage,
+                'settings': renderSettingsPage
+            });
 
-    // Initial route
-    router.navigate();
+            // Nav click handlers
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const route = item.dataset.route;
+                    router.navigate(route);
+                    // Close mobile menu
+                    const sidebar = document.querySelector('.sidebar');
+                    if (sidebar) sidebar.classList.remove('open');
+                });
+            });
+        }
+
+        // Initial route
+        router.navigate();
+
+    } else {
+        console.log('User not authenticated. Showing login.');
+
+        // Clear Data
+        db.clearData();
+
+        // Show Login
+        const loginContainer = document.getElementById('login-container');
+        loginContainer.style.display = 'flex'; // Force display flex
+        loginContainer.classList.add('active');
+        renderLoginPage(loginContainer);
+    }
 }
 
 // Prevent pinch-to-zoom on mobile
@@ -48,7 +75,15 @@ document.addEventListener('gesturestart', function (e) {
 }, { passive: false });
 
 // Start app
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', async () => {
+    // Init Auth
+    await AuthModule.init();
+
+    // Listen for Auth Changes
+    AuthModule.onAuthChange((user) => {
+        init(user);
+    });
+});
 
 // Global Auto-Refresh on Sync
 window.addEventListener('data-synced', () => {

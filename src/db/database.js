@@ -91,6 +91,7 @@ class FirebaseDB {
         this.dbRef = null;
         this.initialized = false;
         this.initPromise = null;
+        this.currentUid = null;
 
         this.transactions = new MemoryCollection(this, 'transactions');
         this.debts = new MemoryCollection(this, 'debts');
@@ -114,20 +115,6 @@ class FirebaseDB {
                 firebase.initializeApp(firebaseConfig);
             }
             this.database = firebase.database();
-
-            // Use global sync ID
-            const syncId = 'global_default_user';
-            this.dbRef = this.database.ref('users/' + syncId + '/data');
-
-            // Load initial data
-            await this.loadFromCloud();
-
-            // Setup Realtime Listener
-            this.dbRef.on('value', (snapshot) => {
-                this.updateLocalCache(snapshot.val());
-                window.dispatchEvent(new Event('data-synced'));
-            });
-
             this.initialized = true;
             console.log('Firebase Adapter Ready');
         })();
@@ -135,11 +122,58 @@ class FirebaseDB {
         return this.initPromise;
     }
 
+    // Called when user logs in
+    async setUser(uid) {
+        if (!uid) return;
+
+        await this.ensureInit();
+        this.currentUid = uid;
+
+        // Update Ref to User's private path
+        const userPath = `users/${uid}/data`;
+        console.log(`Setting DB path to: ${userPath}`);
+
+        // Remove old listener if exists
+        if (this.dbRef) {
+            this.dbRef.off();
+        }
+
+        this.dbRef = this.database.ref(userPath);
+
+        // Load initial data
+        await this.loadFromCloud();
+
+        // Setup Realtime Listener
+        this.dbRef.on('value', (snapshot) => {
+            this.updateLocalCache(snapshot.val());
+            window.dispatchEvent(new Event('data-synced'));
+        });
+    }
+
+    // Called when user logs out
+    clearData() {
+        this.currentUid = null;
+        if (this.dbRef) {
+            this.dbRef.off(); // Detach listener
+            this.dbRef = null;
+        }
+
+        // Clear local memory
+        this.transactions.data = [];
+        this.debts.data = [];
+        this.debtPayments.data = [];
+        this.categories.data = [];
+
+        window.dispatchEvent(new Event('data-synced'));
+        console.log('Database cleared (Logout)');
+    }
+
     async ensureInit() {
         if (!this.initialized) await this.init();
     }
 
     async loadFromCloud() {
+        if (!this.dbRef) return;
         const snapshot = await this.dbRef.once('value');
         this.updateLocalCache(snapshot.val());
     }
