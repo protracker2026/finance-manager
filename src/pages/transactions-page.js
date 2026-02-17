@@ -68,7 +68,10 @@ export async function renderTransactionsPage(container) {
     <details class="txn-list-details" id="txnListDetails">
       <summary class="btn" style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding:var(--space-md);">
         <span style="font-weight:bold;">📋 แสดงรายการทั้งหมด</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button id="toggleEditModeBtn" class="btn btn-sm btn-outline" style="padding:4px 8px; font-size:12px;">✏️ แก้ไข</button>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
       </summary>
       <div id="transactionsTable"></div>
     </details>
@@ -154,6 +157,23 @@ export async function renderTransactionsPage(container) {
 }
 
 function setupTransactionEvents() {
+  // Toggle Edit Mode in List
+  const toggleEditBtn = document.getElementById('toggleEditModeBtn');
+  if (toggleEditBtn) {
+    toggleEditBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // prevent details toggle
+      const table = document.getElementById('transactionsTable');
+      if (table) {
+        table.classList.toggle('edit-mode');
+        const isEdit = table.classList.contains('edit-mode');
+        toggleEditBtn.innerHTML = isEdit ? '✅ เสร็จสิ้น' : '✏️ แก้ไข';
+        toggleEditBtn.classList.toggle('btn-primary', isEdit);
+        toggleEditBtn.classList.toggle('btn-outline', !isEdit);
+      }
+    });
+  }
+
   // Open modal
   document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
 
