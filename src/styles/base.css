@@ -11,6 +11,7 @@ html {
     font-size: 17px;
     /* Increased from 16px for better legibility */
     scroll-behavior: smooth;
+    touch-action: manipulation;
 }
 
 body {
