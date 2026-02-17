@@ -643,7 +643,7 @@ async function refreshTransactions() {
         // Check if clicked ON a button (edit/delete), if so, ignore row click
         if (e.target.closest('button')) return;
 
-        consttxn = txns.find(t => t.id === parseInt(row.dataset.id));
+        const txn = txns.find(t => t.id === parseInt(row.dataset.id));
         if (txn) {
           // Vibrate if supported
           if (navigator.vibrate) navigator.vibrate(30);
