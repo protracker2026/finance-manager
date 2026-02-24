@@ -93,7 +93,7 @@ window.addEventListener('data-synced', () => {
     if (isEditing) {
         console.log('Skipped auto-reload due to open modal.');
     } else {
-        // Trigger hashchange to reload current route
-        window.dispatchEvent(new Event('hashchange'));
+        // Refresh data only — do NOT re-render via hashchange
+        window.dispatchEvent(new Event('refresh-transactions'));
     }
 });
