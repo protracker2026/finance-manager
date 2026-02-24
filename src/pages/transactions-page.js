@@ -4,6 +4,7 @@ import { Utils } from '../modules/utils.js';
 
 let currentFilters = {};
 let currentDetailTxn = null;
+let cachedTxns = []; // Cache for event delegation
 
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
@@ -170,6 +171,60 @@ function setupTransactionEvents() {
         toggleEditBtn.innerHTML = isEdit ? '✅ เสร็จสิ้น' : '✏️ แก้ไข';
         toggleEditBtn.classList.toggle('btn-primary', isEdit);
         toggleEditBtn.classList.toggle('btn-outline', !isEdit);
+      }
+    });
+  }
+
+  // Persistent Event Delegation for Table Actions (attached ONCE, uses cachedTxns)
+  const tableEl = document.getElementById('transactionsTable');
+  if (tableEl) {
+    tableEl.addEventListener('click', (e) => {
+      const target = e.target;
+
+      // Handle Mobile Edit Overlay (Invisible Button)
+      if (target.classList.contains('mobile-edit-overlay')) {
+        e.stopPropagation();
+        const txnId = target.dataset.id;
+        const txn = cachedTxns.find(t => String(t.id) === String(txnId));
+        if (txn) {
+          if (navigator.vibrate) navigator.vibrate(50);
+          openTxnModal(txn);
+        }
+        return;
+      }
+
+      // Handle Button Clicks (Edit/Delete)
+      const btn = target.closest('button');
+      if (btn) {
+        if (btn.classList.contains('edit-txn')) {
+          e.stopPropagation();
+          const txnId = btn.dataset.id;
+          const txn = cachedTxns.find(t => String(t.id) === String(txnId));
+          if (txn) openTxnModal(txn);
+          return;
+        }
+        if (btn.classList.contains('delete-txn')) {
+          e.stopPropagation();
+          if (confirm('คุณต้องการลบรายการนี้?')) {
+            const txnId = btn.dataset.id;
+            TransactionModule.delete(txnId).then(() => {
+              Utils.showToast('ลบรายการสำเร็จ', 'success');
+              refreshTransactions();
+            });
+          }
+          return;
+        }
+      }
+
+      // Handle Row Click (View Details)
+      const row = target.closest('.txn-row');
+      if (row && !btn) {
+        const txnId = row.dataset.id;
+        const txn = cachedTxns.find(t => String(t.id) === String(txnId));
+        if (txn) {
+          if (navigator.vibrate) navigator.vibrate(30);
+          openTxnDetail(txn);
+        }
       }
     });
   }
@@ -642,53 +697,8 @@ async function refreshTransactions() {
     </div>
   `;
 
-    // Event Delegation for Table Actions
-    tableEl.addEventListener('click', (e) => {
-      const target = e.target;
-
-      // Handle Mobile Edit Overlay (Invisible Button)
-      if (target.classList.contains('mobile-edit-overlay')) {
-        e.stopPropagation();
-        const txnId = parseInt(target.dataset.id);
-        const txn = txns.find(t => t.id === txnId);
-        if (txn) {
-          if (navigator.vibrate) navigator.vibrate(50);
-          openTxnModal(txn);
-        }
-        return;
-      }
-
-      // Handle Button Clicks (Edit/Delete)
-      const btn = target.closest('button');
-      if (btn) {
-        if (btn.classList.contains('edit-txn')) {
-          e.stopPropagation();
-          const txn = txns.find(t => t.id === parseInt(btn.dataset.id));
-          if (txn) openTxnModal(txn);
-          return;
-        }
-        if (btn.classList.contains('delete-txn')) {
-          e.stopPropagation();
-          if (confirm('คุณต้องการลบรายการนี้?')) {
-            TransactionModule.delete(parseInt(btn.dataset.id)).then(() => {
-              Utils.showToast('ลบรายการสำเร็จ', 'success');
-              refreshTransactions();
-            });
-          }
-          return;
-        }
-      }
-
-      // Handle Row Click (View Details)
-      const row = target.closest('.txn-row');
-      if (row && !btn) {
-        const txn = txns.find(t => t.id === parseInt(row.dataset.id));
-        if (txn) {
-          if (navigator.vibrate) navigator.vibrate(30);
-          openTxnDetail(txn);
-        }
-      }
-    });
+    // Update the shared cache so the persistent event handler can find txn objects
+    cachedTxns = txns;
   } catch (e) {
     console.error('Error refreshing transactions:', e);
     const tableEl = document.getElementById('transactionsTable');
