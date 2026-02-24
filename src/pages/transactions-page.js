@@ -392,7 +392,20 @@ async function openTxnModal(txn = null) {
     // Ensure datetime string format
     // document.getElementById('txnDate').value = txn.date.includes('T') ? txn.date.slice(0, 16) : txn.date + 'T12:00';
     const fp = document.getElementById('txnDate')._flatpickr;
-    if (fp) fp.setDate(txn.date);
+    if (fp) {
+      let dStr = txn.date;
+      // Handle legacy date-only formats by appending mid-day time (prevents UTC shift issues)
+      if (dStr && dStr.length === 10) dStr += 'T12:00:00';
+      // Normalize any stray space separated dates to ISO 8601
+      if (dStr) dStr = dStr.replace(' ', 'T');
+
+      const parsedDate = new Date(dStr);
+      if (!isNaN(parsedDate.getTime())) {
+        fp.setDate(parsedDate);
+      } else {
+        fp.setDate(new Date()); // Fallback if somehow date is invalid
+      }
+    }
     document.getElementById('txnNote').value = txn.note || '';
 
     // Set type tab
