@@ -181,59 +181,62 @@ function setupTransactionEvents() {
     });
   }
 
-  // Persistent Event Delegation for Table Actions (attached ONCE, uses cachedTxns)
-  const tableEl = document.getElementById('transactionsTable');
-  if (tableEl) {
-    tableEl.addEventListener('click', (e) => {
-      const target = e.target;
+  // Persistent Event Delegation — attached to document so it survives innerHTML replacements
+  document.addEventListener('click', async (e) => {
+    const target = e.target;
 
-      // Handle Mobile Edit Overlay (Invisible Button)
-      if (target.classList.contains('mobile-edit-overlay')) {
+    // Only handle clicks inside #transactionsTable
+    const tableEl = document.getElementById('transactionsTable');
+    if (!tableEl || !tableEl.contains(target)) return;
+
+    // Handle Mobile Edit Overlay (Invisible Button)
+    if (target.classList.contains('mobile-edit-overlay')) {
+      e.stopPropagation();
+      const txnId = target.dataset.id;
+      const all = await TransactionModule.getAll({});
+      const txn = all.find(t => String(t.id) === String(txnId));
+      if (txn) {
+        if (navigator.vibrate) navigator.vibrate(50);
+        openTxnModal(txn);
+      }
+      return;
+    }
+
+    // Handle Button Clicks (Edit/Delete)
+    const btn = target.closest('button');
+    if (btn) {
+      if (btn.classList.contains('edit-txn')) {
         e.stopPropagation();
-        const txnId = target.dataset.id;
-        const txn = cachedTxns.find(t => String(t.id) === String(txnId));
-        if (txn) {
-          if (navigator.vibrate) navigator.vibrate(50);
-          openTxnModal(txn);
+        const txnId = btn.dataset.id;
+        const all = await TransactionModule.getAll({});
+        const txn = all.find(t => String(t.id) === String(txnId));
+        if (txn) openTxnModal(txn);
+        return;
+      }
+      if (btn.classList.contains('delete-txn')) {
+        e.stopPropagation();
+        if (confirm('คุณต้องการลบรายการนี้?')) {
+          const txnId = btn.dataset.id;
+          await TransactionModule.delete(txnId);
+          Utils.showToast('ลบรายการสำเร็จ', 'success');
+          await refreshTransactions();
         }
         return;
       }
+    }
 
-      // Handle Button Clicks (Edit/Delete)
-      const btn = target.closest('button');
-      if (btn) {
-        if (btn.classList.contains('edit-txn')) {
-          e.stopPropagation();
-          const txnId = btn.dataset.id;
-          const txn = cachedTxns.find(t => String(t.id) === String(txnId));
-          if (txn) openTxnModal(txn);
-          return;
-        }
-        if (btn.classList.contains('delete-txn')) {
-          e.stopPropagation();
-          if (confirm('คุณต้องการลบรายการนี้?')) {
-            const txnId = btn.dataset.id;
-            TransactionModule.delete(txnId).then(() => {
-              Utils.showToast('ลบรายการสำเร็จ', 'success');
-              refreshTransactions();
-            });
-          }
-          return;
-        }
+    // Handle Row Click (View Details)
+    const row = target.closest('.txn-row');
+    if (row && !btn) {
+      const txnId = row.dataset.id;
+      const all = await TransactionModule.getAll({});
+      const txn = all.find(t => String(t.id) === String(txnId));
+      if (txn) {
+        if (navigator.vibrate) navigator.vibrate(30);
+        openTxnDetail(txn);
       }
-
-      // Handle Row Click (View Details)
-      const row = target.closest('.txn-row');
-      if (row && !btn) {
-        const txnId = row.dataset.id;
-        const txn = cachedTxns.find(t => String(t.id) === String(txnId));
-        if (txn) {
-          if (navigator.vibrate) navigator.vibrate(30);
-          openTxnDetail(txn);
-        }
-      }
-    });
-  }
+    }
+  });
 
   // Open modal
   document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
