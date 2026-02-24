@@ -307,8 +307,11 @@ function setupTransactionEvents() {
   // Delete from modal
   document.getElementById('txnDeleteBtn').addEventListener('click', async () => {
     const id = document.getElementById('txnId').value;
+    console.log('[DEBUG] Delete clicked, id:', id, 'type:', typeof id);
     if (id && confirm('คุณต้องการลบรายการนี้?')) {
-      await TransactionModule.delete(id); // Use string ID directly (Firebase key)
+      console.log('[DEBUG] Calling TransactionModule.delete with id:', id);
+      const result = await TransactionModule.delete(id);
+      console.log('[DEBUG] Delete result:', result);
       Utils.showToast('ลบรายการสำเร็จ', 'success');
       closeTxnModal();
       refreshTransactions();
@@ -548,7 +551,9 @@ async function saveTxn(closeModal = true) {
 
   try {
     if (id) {
-      await TransactionModule.update(id, data); // Use string ID directly (Firebase key)
+      console.log('[DEBUG] Updating txn, id:', id, 'type:', typeof id, 'data:', data);
+      const result = await TransactionModule.update(id, data);
+      console.log('[DEBUG] Update result:', result);
       Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
     } else {
       await TransactionModule.add(data);

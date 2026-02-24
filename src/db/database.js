@@ -26,22 +26,35 @@ class MemoryCollection {
     async update(id, changes) {
         if (!this.db.dbRef) await this.db.ensureInit();
 
+        console.log('[DB DEBUG] update() called, id:', id, 'type:', typeof id);
+        console.log('[DB DEBUG] current data IDs:', this.data.map(x => x.id));
         const idx = this.data.findIndex(x => x.id === id);
+        console.log('[DB DEBUG] findIndex result:', idx);
         if (idx !== -1) {
             this.data[idx] = { ...this.data[idx], ...changes };
+            console.log('[DB DEBUG] Writing to Firebase path:', this.name + '/' + id);
             await this.db.dbRef.child(this.name).child(id).update(changes);
+            console.log('[DB DEBUG] Firebase update done');
             return 1;
         }
+        console.warn('[DB DEBUG] ID not found in memory cache!');
         return 0;
     }
 
     async delete(id) {
         if (!this.db.dbRef) await this.db.ensureInit();
 
+        console.log('[DB DEBUG] delete() called, id:', id, 'type:', typeof id);
+        console.log('[DB DEBUG] current data IDs:', this.data.map(x => x.id));
         const idx = this.data.findIndex(x => x.id === id);
+        console.log('[DB DEBUG] findIndex result:', idx);
         if (idx !== -1) {
             this.data.splice(idx, 1);
+            console.log('[DB DEBUG] Writing remove to Firebase path:', this.name + '/' + id);
             await this.db.dbRef.child(this.name).child(id).remove();
+            console.log('[DB DEBUG] Firebase remove done');
+        } else {
+            console.warn('[DB DEBUG] ID not found in memory for delete!');
         }
     }
 
