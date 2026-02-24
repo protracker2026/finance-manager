@@ -87,16 +87,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Global Auto-Refresh on Sync
 window.addEventListener('data-synced', () => {
-    // Check if user is editing something (if any modal is open)
-    const modals = document.querySelectorAll('.modal-overlay');
-    let isEditing = false;
-    modals.forEach(m => {
-        // Check for common visibility patterns
-        const style = getComputedStyle(m);
-        if (style.display !== 'none' && style.visibility !== 'hidden') {
-            isEditing = true;
-        }
-    });
+    // Check if any modal is currently open (uses .active class)
+    const isEditing = document.querySelector('.modal-overlay.active') !== null;
 
     if (isEditing) {
         console.log('Skipped auto-reload due to open modal.');

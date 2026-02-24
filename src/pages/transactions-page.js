@@ -5,12 +5,16 @@ import { Utils } from '../modules/utils.js';
 let currentFilters = {};
 let currentDetailTxn = null;
 let cachedTxns = []; // Cache for event delegation
+let eventsInitialized = false; // Guard to prevent duplicate event listeners
 
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
   const { start, end } = Utils.getMonthRange();
 
-  container.innerHTML = `
+  // Only inject full HTML on first load — avoids destroying DOM nodes that have listeners
+  if (!eventsInitialized) {
+
+    container.innerHTML = `
     <div class="page-header">
       <div>
         <h2>รายรับ - รายจ่าย</h2>
@@ -150,10 +154,12 @@ export async function renderTransactionsPage(container) {
       </div>
     </div>
   `;
+    setupTransactionEvents();
+    eventsInitialized = true;
+    currentFilters = { startDate: start, endDate: end };
+  }
 
-  // Setup event listeners
-  setupTransactionEvents();
-  currentFilters = { startDate: start, endDate: end };
+  // Always refresh data (even on re-renders triggered by data-synced)
   await refreshTransactions();
 }
 
