@@ -1,7 +1,8 @@
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add('http://localhost:8080/')
+$listener.Prefixes.Add("http://192.168.1.8:8080/")
 $listener.Start()
-Write-Host "Server running at http://localhost:8080/"
+Write-Host "Server running at http://localhost:8080/ and http://192.168.1.8:8080/"
 
 while ($listener.IsListening) {
     $context = $listener.GetContext()
@@ -13,6 +14,9 @@ while ($listener.IsListening) {
 
     $basePath = 'c:\Users\usEr\Desktop\code2'
     $filePath = Join-Path $basePath ($path.TrimStart('/').Replace('/', '\'))
+
+    # Strip query string from file path (important for ?v=4 cache busting)
+    if ($filePath -match '^([^\?]+)') { $filePath = $matches[1] }
 
     if (Test-Path $filePath -PathType Leaf) {
         $bytes = [System.IO.File]::ReadAllBytes($filePath)
@@ -29,6 +33,10 @@ while ($listener.IsListening) {
             default { 'application/octet-stream' }
         }
         $response.ContentType = $contentType
+        # Prevent ALL browser caching for development
+        $response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate")
+        $response.Headers.Add("Pragma", "no-cache")
+        $response.Headers.Add("Expires", "0")
         $response.ContentLength64 = $bytes.Length
         $response.OutputStream.Write($bytes, 0, $bytes.Length)
     } else {
