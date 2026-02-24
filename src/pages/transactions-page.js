@@ -308,7 +308,7 @@ function setupTransactionEvents() {
   document.getElementById('txnDeleteBtn').addEventListener('click', async () => {
     const id = document.getElementById('txnId').value;
     if (id && confirm('คุณต้องการลบรายการนี้?')) {
-      await TransactionModule.delete(parseInt(id));
+      await TransactionModule.delete(id); // Use string ID directly (Firebase key)
       Utils.showToast('ลบรายการสำเร็จ', 'success');
       closeTxnModal();
       refreshTransactions();
@@ -431,10 +431,12 @@ async function openTxnModal(txn = null) {
   }
 
   modal.classList.add('active');
+  document.body.classList.add('modal-open');
 }
 
 function closeTxnModal() {
   document.getElementById('txnModal').classList.remove('active');
+  document.body.classList.remove('modal-open');
 }
 
 function openTxnDetail(txn) {
@@ -496,10 +498,12 @@ function openTxnDetail(txn) {
   `;
 
   modal.classList.add('active');
+  document.body.classList.add('modal-open');
 }
 
 function closeTxnDetailModal() {
   document.getElementById('txnDetailModal').classList.remove('active');
+  document.body.classList.remove('modal-open');
 }
 
 async function updateCategoryOptions(type) {
@@ -544,7 +548,7 @@ async function saveTxn(closeModal = true) {
 
   try {
     if (id) {
-      await TransactionModule.update(parseInt(id), data);
+      await TransactionModule.update(id, data); // Use string ID directly (Firebase key)
       Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
     } else {
       await TransactionModule.add(data);
