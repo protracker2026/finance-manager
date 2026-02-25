@@ -182,7 +182,7 @@ export const Utils = {
             const pct = totalAll > 0 ? ((amount / totalAll) * 100).toFixed(1) : '0.0';
             catRows += '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:15px;">'
                 + '<span style="flex-shrink:0;">' + cat + '</span>'
-                + '<div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div>'
+                + '<div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div>'
                 + '<span style="width:120px;text-align:right;font-weight:bold;flex-shrink:0;">' + fmt(amount) + '</span>'
                 + '<span style="width:70px;text-align:right;opacity:0.7;flex-shrink:0;">' + pct + '%</span>'
                 + '</div>';
@@ -197,7 +197,7 @@ export const Utils = {
             detailRows += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;font-size:14px;padding-bottom:6px;">'
                 + '<span style="width:150px;flex-shrink:0;">' + d + '</span>'
                 + '<span style="flex-shrink:0;">' + (t.category || '-') + '</span>'
-                + '<div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div>'
+                + '<div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div>'
                 + '<span style="width:130px;text-align:right;flex-shrink:0;font-weight:bold;color:' + (t.type === 'income' ? '#2e7d32' : '#c62828') + ';">' + sign + fmt(t.amount) + '</span>'
                 + '</div>';
             if (desc) {
@@ -219,10 +219,10 @@ export const Utils = {
             // MONTHLY SUMMARY
             + '<div style="margin-bottom:25px; background:rgba(0,0,0,0.02); padding:20px; border-radius:8px; border:1px solid rgba(0,0,0,0.05);">'
             + '<div style="font-weight:bold;font-size:18px;margin-bottom:12px;border-bottom:2px solid #999;padding-bottom:5px;">[ Monthly Summary ]</div>'
-            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Income</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#2a7;font-weight:bold;">' + fmt(totalIncome) + '</span></div>'
-            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Expense</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#d44;font-weight:bold;">' + fmt(totalExpense) + '</span></div>'
+            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Income</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#2a7;font-weight:bold;">' + fmt(totalIncome) + '</span></div>'
+            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Expense</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#d44;font-weight:bold;">' + fmt(totalExpense) + '</span></div>'
             + '<div style="font-size:14px;margin:10px 0;color:#ddd;">' + dash + dash + '</div>'
-            + '<div style="display:flex;align-items:baseline;font-weight:bold;font-size:22px;"><span>Saving</span><div style="flex:1;border-bottom:2px dotted #ccc;margin:0 8px;position:relative;top:-5px;"></div><span>' + fmt(net) + '</span></div>'
+            + '<div style="display:flex;align-items:baseline;font-weight:bold;font-size:22px;"><span>Saving</span><div style="flex:1;border-bottom:2px solid #ccc;margin:0 8px;position:relative;top:-5px;"></div><span>' + fmt(net) + '</span></div>'
             + '</div>'
 
             + '<div style="font-size:9px;text-align:center;">' + dblDash + '</div>'
@@ -334,7 +334,7 @@ export const Utils = {
             debtRows += '<div style="margin-bottom:30px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom:20px;">'
                 + '<div style="display:flex;align-items:baseline;font-weight:bold; font-size:20px; margin-bottom:8px;">'
                 + '<span style="flex-shrink:0;">' + statusIcon + ' ' + d.name + '</span>'
-                + '<div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-5px;"></div>'
+                + '<div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-5px;"></div>'
                 + '<span style="flex-shrink:0;">' + fmt(d.currentBalance) + '</span>'
                 + '</div>'
                 + '<div style="display:flex;justify-content:space-between;font-size:16px;color:#444;">'
@@ -356,12 +356,12 @@ export const Utils = {
 
             + '<div style="margin-bottom:25px; background:rgba(0,0,0,0.02); padding:20px; border-radius:8px; border:1px solid rgba(0,0,0,0.05);">'
             + '<div style="font-weight:bold;font-size:18px;margin-bottom:12px;border-bottom:2px solid #999;padding-bottom:5px;">[ Overall Stats ]</div>'
-            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Total Active Debt</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#c62828; font-weight:bold;">' + fmt(summary.totalDebt) + '</span></div>'
-            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Interest Paid</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#b45309;">' + fmt(summary.totalInterestPaid) + '</span></div>'
-            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Total Principal Paid</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#2e7d32;">' + fmt(summary.totalPaid) + '</span></div>'
+            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Total Active Debt</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#c62828; font-weight:bold;">' + fmt(summary.totalDebt) + '</span></div>'
+            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Interest Paid</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#b45309;">' + fmt(summary.totalInterestPaid) + '</span></div>'
+            + '<div style="display:flex;align-items:baseline;margin-bottom:8px;font-size:18px;"><span>Total Principal Paid</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#2e7d32;">' + fmt(summary.totalPaid) + '</span></div>'
             + '<div style="font-size:14px;margin:10px 0;color:#ddd;">' + dash + dash + '</div>'
-            + '<div style="display:flex;align-items:baseline; font-size:16px; margin-bottom:4px;"><span>Active Accounts</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>' + summary.activeCount + '</span></div>'
-            + '<div style="display:flex;align-items:baseline; font-size:16px;"><span>Paid Accounts</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>' + summary.paidCount + '</span></div>'
+            + '<div style="display:flex;align-items:baseline; font-size:16px; margin-bottom:4px;"><span>Active Accounts</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>' + summary.activeCount + '</span></div>'
+            + '<div style="display:flex;align-items:baseline; font-size:16px;"><span>Paid Accounts</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>' + summary.paidCount + '</span></div>'
             + '</div>'
 
             + '<div style="margin-top:25px;">'
@@ -492,13 +492,13 @@ export const Utils = {
 
             <div style="margin-bottom:25px; background:rgba(0,0,0,0.02); padding:20px; border-radius:8px; border:1px solid rgba(0,0,0,0.05);">
                 <div style="font-weight:bold;font-size:18px;margin-bottom:12px;border-bottom:2px solid #999; padding-bottom:5px;">[ Account Profile ]</div>
-                <div style="display:flex;align-items:baseline;margin-bottom:8px;"><span>Type</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${this.debtTypeName(debt.type)}</span></div>
-                <div style="display:flex;align-items:baseline;margin-bottom:8px;"><span>Interest Rate</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${debt.annualRate}% (${this.interestTypeName(debt.interestType)})</span></div>
-                <div style="display:flex;align-items:baseline;margin-bottom:8px;"><span>Original Principal</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${fmt(debt.principal)}</span></div>
+                <div style="display:flex;align-items:baseline;margin-bottom:8px;"><span>Type</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${this.debtTypeName(debt.type)}</span></div>
+                <div style="display:flex;align-items:baseline;margin-bottom:8px;"><span>Interest Rate</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${debt.annualRate}% (${this.interestTypeName(debt.interestType)})</span></div>
+                <div style="display:flex;align-items:baseline;margin-bottom:8px;"><span>Original Principal</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${fmt(debt.principal)}</span></div>
                 <div style="font-size:14px; margin:10px 0; color:#ddd;">${dash}${dash}</div>
-                <div style="display:flex;align-items:baseline;font-weight:bold; font-size:20px; margin-bottom:8px;"><span>Current Balance</span><div style="flex:1;border-bottom:2px dotted #ccc;margin:0 8px;position:relative;top:-5px;"></div><span style="color:#c62828;">${fmt(debt.currentBalance)}</span></div>
-                <div style="display:flex;align-items:baseline; font-size:18px; margin-bottom:6px;"><span>Total Paid</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#2e7d32;">${fmt(debt.totalPaid || 0)}</span></div>
-                <div style="display:flex;align-items:baseline;"><span>Paid Percentage</span><div style="flex:1;border-bottom:1px dotted #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${paidPct}%</span></div>
+                <div style="display:flex;align-items:baseline;font-weight:bold; font-size:20px; margin-bottom:8px;"><span>Current Balance</span><div style="flex:1;border-bottom:2px solid #ccc;margin:0 8px;position:relative;top:-5px;"></div><span style="color:#c62828;">${fmt(debt.currentBalance)}</span></div>
+                <div style="display:flex;align-items:baseline; font-size:18px; margin-bottom:6px;"><span>Total Paid</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span style="color:#2e7d32;">${fmt(debt.totalPaid || 0)}</span></div>
+                <div style="display:flex;align-items:baseline;"><span>Paid Percentage</span><div style="flex:1;border-bottom:1px solid #ccc;margin:0 8px;position:relative;top:-4px;"></div><span>${paidPct}%</span></div>
             </div>
 
             ${historyTable}
