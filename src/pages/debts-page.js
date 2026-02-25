@@ -792,9 +792,9 @@ async function refreshDebts() {
       return `
         <div class="debt-item" data-id="${d.id}">
           <!-- Name header row at the top -->
-          <div style="padding: 10px 16px 2px 16px; display:flex; align-items:center; gap:8px;" onclick="this.parentElement.querySelector('.debt-item-details').toggleAttribute('open')">
+          <div style="padding: 8px 16px 0 16px; display:flex; align-items:center; gap:8px;" onclick="this.parentElement.querySelector('.debt-item-details').toggleAttribute('open')">
             <span style="font-size:15px; font-weight:700; color:var(--text-primary); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
-            <span class="badge" style="font-size:11px; opacity:0.9; background:var(--bg-tertiary); flex-shrink:0; padding: 2px 8px;">${Utils.debtTypeName(d.type)}</span>
+            <span class="badge" style="font-size:11px; opacity:0.9; background:var(--bg-tertiary); flex-shrink:0; padding: 1px 6px;">${Utils.debtTypeName(d.type)}</span>
           </div>
 
           <div class="debt-item-main" style="padding-top: 0;" onclick="this.nextElementSibling.toggleAttribute('open')">
