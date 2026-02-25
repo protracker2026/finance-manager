@@ -821,8 +821,8 @@ async function refreshDebts() {
             </div>
 
             <!-- Neutral but Clear Progress Bar at Bottom -->
-            <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.1); border-radius: 0; overflow: hidden;">
-               <div class="progress-fill" style="width:${paidPct}%; height: 100%; border-radius: 0; background: #fff; opacity: 0.8; box-shadow: 0 0 8px rgba(255,255,255,0.4); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+            <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.08); border-radius: 0; overflow: hidden;">
+               <div class="progress-fill" style="width:${paidPct}%; height: 100%; border-radius: 0; background: #fff; transition: width 0.8s ease-in-out;"></div>
             </div>
           </div>
           
