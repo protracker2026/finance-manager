@@ -588,3 +588,20 @@ input[type="date"],
 input.flatpickr-input {
     max-width: 50% !important;
 }
+
+/* Fullscreen detail modal override */
+#detailModal {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+}
+
+#detailModal .modal {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
