@@ -605,3 +605,7 @@ input.flatpickr-input {
     display: flex;
     flex-direction: column;
 }
+
+#detailModal #detailBody {
+    padding-bottom: 80px;
+}
