@@ -204,12 +204,12 @@ export async function renderDebtsPage(container) {
 
     <!-- Detail Modal -->
     <div class="modal-overlay" id="detailModal">
-      <div class="modal modal-wide">
+      <div class="modal" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column;">
         <div class="modal-header">
           <h3 id="detailTitle">รายละเอียดหนี้</h3>
           <button class="modal-close" id="detailModalClose">&times;</button>
         </div>
-        <div class="modal-body" id="detailBody" style="max-height:70vh;overflow-y:auto;"></div>
+        <div class="modal-body" id="detailBody" style="flex:1; overflow-y:auto; padding:var(--space-md);"></div>
       </div>
     </div>
   `;
