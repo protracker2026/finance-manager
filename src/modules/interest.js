@@ -15,12 +15,16 @@ export const InterestEngine = {
         },
         personal_loan: {
             maxRate: 25,           // เพดาน 25% (ไม่มีหลักประกัน)
+            minPaymentPct: 3,      // ชำระขั้นต่ำ 3% ของยอดคงค้าง
+            minPaymentFloor: 0,    // ไม่มีขั้นต่ำแบบ fixed
             method: 'reducing_balance',
             label: 'สินเชื่อส่วนบุคคล',
             description: 'ดอกเบี้ยลดต้นลดดอก คิดจากยอดคงค้าง × (อัตรา / 12)'
         },
         personal_loan_vehicle: {
             maxRate: 24,           // เพดาน 24% (มีทะเบียนรถ)
+            minPaymentPct: 3,      // ชำระขั้นต่ำ 3% ของยอดคงค้าง
+            minPaymentFloor: 0,    // ไม่มีขั้นต่ำแบบ fixed
             method: 'reducing_balance',
             label: 'สินเชื่อ (มีทะเบียนรถค้ำ)',
             description: 'ดอกเบี้ยลดต้นลดดอก คิดจากยอดคงค้าง × (อัตรา / 12)'
@@ -51,16 +55,17 @@ export const InterestEngine = {
         };
     },
 
-    // === คำนวณยอดชำระขั้นต่ำ (สำหรับบัตรเครดิต) ===
-    // ชำระขั้นต่ำ = max(8% × ยอดคงค้าง, 200 บาท)
-    // ถ้ายอดคงค้างน้อยกว่า 200 บาท → ชำระทั้งหมด
+    // === คำนวณยอดชำระขั้นต่ำ ===
+    // บัตรเครดิต: max(8% × ยอดคงค้าง, 200 บาท)
+    // สินเชื่อส่วนบุคคล: 3% × ยอดคงค้าง
     calculateMinPayment(balance, debtType = 'credit_card') {
         const config = this.getBOTConfig(debtType);
-        if (!config.minPaymentPct) return 0; // ไม่ใช่บัตรเครดิต
+        if (!config.minPaymentPct) return 0; // ประเภทที่ไม่ระบุขั้นต่ำ
 
         const calculated = balance * (config.minPaymentPct / 100);
-        if (balance <= config.minPaymentFloor) return balance;
-        return Math.max(calculated, config.minPaymentFloor);
+        if (config.minPaymentFloor > 0 && balance <= config.minPaymentFloor) return balance;
+        if (config.minPaymentFloor > 0) return Math.max(calculated, config.minPaymentFloor);
+        return calculated; // สินเชื่อส่วนบุคคล: คืนค่า 3% ตรงๆ
     },
 
     // === ลดต้นลดดอก (Reducing Balance) ===

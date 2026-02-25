@@ -439,13 +439,13 @@ async function showDebtDetail(debt) {
               <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.maxRate}% ต่อปี</td>
             </tr>
             <tr>
-              <td style="padding:10px; ${debt.type === 'credit_card' ? 'border-bottom:1px solid var(--border-color);' : ''} color:var(--text-secondary); border-right:1px solid var(--border-color);">สถานะอัตรา</td>
-              <td style="padding:10px; ${debt.type === 'credit_card' ? 'border-bottom:1px solid var(--border-color);' : ''} font-weight:600; text-align:right; color:${rateValidation.isOverLimit ? 'var(--text-danger)' : 'var(--text-success)'};">${rateValidation.message}</td>
+              <td style="padding:10px; ${botConfig.minPaymentPct ? 'border-bottom:1px solid var(--border-color);' : ''} color:var(--text-secondary); border-right:1px solid var(--border-color);">สถานะอัตรา</td>
+              <td style="padding:10px; ${botConfig.minPaymentPct ? 'border-bottom:1px solid var(--border-color);' : ''} font-weight:600; text-align:right; color:${rateValidation.isOverLimit ? 'var(--text-danger)' : 'var(--text-success)'};">${rateValidation.message}</td>
             </tr>
-            ${debt.type === 'credit_card' ? `
+            ${botConfig.minPaymentPct ? `
             <tr>
-              <td style="padding:10px; color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำปัจจุบัน (8%)</td>
-              <td style="padding:10px; font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(InterestEngine.calculateMinPayment(debt.currentBalance, 'credit_card'))}</td>
+              <td style="padding:10px; color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำปัจจุบัน (${botConfig.minPaymentPct}%)</td>
+              <td style="padding:10px; font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(InterestEngine.calculateMinPayment(parseFloat(debt.currentBalance) || 0, debt.type))}</td>
             </tr>` : ''}
           </tbody>
         </table>
