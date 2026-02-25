@@ -386,7 +386,7 @@ async function saveDebt() {
 function openPaymentModal(debt) {
   document.getElementById('paymentDebtId').value = debt.id;
   document.getElementById('paymentDebtName').textContent = debt.name;
-  document.getElementById('paymentAmount').value = debt.monthlyPayment || debt.minPayment || '';
+  document.getElementById('paymentAmount').value = '';
   document.getElementById('paymentDate').value = Utils.today();
   document.getElementById('paymentNote').value = '';
   document.getElementById('paymentModal').classList.add('active');
