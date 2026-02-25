@@ -521,8 +521,8 @@ async function showDebtDetail(debt) {
   } else {
     scheduleHtml = `
       <div style="margin-top:20px; padding:20px; text-align:center; background:var(--bg-tertiary); border-radius:var(--border-radius); color:var(--text-tertiary);">
-        <p style="margin:0; font-size:var(--font-size-sm);">⚠️ ไม่สามารถแสดงตารางผ่อนชำระได้</p>
-        <p style="margin:5px 0 0; font-size:var(--font-size-xs); opacity:0.7;">กรุณาระบุมูลค่า "ยอดผ่อนชำระต่อเดือน" ในเมนูแก้ไขเพื่อคำนวณ</p>
+        <p style="margin:0; font-size:var(--font-size-sm);">ℹ️ ไม่สามารถคำนวณตารางคาดการณ์ได้</p>
+        <p style="margin:5px 0 0; font-size:var(--font-size-xs); opacity:0.7;">ระบบจำเป็นต้องทราบ "ค่างวด หรือ จ่ายขั้นต่ำ" เพื่อจำลองตารางล่วงหน้า<br>หากค่างวดไม่ตายตัว สามารถข้ามกล่องนี้และบันทึกประวัติจ่ายจริงได้เลย</p>
       </div>
     `;
   }
