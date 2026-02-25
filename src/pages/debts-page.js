@@ -555,7 +555,7 @@ async function showDebtDetail(debt) {
               <h4 style="margin:0;">ประวัติการชำระ</h4>
           </div>
           
-          <div class="receipt-content" style="width:100%; max-width:none; padding:15px; margin:0; background:#f5e6ca; color:#333; box-shadow:none; border-radius:4px;">
+          <div class="receipt-content" style="width:100%; max-width:none; padding:15px; margin:0; background:#f5e6ca; color:#333; box-shadow:none; border-radius:8px;">
               <div style="text-align:center; font-family:'Courier Prime', 'Inconsolata', monospace; font-weight:bold; font-size:16px; margin-bottom:12px; border-bottom:1px dashed #999; padding-bottom:10px;">
                   รายการชำระเงิน
               </div>

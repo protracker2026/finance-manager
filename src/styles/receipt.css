@@ -27,19 +27,11 @@
     width: 90%;
     max-width: 300px;
     padding: 24px;
-    border-radius: 2px;
+    border-radius: 8px;
     position: relative;
     transform: translateY(20px);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    background-image:
-        radial-gradient(circle at 0 0, transparent 0, transparent 0),
-        radial-gradient(circle at 100% 0, transparent 0, transparent 0);
-    /* Jagged edge effect */
-    --mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) 50% / 20px 100%;
-    -webkit-mask: var(--mask);
-    mask: var(--mask);
-    padding-bottom: 40px;
 }
 
 .receipt-popup.active .receipt-content {
