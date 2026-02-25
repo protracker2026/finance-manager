@@ -436,23 +436,27 @@ async function showDebtDetail(debt) {
 
   // Generate schedule
   let scheduleHtml = '';
-  const paymentForSchedule = debt.monthlyPayment || debt.minPayment;
+  const safePrincipal = parseFloat(debt.principal) || 0;
+  const safeBalance = parseFloat(debt.currentBalance) || safePrincipal;
+  const safeRate = parseFloat(debt.annualRate) || 0;
+  const paymentForSchedule = parseFloat(debt.monthlyPayment) || parseFloat(debt.minPayment) || 0;
+
   if (paymentForSchedule > 0) {
     let result;
     if (debt.type === 'credit_card') {
       // ใช้ตารางบัตรเครดิตเฉพาะ (daily accrual + dynamic min payment)
       result = InterestEngine.generateCreditCardSchedule(
-        debt.currentBalance, debt.annualRate, debt.monthlyPayment || 0, debt.startDate);
+        safeBalance, safeRate, paymentForSchedule, debt.startDate || Utils.today());
     } else if (debt.interestType === 'daily_accrual') {
       result = InterestEngine.generateDailyAccrualSchedule(
-        debt.currentBalance, debt.annualRate, paymentForSchedule, debt.startDate);
+        safeBalance, safeRate, paymentForSchedule, debt.startDate || Utils.today());
     } else if (debt.interestType === 'fixed_rate') {
       // Use principal as the base for flat rate calc
       result = InterestEngine.generateFixedRateSchedule(
-        debt.principal, debt.annualRate, paymentForSchedule);
+        safePrincipal, safeRate, paymentForSchedule);
     } else {
       result = InterestEngine.generateAmortizationSchedule(
-        debt.currentBalance, debt.annualRate, paymentForSchedule);
+        safeBalance, safeRate, paymentForSchedule);
     }
 
     const scheduleRows = result.schedule.slice(0, 60);

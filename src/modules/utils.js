@@ -5,11 +5,13 @@ export const Utils = {
     },
 
     formatNumber(amount) {
+        const num = parseFloat(amount);
+        if (isNaN(num)) return '0.00';
         return new Intl.NumberFormat('th-TH', {
             style: 'decimal',
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        }).format(amount);
+        }).format(num);
     },
 
     formatDate(dateStr) {
