@@ -956,9 +956,8 @@ details[open].txn-list-details summary svg {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-sm) var(--space-md);
+    padding: 8px 16px var(--space-sm) 16px;
     cursor: pointer;
-    min-height: 70px;
 }
 
 .debt-item-info {
@@ -994,11 +993,11 @@ details[open].txn-list-details summary svg {
 }
 
 .debt-item-balance .label {
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     color: var(--text-tertiary);
     display: block;
-    margin-bottom: -2px;
+    margin-bottom: -1px;
 }
 
 .debt-item-balance .amount {
