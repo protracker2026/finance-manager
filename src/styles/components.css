@@ -956,14 +956,14 @@ details[open].txn-list-details summary svg {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 16px var(--space-sm) 16px;
+    padding: 0 16px 10px 16px;
     cursor: pointer;
 }
 
 .debt-item-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0;
     flex: 1;
 }
 
