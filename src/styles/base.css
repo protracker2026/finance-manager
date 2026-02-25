@@ -31,9 +31,7 @@ body {
 /* Lock scroll when any modal is open */
 body.modal-open {
     overflow: hidden;
-    touch-action: none;
-    position: fixed;
-    width: 100%;
+    overscroll-behavior: none;
 }
 
 a {
