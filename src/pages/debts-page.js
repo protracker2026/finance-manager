@@ -576,45 +576,45 @@ async function showDebtDetail(debt) {
 
   document.getElementById('detailTitle').textContent = debt.name;
   document.getElementById('detailBody').innerHTML = `
-    <!-- Top Account Overview Frame -->
-    <div style="background:var(--bg-tertiary); border-radius:var(--border-radius); padding:var(--space-md); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
-        <h4 style="margin: 0 0 12px 0; color:var(--text-accent); font-size:16px; display:flex; align-items:center; gap:6px;"><span>📝</span> ข้อมูลบัญชีหนี้สิน</h4>
-        
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dotted var(--border-color); align-items:center;">
-          <span style="color:var(--text-secondary); font-size:13px;">ประเภท</span>
-          <span style="font-weight:600; text-align:right;">${Utils.debtTypeName(debt.type)}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dotted var(--border-color); align-items:center;">
-          <span style="color:var(--text-secondary); font-size:13px;">อัตราดอกเบี้ย / วิธีคิด</span>
-          <span style="font-weight:600; text-align:right;">${debt.annualRate}% ต่อปี<br><span style="font-size:12px; font-weight:normal; opacity:0.8;">(${Utils.interestTypeName(debt.interestType)})</span></span>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:none; align-items:center;">
-          <span style="color:var(--text-secondary); font-size:13px;">วันที่เริ่มสัญญา</span>
-          <span style="font-weight:600; text-align:right;">${Utils.formatDate(debt.startDate)}</span>
-        </div>
-    </div>
-
-    <!-- Financial Values Frame -->
+    <!-- Account & Financial Table Frame -->
     <div style="background:var(--bg-tertiary); border-radius:var(--border-radius); padding:var(--space-md); margin-bottom:var(--space-lg); border:1px solid rgba(255,255,255,0.05);">
-        <h4 style="margin: 0 0 12px 0; color:var(--text-accent); font-size:16px; display:flex; align-items:center; gap:6px;"><span>💰</span> ยอดหนี้สิน & การผ่อนชำระ</h4>
-
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dotted var(--border-color); align-items:center;">
-          <span style="color:var(--text-secondary); font-size:13px;">ยอดเงินต้นเริ่มแรก</span>
-          <span style="font-weight:600;">${Utils.formatCurrency(debt.principal)}</span>
+        <h4 style="margin: 0 0 12px 0; color:var(--text-accent); font-size:16px; display:flex; align-items:center; gap:6px;"><span>📋</span> ข้อมูลบัญชีและยอดหนี้</h4>
+        
+        <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse; font-size:14px;">
+            <tbody>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); width:40%; border-right:1px solid var(--border-color);">ประเภท</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${Utils.debtTypeName(debt.type)}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">อัตราดอกเบี้ย</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${debt.annualRate}% ต่อปี <div style="font-size:12px; font-weight:normal; opacity:0.8; margin-top:2px;">(${Utils.interestTypeName(debt.interestType)})</div></td>
+              </tr>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">วันที่เริ่มสัญญา</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${Utils.formatDate(debt.startDate)}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">เงินต้นเริ่มแรก</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${Utils.formatCurrency(debt.principal)}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ค่างวด (ต่อเดือน)</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${Utils.formatCurrency(debt.monthlyPayment || 0)}</td>
+              </tr>
+              ${debt.type === 'credit_card' ? `
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำ (ประเมิน)</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(debt.minPayment || 0)}</td>
+              </tr>` : ''}
+              <tr style="background: rgba(220, 53, 69, 0.05);">
+                <td style="padding:12px 10px; border-bottom:none; font-weight:600; color:var(--text-primary); border-right:1px solid var(--border-color);">ยอดคงเหลือ (ล่าสุด)</td>
+                <td style="padding:12px 10px; border-bottom:none; font-weight:bold; color:var(--text-danger); font-size:16px; text-align:right;">${Utils.formatCurrency(debt.currentBalance)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dotted var(--border-color); align-items:center;">
-          <span style="font-size:14px; font-weight:600;">ยอดคงเหลือ (ล่าสุด)</span>
-          <span style="font-weight:bold; color:var(--text-danger); font-size:18px;">${Utils.formatCurrency(debt.currentBalance)}</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dotted var(--border-color); align-items:center;">
-          <span style="color:var(--text-secondary); font-size:13px;">ยอดชำระเบื้องต้น (ค่างวด)</span>
-          <span style="font-weight:600;">${Utils.formatCurrency(debt.monthlyPayment || 0)}</span>
-        </div>
-        ${debt.type === 'credit_card' ? `
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:none; align-items:center;">
-          <span style="color:var(--text-secondary); font-size:13px;">ชำระขั้นต่ำปัจจุบัน (ประเมิน)</span>
-          <span style="font-weight:600; color:var(--text-warning);">${Utils.formatCurrency(debt.minPayment || 0)}</span>
-        </div>` : ''}
     </div>
     <div>
       <div class="progress-bar">
