@@ -77,102 +77,67 @@ export const DebtModule = {
     },
 
     async recordPayment(debtId, payment) {
+        const debt = await this.getById(debtId);
+        if (!debt) throw new Error('ไม่พบข้อมูลหนี้');
+
+        let interestPortion = 0;
+        let principalPortion = 0;
         const paymentAmount = parseFloat(payment.amount);
-        await db.debtPayments.add({
-            debtId,
-            date: payment.date,
-            amount: paymentAmount,
-            interestPortion: 0, // Will be calculated in recalculateDebt
-            principalPortion: 0,
-            balanceAfter: 0,
-            note: payment.note || '',
-            createdAt: new Date().toISOString()
-        });
-        await this.recalculateDebt(debtId);
-        SyncModule.notifyDataChange();
-        return true;
-    },
 
-    async deletePayment(paymentId) {
-        const p = await db.debtPayments.get(paymentId);
-        if (!p) return;
-        const debtId = p.debtId;
-        await db.debtPayments.delete(paymentId);
-        await this.recalculateDebt(debtId);
-        SyncModule.notifyDataChange();
-    },
+        if (debt.interestType === 'daily_accrual') {
+            // ดอกเบี้ยเดินรายวัน (บัตรเครดิต / สินเชื่อบางประเภท)
+            // คำนวณดอกเบี้ยจากวันที่ชำระครั้งก่อนถึงวันนี้
+            const daysDiff = InterestEngine.daysBetween(debt.lastInterestDate, payment.date);
+            const accruedNew = InterestEngine.dailyAccrual(debt.currentBalance, debt.annualRate, daysDiff);
+            const totalAccrued = (debt.accruedInterest || 0) + accruedNew;
 
-    async updatePayment(paymentId, data) {
-        const p = await db.debtPayments.get(paymentId);
-        if (!p) return;
-        const debtId = p.debtId;
-        await db.debtPayments.update(paymentId, data);
-        await this.recalculateDebt(debtId);
-        SyncModule.notifyDataChange();
-    },
+            interestPortion = Math.min(paymentAmount, totalAccrued);
+            principalPortion = paymentAmount - interestPortion;
 
-    async recalculateDebt(debtId) {
-        const debt = await db.debts.get(debtId);
-        if (!debt) return;
+            const newBalance = Math.max(0, debt.currentBalance - principalPortion);
 
-        const payments = await this.getPayments(debtId);
+            // อัปเดต minPayment ใหม่ตามยอดคงเหลือ (สำหรับบัตรเครดิต)
+            const newMinPayment = debt.type === 'credit_card'
+                ? InterestEngine.calculateMinPayment(newBalance, 'credit_card')
+                : debt.minPayment;
 
-        // Reset debt state to start
-        let currentBalance = debt.principal;
-        let totalInterestPaid = 0;
-        let totalPaid = 0;
-        let accruedInterest = 0;
-        let lastInterestDate = debt.startDate;
+            await this.update(debtId, {
+                currentBalance: newBalance,
+                accruedInterest: Math.max(0, totalAccrued - interestPortion),
+                totalInterestPaid: (debt.totalInterestPaid || 0) + interestPortion,
+                totalPaid: (debt.totalPaid || 0) + paymentAmount,
+                lastInterestDate: payment.date,
+                minPayment: Math.round(newMinPayment * 100) / 100,
+                status: newBalance <= 0.01 ? 'paid' : 'active'
+            });
+        } else {
+            // ลดต้นลดดอก (สินเชื่อส่วนบุคคล)
+            const monthlyInterest = InterestEngine.reducingBalanceMonthly(debt.currentBalance, debt.annualRate);
+            interestPortion = Math.min(paymentAmount, monthlyInterest);
+            principalPortion = paymentAmount - interestPortion;
 
-        for (let p of payments) {
-            const paymentAmount = parseFloat(p.amount);
-            let interestPortion = 0;
-            let principalPortion = 0;
+            const newBalance = Math.max(0, debt.currentBalance - principalPortion);
 
-            if (debt.interestType === 'daily_accrual') {
-                const daysDiff = InterestEngine.daysBetween(lastInterestDate, p.date);
-                const accruedNew = InterestEngine.dailyAccrual(currentBalance, debt.annualRate, daysDiff);
-                const totalAccruedAtPayment = accruedInterest + accruedNew;
-
-                interestPortion = Math.min(paymentAmount, totalAccruedAtPayment);
-                principalPortion = paymentAmount - interestPortion;
-
-                accruedInterest = Math.max(0, totalAccruedAtPayment - interestPortion);
-                lastInterestDate = p.date;
-            } else {
-                // Reducing Balance (Monthly)
-                const monthlyInterest = InterestEngine.reducingBalanceMonthly(currentBalance, debt.annualRate);
-                interestPortion = Math.min(paymentAmount, monthlyInterest);
-                principalPortion = paymentAmount - interestPortion;
-            }
-
-            currentBalance = Math.max(0, currentBalance - principalPortion);
-            totalInterestPaid += interestPortion;
-            totalPaid += paymentAmount;
-
-            // Update payment record with calculated values
-            await db.debtPayments.update(p.id, {
-                interestPortion: Math.round(interestPortion * 100) / 100,
-                principalPortion: Math.round(principalPortion * 100) / 100,
-                balanceAfter: Math.round(currentBalance * 100) / 100
+            await this.update(debtId, {
+                currentBalance: newBalance,
+                totalInterestPaid: (debt.totalInterestPaid || 0) + interestPortion,
+                totalPaid: (debt.totalPaid || 0) + paymentAmount,
+                status: newBalance <= 0.01 ? 'paid' : 'active'
             });
         }
 
-        // Final debt status & min payment for credit cards
-        const newMinPayment = debt.type === 'credit_card'
-            ? InterestEngine.calculateMinPayment(currentBalance, 'credit_card')
-            : debt.minPayment;
-
-        await db.debts.update(debtId, {
-            currentBalance: Math.round(currentBalance * 100) / 100,
-            accruedInterest: Math.round(accruedInterest * 100) / 100,
-            totalInterestPaid: Math.round(totalInterestPaid * 100) / 100,
-            totalPaid: Math.round(totalPaid * 100) / 100,
-            lastInterestDate: lastInterestDate,
-            minPayment: Math.round(newMinPayment * 100) / 100,
-            status: currentBalance <= 0.01 ? 'paid' : 'active',
-            updatedAt: new Date().toISOString()
+        const result = await db.debtPayments.add({
+            debtId,
+            date: payment.date,
+            amount: paymentAmount,
+            interestPortion,
+            principalPortion,
+            balanceAfter: Math.max(0, debt.currentBalance - principalPortion),
+            note: payment.note || '',
+            createdAt: new Date().toISOString()
         });
+        SyncModule.notifyDataChange();
+        return result;
     },
 
     async getPayments(debtId) {

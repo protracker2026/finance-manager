@@ -383,43 +383,17 @@ async function saveDebt() {
   }
 }
 
-function openPaymentModal(debt, payment = null) {
-  const modal = document.getElementById('paymentModal');
-  const title = document.getElementById('paymentModalTitle') || modal.querySelector('h3');
-
+function openPaymentModal(debt) {
   document.getElementById('paymentDebtId').value = debt.id;
   document.getElementById('paymentDebtName').textContent = debt.name;
-
-  // Ensure we have a hidden input for paymentId
-  let paymentIdEl = document.getElementById('paymentId');
-  if (!paymentIdEl) {
-    paymentIdEl = document.createElement('input');
-    paymentIdEl.type = 'hidden';
-    paymentIdEl.id = 'paymentId';
-    document.getElementById('paymentForm').appendChild(paymentIdEl);
-  }
-
-  if (payment) {
-    if (title) title.textContent = 'แก้ไขประวัติชำระ';
-    paymentIdEl.value = payment.id;
-    document.getElementById('paymentAmount').value = payment.amount;
-    document.getElementById('paymentDate').value = payment.date;
-    document.getElementById('paymentNote').value = payment.note || '';
-  } else {
-    if (title) title.textContent = 'บันทึกการชำระ';
-    paymentIdEl.value = '';
-    document.getElementById('paymentAmount').value = '';
-    document.getElementById('paymentDate').value = Utils.today();
-    document.getElementById('paymentNote').value = '';
-  }
-
-  modal.classList.add('active');
+  document.getElementById('paymentAmount').value = '';
+  document.getElementById('paymentDate').value = Utils.today();
+  document.getElementById('paymentNote').value = '';
+  document.getElementById('paymentModal').classList.add('active');
 }
 
 async function savePayment() {
   const debtId = document.getElementById('paymentDebtId').value;
-  const paymentId = document.getElementById('paymentId') ? document.getElementById('paymentId').value : null;
-
   const data = {
     amount: document.getElementById('paymentAmount').value,
     date: document.getElementById('paymentDate').value,
@@ -432,38 +406,10 @@ async function savePayment() {
   }
 
   try {
-    if (paymentId) {
-      await DebtModule.updatePayment(paymentId, data);
-      Utils.showToast('แก้ไขการชำระสำเร็จ', 'success');
-    } else {
-      await DebtModule.recordPayment(debtId, data);
-      Utils.showToast('บันทึกการชำระสำเร็จ', 'success');
-    }
+    await DebtModule.recordPayment(debtId, data);
+    Utils.showToast('บันทึกการชำระสำเร็จ', 'success');
     closePaymentModal();
     await refreshDebts();
-
-    // If detail modal is open, refresh it
-    const detailModal = document.getElementById('detailModal');
-    if (detailModal.classList.contains('active')) {
-      const debt = await DebtModule.getById(debtId);
-      if (debt) showDebtDetail(debt);
-    }
-  } catch (e) {
-    Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
-  }
-}
-
-async function deletePayment(paymentId, debtId) {
-  if (!confirm('ยืนยันการลบประวัติการชำระนี้? \nระบบจะคำนวณยอดคงเหลือใหม่ทั้งหมด')) return;
-
-  try {
-    await DebtModule.deletePayment(paymentId);
-    Utils.showToast('ลบประวัติการชำระสำเร็จ', 'success');
-
-    // Refresh UI
-    await refreshDebts();
-    const debt = await DebtModule.getById(debtId);
-    if (debt) showDebtDetail(debt);
   } catch (e) {
     Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
   }
@@ -623,7 +569,6 @@ async function showDebtDetail(debt) {
                           <th style="text-align:right; padding:5px;">ดอกเบี้ย</th>
                           <th style="text-align:right; padding:5px;">เงินต้น</th>
                           <th style="text-align:right; padding:5px;">คงเหลือ</th>
-                          <th style="text-align:center; padding:5px;">จัดการ</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -634,10 +579,6 @@ async function showDebtDetail(debt) {
                               <td style="text-align:right; padding:5px; color:#c62828;">${Utils.formatCurrency(p.interestPortion).replace(' ฿', '')}</td>
                               <td style="text-align:right; padding:5px; color:#2e7d32;">${Utils.formatCurrency(p.principalPortion).replace(' ฿', '')}</td>
                               <td style="text-align:right; padding:5px;">${Utils.formatCurrency(p.balanceAfter).replace(' ฿', '')}</td>
-                              <td style="text-align:center; padding:5px; display:flex; gap:4px; justify-content:center;">
-                                <button class="btn-icon edit-payment" data-id="${p.id}" style="padding:2px; font-size:12px; background:none; border:none; cursor:pointer;" title="แก้ไข">✏️</button>
-                                <button class="btn-icon delete-payment" data-id="${p.id}" style="padding:2px; font-size:12px; background:none; border:none; cursor:pointer;" title="ลบ">🗑️</button>
-                              </td>
                           </tr>
                       `).join('')}
                   </tbody>
@@ -708,20 +649,6 @@ async function showDebtDetail(debt) {
   `;
 
   document.getElementById('detailModal').classList.add('active');
-
-  // Add listeners for payment history actions
-  document.querySelectorAll('.edit-payment').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const payment = payments.find(p => String(p.id) === String(btn.dataset.id));
-      if (payment) openPaymentModal(debt, payment);
-    });
-  });
-
-  document.querySelectorAll('.delete-payment').forEach(btn => {
-    btn.addEventListener('click', () => {
-      deletePayment(btn.dataset.id, debt.id);
-    });
-  });
 }
 
 async function refreshDebts() {
