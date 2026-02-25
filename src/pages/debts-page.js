@@ -791,13 +791,15 @@ async function refreshDebts() {
 
       return `
         <div class="debt-item" data-id="${d.id}">
+          <!-- Name header row at the top -->
+          <div style="padding: 10px 16px 0 16px; display:flex; align-items:center; gap:8px;" onclick="this.parentElement.querySelector('.debt-item-details').toggleAttribute('open')">
+            <span style="font-size:15px; font-weight:700; color:var(--text-primary); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
+            <span class="badge" style="font-size:11px; opacity:0.9; background:var(--bg-tertiary); flex-shrink:0;">${Utils.debtTypeName(d.type)}</span>
+          </div>
+
           <div class="debt-item-main" onclick="this.nextElementSibling.toggleAttribute('open')">
             <div class="debt-item-info">
-              <div class="debt-item-name">
-                ${d.name || 'หนี้สินที่ไม่มีชื่อ'}
-                <span class="badge" style="font-size: 10px; opacity: 0.8; background: var(--bg-tertiary);">${Utils.debtTypeName(d.type)}</span>
-              </div>
-              <div class="debt-item-meta">
+              <div class="debt-item-meta" style="margin-top:0;">
                 <span>ดอกเบี้ย ${d.annualRate}%</span>
                 <span>•</span>
                 <span>จ่ายรายเดือน ~${Utils.formatCurrency(paymentAmountForCalc)}</span>
