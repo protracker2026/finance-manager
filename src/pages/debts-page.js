@@ -826,9 +826,12 @@ async function refreshDebts() {
             </div>
           </div>
           
-          <details class="debt-item-details">
+          <details class="debt-item-details" style="position: relative;">
             <summary style="display:none"></summary>
             
+            <!-- Pay Button (Top Right Absolute) -->
+            <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="position: absolute; top: 12px; right: 12px; padding: 6px 14px; font-weight: 700; border-radius: 8px; z-index: 5;">💰 ชำระเงิน</button>
+
             <div class="debt-detail-item">
               <div class="label">เงินต้นตั้งต้น</div>
               <div class="value">${Utils.formatCurrency(d.principal)}</div>
@@ -840,12 +843,15 @@ async function refreshDebts() {
             
             ${predictionSummaryHtml}
 
-            <div class="debt-item-actions" style="grid-column: 1 / -1; display:flex; gap:8px; margin-top:12px; border-top: 1px solid var(--border-color); padding-top:12px; justify-content: flex-start;">
-               <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="padding: 6px 16px; font-weight: 600;">💰 ชำระเงิน</button>
-               <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background: var(--bg-tertiary);">📋 ตารางผ่อน & ประวัติ</button>
-               <button class="btn btn-sm btn-icon export-single-pdf" data-id="${d.id}" title="Export PDF">📄</button>
-               <button class="btn btn-sm btn-icon edit-debt" data-id="${d.id}" title="แก้ไข">✏️</button>
-               <button class="btn btn-sm btn-icon btn-danger delete-debt" data-id="${d.id}" title="ลบ">🗑️</button>
+            <!-- Bottom Actions Bar -->
+            <div class="debt-item-actions" style="grid-column: 1 / -1; display:flex; gap:8px; margin-top:12px; border-top: 1px solid var(--border-color); padding-top:12px; justify-content: space-between; align-items: center;">
+               <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background: var(--bg-tertiary); padding: 8px 12px; font-weight: 600;">📋 ตารางผ่อน & ประวัติ</button>
+               
+               <div style="display:flex; gap:6px;">
+                 <button class="btn btn-sm btn-icon export-single-pdf" data-id="${d.id}" title="Export PDF">📄</button>
+                 <button class="btn btn-sm btn-icon edit-debt" data-id="${d.id}" title="แก้ไข">✏️</button>
+                 <button class="btn btn-sm btn-icon btn-danger delete-debt" data-id="${d.id}" title="ลบ">🗑️</button>
+               </div>
             </div>
           </details>
         </div>
