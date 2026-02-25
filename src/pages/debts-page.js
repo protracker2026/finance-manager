@@ -789,12 +789,12 @@ async function refreshDebts() {
         `;
       }
 
-      // Dynamic color based on repayment progress
-      let statusColor = 'var(--text-danger-soft)'; // 0-25% (Red)
-      if (paidPct >= 90) statusColor = '#16a34a';      // 90%+ (Dark Green)
+      // Dynamic color based on repayment progress (Text only)
+      let statusColor = '#ef4444'; // 0-25% (Vibrant Red)
+      if (paidPct >= 90) statusColor = '#22c55e';      // 90%+ (Green)
       else if (paidPct >= 75) statusColor = '#4ade80'; // 75-90% (Light Green)
       else if (paidPct >= 50) statusColor = '#fcd34d'; // 50-75% (Yellow)
-      else if (paidPct >= 25) statusColor = '#ff9f43'; // 25-50% (Orange)
+      else if (paidPct >= 25) statusColor = '#fb923c'; // 25-50% (Orange)
 
       return `
         <div class="debt-item" data-id="${d.id}">
@@ -820,9 +820,9 @@ async function refreshDebts() {
               </div>
             </div>
 
-            <!-- Enhanced & Visible Progress Bar at Bottom -->
-            <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(0,0,0,0.3); border-radius: 0; overflow: visible;">
-               <div class="progress-fill" style="width:${paidPct}%; height: 100%; border-radius: 0; background-color: ${statusColor}; box-shadow: 0 0 4px ${statusColor}; transition: width 0.6s ease-in-out;"></div>
+            <!-- Neutral but Clear Progress Bar at Bottom -->
+            <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.1); border-radius: 0; overflow: hidden;">
+               <div class="progress-fill" style="width:${paidPct}%; height: 100%; border-radius: 0; background: #fff; opacity: 0.8; box-shadow: 0 0 8px rgba(255,255,255,0.4); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
             </div>
           </div>
           
