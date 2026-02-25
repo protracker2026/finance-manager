@@ -584,3 +584,9 @@ a:hover {
         border-radius: 0;
     }
 }
+
+/* Reduce width of date inputs for iOS layout */
+input[type="date"],
+input.flatpickr-input {
+    max-width: 50% !important;
+}
