@@ -100,7 +100,7 @@ export const InterestEngine = {
             month++;
             const interest = this.reducingBalanceMonthly(balance, annualRatePercent);
             const payment = Math.min(monthlyPayment, balance + interest);
-            const principalPart = payment - interest;
+            const principalPart = Math.max(0, payment - interest);
             balance = Math.max(0, balance - principalPart);
             totalInterest += interest;
             totalPaid += payment;
@@ -145,7 +145,7 @@ export const InterestEngine = {
 
             // For Flat Rate, generally payment is fixed.
             // Principal part = Payment - Interest
-            const principalPart = payment - interest;
+            const principalPart = Math.max(0, payment - interest);
 
             // If payment is less than interest, balance grows (which shouldn't happen in flat rate usually)
             balance = Math.max(0, balance - principalPart);
@@ -181,7 +181,10 @@ export const InterestEngine = {
         let month = 0;
         let totalInterest = 0;
         let totalPaid = 0;
+
         let currentDate = new Date(startDate);
+        if (isNaN(currentDate.getTime())) currentDate = new Date();
+
         const useMinPayment = !paymentAmount || paymentAmount <= 0;
 
         while (balance > 0.01 && month < maxMonths) {
@@ -203,7 +206,7 @@ export const InterestEngine = {
                 payment = Math.min(paymentAmount, balance + monthInterest);
             }
 
-            const principalPart = payment - monthInterest;
+            const principalPart = Math.max(0, payment - monthInterest);
             balance = Math.max(0, balance - principalPart);
             totalInterest += monthInterest;
             totalPaid += payment;
@@ -239,7 +242,9 @@ export const InterestEngine = {
         let month = 0;
         let totalInterest = 0;
         let totalPaid = 0;
+
         let currentDate = new Date(startDate);
+        if (isNaN(currentDate.getTime())) currentDate = new Date();
 
         while (balance > 0.01 && month < maxMonths) {
             month++;
@@ -249,7 +254,7 @@ export const InterestEngine = {
 
             const monthInterest = this.dailyAccrual(balance, annualRatePercent, daysInMonth);
             const payment = Math.min(monthlyPayment, balance + monthInterest);
-            const principalPart = payment - monthInterest;
+            const principalPart = Math.max(0, payment - monthInterest);
             balance = Math.max(0, balance - principalPart);
             totalInterest += monthInterest;
             totalPaid += payment;
