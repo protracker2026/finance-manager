@@ -919,7 +919,7 @@ details[open].txn-list-details summary svg {
     align-items: baseline;
     margin-bottom: var(--space-sm);
     padding-bottom: 4px;
-    border-bottom: 2px solid var(--bg-tertiary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .debt-group-title {
