@@ -43,10 +43,10 @@ export async function renderTransactionsPage(container) {
 
     <!-- Filters -->
     <div class="filter-bar">
-      <div class="filter-group">
-        <input type="date" class="form-input" id="filterStartDate" value="${start}" style="width:auto">
-        <span style="color:var(--text-tertiary)">-</span>
-        <input type="date" class="form-input" id="filterEndDate" value="${end}" style="width:auto">
+      <div class="filter-group date-range-group">
+        <input type="date" class="date-no-border" id="filterStartDate" value="${start}">
+        <span>-</span>
+        <input type="date" class="date-no-border" id="filterEndDate" value="${end}">
       </div>
       <div class="filter-group selects">
         <select class="form-select" id="filterType" style="width:auto;min-width:120px">
