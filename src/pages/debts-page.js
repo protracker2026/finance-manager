@@ -811,11 +811,6 @@ async function refreshDebts() {
                 <span class="label">คงเหลือ</span>
                 <span class="amount">${Utils.formatCurrency(d.currentBalance)}</span>
               </div>
-              <div class="debt-item-actions">
-                 <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" onclick="event.stopPropagation()">
-                   ชำระ
-                 </button>
-              </div>
             </div>
 
             <!-- Subtle Progress Bar at Bottom -->
@@ -839,6 +834,7 @@ async function refreshDebts() {
             ${predictionSummaryHtml}
 
             <div class="debt-item-actions" style="grid-column: 1 / -1; display:flex; gap:8px; margin-top:12px; border-top: 1px solid var(--border-color); padding-top:12px; justify-content: flex-start;">
+               <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="padding: 6px 16px; font-weight: 600;">💰 ชำระเงิน</button>
                <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background: var(--bg-tertiary);">📋 ตารางผ่อน & ประวัติ</button>
                <button class="btn btn-sm btn-icon export-single-pdf" data-id="${d.id}" title="Export PDF">📄</button>
                <button class="btn btn-sm btn-icon edit-debt" data-id="${d.id}" title="แก้ไข">✏️</button>
