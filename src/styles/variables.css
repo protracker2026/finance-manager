@@ -46,6 +46,8 @@
     /* Clear Green */
     --text-danger: #ef4444;
     /* Clear Red */
+    --text-danger-soft: #ea868f;
+    /* Muted Red for large amounts */
     --text-warning: #f59e0b;
     /* Clear Amber */
 

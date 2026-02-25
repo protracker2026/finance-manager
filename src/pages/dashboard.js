@@ -37,7 +37,7 @@ export async function renderDashboard(container) {
         </div>
          <div class="metric-item">
           <span class="metric-label">หนี้สินคงค้าง</span>
-          <span class="metric-value warning" style="color:var(--text-warning)">${Utils.formatCurrency(debtSummary.totalDebt)}</span>
+          <span class="metric-value" style="color:var(--text-danger-soft)">${Utils.formatCurrency(debtSummary.totalDebt)}</span>
         </div>
       </div>
     </div>
