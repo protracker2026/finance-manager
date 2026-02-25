@@ -371,7 +371,7 @@ async function saveDebt() {
 
   try {
     if (id) {
-      await DebtModule.update(parseInt(id), data);
+      await DebtModule.update(id, data);
       Utils.showToast('แก้ไขหนี้สำเร็จ', 'success');
     } else {
       await DebtModule.add(data);
@@ -394,7 +394,7 @@ function openPaymentModal(debt) {
 }
 
 async function savePayment() {
-  const debtId = parseInt(document.getElementById('paymentDebtId').value);
+  const debtId = document.getElementById('paymentDebtId').value;
   const data = {
     amount: document.getElementById('paymentAmount').value,
     date: document.getElementById('paymentDate').value,
@@ -832,21 +832,21 @@ async function refreshDebts() {
   // Event listeners delegated
   container.querySelectorAll('.pay-debt').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const debt = allDebts.find(d => d.id === parseInt(btn.dataset.id));
+      const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
       if (debt) openPaymentModal(debt);
     });
   });
 
   container.querySelectorAll('.detail-debt').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const debt = allDebts.find(d => d.id === parseInt(btn.dataset.id));
+      const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
       if (debt) showDebtDetail(debt);
     });
   });
 
   container.querySelectorAll('.edit-debt').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const debt = allDebts.find(d => d.id === parseInt(btn.dataset.id));
+      const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
       if (debt) openDebtModal(debt);
     });
   });
@@ -854,7 +854,7 @@ async function refreshDebts() {
   container.querySelectorAll('.export-single-pdf').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const debt = allDebts.find(d => d.id === parseInt(btn.dataset.id));
+      const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
       if (debt) {
         const payments = await DebtModule.getPayments(debt.id);
         const debtWithPayments = { ...debt, payments };
@@ -882,7 +882,7 @@ async function refreshDebts() {
   container.querySelectorAll('.delete-debt').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       if (confirm('คุณต้องการลบหนี้นี้และประวัติการชำระทั้งหมด?')) {
-        await DebtModule.delete(parseInt(btn.dataset.id));
+        await DebtModule.delete(btn.dataset.id);
         Utils.showToast('ลบหนี้สำเร็จ', 'success');
         refreshDebts(); // Refresh without reloading page
       }
