@@ -978,7 +978,7 @@ details[open].txn-list-details summary svg {
 }
 
 .debt-item-meta {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text-tertiary);
     display: flex;
     gap: var(--space-sm);
@@ -994,7 +994,7 @@ details[open].txn-list-details summary svg {
 }
 
 .debt-item-balance .label {
-    font-size: 10px;
+    font-size: 12px;
     text-transform: uppercase;
     color: var(--text-tertiary);
     display: block;
