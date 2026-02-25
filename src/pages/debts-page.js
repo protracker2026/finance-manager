@@ -425,12 +425,31 @@ async function showDebtDetail(debt) {
   const botConfig = InterestEngine.getBOTConfig(debt.type);
   const rateValidation = InterestEngine.validateRate(debt.annualRate, debt.type);
   const botInfoHtml = `
-    <div style="margin-bottom:var(--space-lg); padding:var(--space-md); background:var(--bg-tertiary); border-radius:var(--border-radius); border-left:3px solid var(--text-accent);">
-      <div style="font-weight:600; color:var(--text-accent); margin-bottom:8px;">📜 ข้อมูลตามหลัก ธปท.</div>
-      <div class="summary-row"><span class="label">วิธีคิดดอกเบี้ย</span><span class="value">${botConfig.description}</span></div>
-      <div class="summary-row"><span class="label">เพดาน ธปท.</span><span class="value">${botConfig.maxRate}% ต่อปี</span></div>
-      <div class="summary-row"><span class="label">สถานะอัตรา</span><span class="value" style="color:${rateValidation.isOverLimit ? 'var(--text-danger)' : 'var(--text-success)'}">${rateValidation.message}</span></div>
-      ${debt.type === 'credit_card' ? `<div class="summary-row"><span class="label">ชำระขั้นต่ำ (8%)</span><span class="value">${Utils.formatCurrency(InterestEngine.calculateMinPayment(debt.currentBalance, 'credit_card'))}</span></div>` : ''}
+    <div style="background:var(--bg-tertiary); border-radius:var(--border-radius); padding:var(--space-md); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
+      <h4 style="margin: 0 0 12px 0; color:var(--text-accent); font-size:16px; display:flex; align-items:center; gap:6px;"><span>📜</span> ข้อมูลตามหลัก ธปท.</h4>
+      <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
+        <table style="width:100%; border-collapse:collapse; font-size:14px;">
+          <tbody>
+            <tr>
+              <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); width:40%; border-right:1px solid var(--border-color);">วิธีคิดดอกเบี้ย</td>
+              <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.description}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">เพดาน ธปท.</td>
+              <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.maxRate}% ต่อปี</td>
+            </tr>
+            <tr>
+              <td style="padding:10px; ${debt.type === 'credit_card' ? 'border-bottom:1px solid var(--border-color);' : ''} color:var(--text-secondary); border-right:1px solid var(--border-color);">สถานะอัตรา</td>
+              <td style="padding:10px; ${debt.type === 'credit_card' ? 'border-bottom:1px solid var(--border-color);' : ''} font-weight:600; text-align:right; color:${rateValidation.isOverLimit ? 'var(--text-danger)' : 'var(--text-success)'};">${rateValidation.message}</td>
+            </tr>
+            ${debt.type === 'credit_card' ? `
+            <tr>
+              <td style="padding:10px; color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำปัจจุบัน (8%)</td>
+              <td style="padding:10px; font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(InterestEngine.calculateMinPayment(debt.currentBalance, 'credit_card'))}</td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 
