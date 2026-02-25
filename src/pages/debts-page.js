@@ -261,29 +261,28 @@ function setupDebtEvents() {
     document.getElementById('debtInterestType').value = config.method;
     // Auto-set max rate as default
     document.getElementById('debtRate').value = config.maxRate;
-    // Auto-calculate min payment if credit card
-    if (type === 'credit_card') {
-      const principal = parseFloat(document.getElementById('debtPrincipal').value) || 0;
-      if (principal > 0) {
-        document.getElementById('debtMinPayment').value = InterestEngine.calculateMinPayment(principal, 'credit_card').toFixed(2);
-      }
-    }
     validateRateInput();
+    autoCalcMinPayment();
   });
 
   // === Rate validation on input ===
   document.getElementById('debtRate').addEventListener('input', validateRateInput);
 
-  // === Auto-calc min payment when principal changes (credit card) ===
-  document.getElementById('debtPrincipal').addEventListener('input', () => {
+  // === Auto-calc min payment when principal or balance changes ===
+  function autoCalcMinPayment() {
     const type = document.getElementById('debtType').value;
-    if (type === 'credit_card') {
-      const principal = parseFloat(document.getElementById('debtPrincipal').value) || 0;
-      if (principal > 0) {
-        document.getElementById('debtMinPayment').value = InterestEngine.calculateMinPayment(principal, 'credit_card').toFixed(2);
+    const balance = parseFloat(document.getElementById('debtCurrentBalance').value)
+      || parseFloat(document.getElementById('debtPrincipal').value) || 0;
+    if (balance > 0) {
+      const minPay = InterestEngine.calculateMinPayment(balance, type);
+      if (minPay > 0) {
+        document.getElementById('debtMinPayment').value = minPay.toFixed(2);
       }
     }
-  });
+  }
+
+  document.getElementById('debtPrincipal').addEventListener('input', autoCalcMinPayment);
+  document.getElementById('debtCurrentBalance').addEventListener('input', autoCalcMinPayment);
 
   // === Sort & Filter Events ===
   document.querySelectorAll('.sort-btn').forEach(btn => {
