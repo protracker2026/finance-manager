@@ -404,8 +404,15 @@ function setupTransactionEvents() {
       else if (period === 'year') r = Utils.getYearRange();
       else if (period === 'all') r = { start: '', end: '' };
 
-      document.getElementById('filterStartDate').value = r.start || '';
-      document.getElementById('filterEndDate').value = r.end || '';
+      const fpStart = document.getElementById('filterStartDate')._flatpickr;
+      const fpEnd = document.getElementById('filterEndDate')._flatpickr;
+
+      if (fpStart) fpStart.setDate(r.start || '', false);
+      else document.getElementById('filterStartDate').value = r.start || '';
+
+      if (fpEnd) fpEnd.setDate(r.end || '', false);
+      else document.getElementById('filterEndDate').value = r.end || '';
+
       applyFilters();
     });
   });
