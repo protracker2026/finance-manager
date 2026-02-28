@@ -482,8 +482,8 @@ window.toggleDebtItem = function (element) {
   details.toggleAttribute('open');
   if (details.hasAttribute('open')) {
     setTimeout(() => {
-      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 50);
+      item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
   }
 }
 
