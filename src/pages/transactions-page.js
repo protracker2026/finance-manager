@@ -638,90 +638,84 @@ function openCategoryDetailModal(type, category, txnsList) {
       <span style="font-weight:700; color:${accentColor}; font-size:15px;">${sign}${Utils.formatCurrency(total)}</span>
     </div>`;
 
-  // ≤15 items: flat list
-  if (txnsList.length <= 15) {
-    body.innerHTML = summaryHtml + `
-      <div style="display:flex; flex-direction:column; gap:2px;">
-        ${txnsList.map(t => _renderTxnItem(t, type)).join('')}
-      </div>`;
-  } else {
-    const activeBtn = document.querySelector('.period-btn.active');
-    const period = activeBtn ? activeBtn.dataset.period : 'month';
+  const activeBtn = document.querySelector('.period-btn.active');
+  const period = activeBtn ? activeBtn.dataset.period : 'month';
 
-    // Levels to group by based on period
-    const levelMap = {
-      'week': ['day'],
-      'month': ['week'],
-      'year': ['month'],
-      'all': ['year', 'month', 'week', 'day']
-    };
-    const levels = levelMap[period] || ['month'];
+  // Levels to group by based on period
+  const levelMap = {
+    'today': [],
+    'week': ['day'],
+    'month': ['week', 'day'],
+    'year': ['month', 'day'],
+    'all': ['year', 'month', 'week', 'day']
+  };
+  const levels = levelMap[period] || ['month', 'day'];
 
-    const getGroupKey = (dateStr, lv) => {
-      const d = new Date(dateStr);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = d.getDate();
-      if (lv === 'year') return `${y}`;
-      if (lv === 'month') return `${y}-${m}`;
-      if (lv === 'week') return `${y}-${m}-W${Math.ceil(dd / 7)}`;
-      if (lv === 'day') return `${y}-${m}-${String(dd).padStart(2, '0')}`;
-      return 'root';
-    };
+  const getGroupKey = (dateStr, lv) => {
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = d.getDate();
+    if (lv === 'year') return `${y}`;
+    if (lv === 'month') return `${y}-${m}`;
+    if (lv === 'week') return `${y}-${m}-W${Math.ceil(dd / 7)}`;
+    if (lv === 'day') return `${y}-${m}-${String(dd).padStart(2, '0')}`;
+    return 'root';
+  };
 
-    const getGroupLabel = (dateStr, lv) => {
-      const d = new Date(dateStr);
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const dd = d.getDate();
-      if (lv === 'year') return `ปี ${y + 543}`;
-      if (lv === 'month') return `📆 ${Utils.getMonthName(m)} ${y + 543}`;
-      if (lv === 'week') return `สัปดาห์ที่ ${Math.ceil(dd / 7)} (${Utils.getMonthName(m)})`;
-      if (lv === 'day') return `📅 ${dd} ${Utils.getMonthName(m)}`;
-      return '';
-    };
+  const getGroupLabel = (dateStr, lv) => {
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const dd = d.getDate();
+    if (lv === 'year') return `ปี ${y + 543}`;
+    if (lv === 'month') return `📆 ${Utils.getMonthName(m)} ${y + 543}`;
+    if (lv === 'week') return `สัปดาห์ที่ ${Math.ceil(dd / 7)} (${Utils.getMonthName(m)})`;
+    if (lv === 'day') return `📅 ${dd} ${Utils.getMonthName(m)}`;
+    return '';
+  };
 
-    const renderGrouped = (txns, lvs) => {
-      if (lvs.length === 0) {
-        return txns.map(t => _renderTxnItem(t, type)).join('');
+  const renderGrouped = (txns, lvs) => {
+    if (lvs.length === 0) {
+      const sorted = [...txns].sort((a, b) => new Date(b.date) - new Date(a.date));
+      return sorted.map(t => _renderTxnItem(t, type)).join('');
+    }
+
+    const currentLv = lvs[0];
+    const remainingLvs = lvs.slice(1);
+    const groups = {};
+
+    txns.forEach(t => {
+      const key = getGroupKey(t.date, currentLv);
+      if (!groups[key]) {
+        groups[key] = { label: getGroupLabel(t.date, currentLv), items: [] };
       }
+      groups[key].items.push(t);
+    });
 
-      const currentLv = lvs[0];
-      const remainingLvs = lvs.slice(1);
-      const groups = {};
+    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
-      txns.forEach(t => {
-        const key = getGroupKey(t.date, currentLv);
-        if (!groups[key]) {
-          groups[key] = { label: getGroupLabel(t.date, currentLv), items: [] };
-        }
-        groups[key].items.push(t);
-      });
+    return sortedKeys.map(key => {
+      const g = groups[key];
+      const gTotal = g.items.reduce((sum, item) => sum + item.amount, 0);
+      return `
+        <details style="margin-bottom:6px; border:1px solid rgba(255,255,255,0.06); border-radius:var(--border-radius); overflow:hidden;">
+          <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg-tertiary); list-style:none;">
+            <span style="font-weight:600; font-size:13px;">${g.label}</span>
+            <span style="font-size:12px; color:${accentColor}; font-weight:600;">
+              ${sign}${Utils.formatCurrency(gTotal)} 
+              <span style="opacity:0.6; font-weight:400; font-size:11px;">(${g.items.length})</span>
+            </span>
+          </summary>
+          <div style="padding:2px 4px 6px 4px; background:rgba(255,255,255,0.01);">
+            ${renderGrouped(g.items, remainingLvs)}
+          </div>
+        </details>
+      `;
+    }).join('');
+  };
 
-      const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-
-      return sortedKeys.map(key => {
-        const g = groups[key];
-        const gTotal = g.items.reduce((sum, item) => sum + item.amount, 0);
-        return `
-          <details style="margin-bottom:6px; border:1px solid rgba(255,255,255,0.06); border-radius:var(--border-radius); overflow:hidden;">
-            <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg-tertiary); list-style:none;">
-              <span style="font-weight:600; font-size:13px;">${g.label}</span>
-              <span style="font-size:12px; color:${accentColor}; font-weight:600;">
-                ${sign}${Utils.formatCurrency(gTotal)} 
-                <span style="opacity:0.6; font-weight:400; font-size:11px;">(${g.items.length})</span>
-              </span>
-            </summary>
-            <div style="padding:2px 4px 6px 4px; background:rgba(255,255,255,0.01);">
-              ${renderGrouped(g.items, remainingLvs)}
-            </div>
-          </details>
-        `;
-      }).join('');
-    };
-
-    body.innerHTML = summaryHtml + renderGrouped(txnsList, levels);
-  }
+  body.innerHTML = summaryHtml + renderGrouped(txnsList, levels);
 
   modal.classList.add('active');
   document.body.classList.add('modal-open');
