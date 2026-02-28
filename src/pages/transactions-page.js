@@ -696,7 +696,7 @@ function openCategoryDetailModal(type, category, txnsList) {
       }
 
       groupedHtml += `
-        <details style="margin-bottom:8px; border:1px solid rgba(255,255,255,0.06); border-radius:var(--border-radius); overflow:hidden;" ${mIdx === 0 ? 'open' : ''}>
+        <details style="margin-bottom:8px; border:1px solid rgba(255,255,255,0.06); border-radius:var(--border-radius); overflow:hidden;">
           <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg-tertiary); list-style:none;">
             <span style="font-weight:600; font-size:13px;">📆 ${monthLabel}</span>
             <span style="font-size:12px; color:${accentColor}; font-weight:600;">${sign}${Utils.formatCurrency(monthTotal)} <span style="opacity:0.6; font-weight:400;">(${items.length})</span></span>
