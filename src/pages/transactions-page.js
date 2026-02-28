@@ -805,6 +805,11 @@ async function saveTxn(closeModal = true) {
       // Only show popup if closing modal, otherwise it might be annoying when adding multiple
       if (closeModal) {
         closeTxnModal();
+        const popup = document.getElementById('receiptPopup');
+        if (popup) {
+          popup.classList.add('active');
+          setTimeout(() => popup.classList.remove('active'), 3000);
+        }
       } else {
         // Reset form for next entry
         document.getElementById('txnId').value = '';
@@ -814,6 +819,7 @@ async function saveTxn(closeModal = true) {
         document.getElementById('txnNote').value = '';
         // Keep Date and Type and Category as they are likely similar
         document.getElementById('txnNote').focus();
+        Utils.showToast('บันทึกสำเร็จ', 'success');
       }
     }
     await refreshTransactions();
