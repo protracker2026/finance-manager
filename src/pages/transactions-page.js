@@ -154,16 +154,13 @@ export async function renderTransactionsPage(container) {
 
     <!-- Category Detail Modal -->
     <div class="modal-overlay" id="categoryDetailModal">
-      <div class="modal">
-        <div class="modal-header">
+      <div class="modal" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="modal-header" style="flex-shrink:0; border-bottom: 1px solid rgba(255,255,255,0.05); background: var(--bg-primary);">
           <h3 id="categoryDetailTitle">รายการในหมวดหมู่</h3>
           <button class="modal-close" id="categoryDetailModalClose">&times;</button>
         </div>
-        <div class="modal-body" id="categoryDetailBody" style="max-height:60vh; overflow-y:auto;">
+        <div class="modal-body" id="categoryDetailBody" style="flex:1; overflow-y:auto; padding-bottom:100px;">
           <!-- Content injected via JS -->
-        </div>
-        <div class="modal-footer">
-          <button class="btn" id="categoryDetailCloseBtn">ปิด</button>
         </div>
       </div>
     </div>
@@ -286,7 +283,6 @@ function setupTransactionEvents() {
 
   // Category Detail Modal Events
   document.getElementById('categoryDetailModalClose').addEventListener('click', closeCategoryDetailModal);
-  document.getElementById('categoryDetailCloseBtn').addEventListener('click', closeCategoryDetailModal);
   document.getElementById('categoryDetailModal').addEventListener('click', (e) => {
     if (e.target.id === 'categoryDetailModal') closeCategoryDetailModal();
   });
