@@ -60,6 +60,14 @@ export const Utils = {
         return { start, end, year: y, month: m + 1 };
     },
 
+    getYearRange(offset = 0) {
+        const now = new Date();
+        const y = now.getFullYear() + offset;
+        const start = `${y}-01-01`;
+        const end = `${y}-12-31`;
+        return { start, end, year: y };
+    },
+
     getTodayRange() {
         const now = new Date();
         const y = now.getFullYear();

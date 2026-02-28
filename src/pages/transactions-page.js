@@ -34,12 +34,14 @@ export async function renderTransactionsPage(container) {
 
     <!-- Filters -->
     <!-- Period Selector -->
-    <div style="display:flex; gap:10px; margin-bottom:10px; padding-bottom:5px;">
-        <button class="btn btn-primary period-btn active" data-period="today" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">วันนี้</button>
-        <button class="btn btn-outline period-btn" data-period="week" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">สัปดาห์นี้</button>
-        <button class="btn btn-outline period-btn" data-period="month" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">เดือนนี้</button>
-        <button class="btn btn-outline period-btn" data-period="all" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">ทั้งหมด</button>
+    <div style="display:flex; gap:6px; margin-bottom:10px; padding-bottom:5px;">
+        <button class="btn btn-primary period-btn active" data-period="today" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">วันนี้</button>
+        <button class="btn btn-outline period-btn" data-period="week" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">สัปดาห์นี้</button>
+        <button class="btn btn-outline period-btn" data-period="month" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">เดือนนี้</button>
+        <button class="btn btn-outline period-btn" data-period="year" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">ปีนี้</button>
+        <button class="btn btn-outline period-btn" data-period="all" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">ทั้งหมด</button>
     </div>
+
 
     <!-- Filters -->
     <div class="filter-bar">
@@ -348,6 +350,7 @@ function setupTransactionEvents() {
       if (period === 'today') r = Utils.getTodayRange();
       else if (period === 'week') r = Utils.getWeekRange();
       else if (period === 'month') r = Utils.getMonthRange();
+      else if (period === 'year') r = Utils.getYearRange();
       else if (period === 'all') r = { start: '', end: '' };
 
       document.getElementById('filterStartDate').value = r.start || '';
