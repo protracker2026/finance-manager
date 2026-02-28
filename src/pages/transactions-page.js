@@ -711,7 +711,7 @@ function openCategoryDetailModal(type, category, txnsList) {
             <span style="font-weight:600; font-size:13px;">${g.label}</span>
             <span style="font-size:12px; color:${accentColor}; font-weight:600;">
               ${sign}${Utils.formatCurrency(gTotal)} 
-              <span style="opacity:0.6; font-weight:400; font-size:11px;">(${g.items.length})</span>
+              <span style="opacity:0.9; font-weight:500; font-size:12px; margin-left:4px; color:var(--text-secondary);">(${g.items.length})</span>
             </span>
           </summary>
           <div style="padding:2px 4px 6px 4px; background:rgba(255,255,255,0.01);">
@@ -792,7 +792,8 @@ async function saveTxn(closeModal = true) {
         document.getElementById('receiptDate').textContent = dateStr;
       }
       if (document.getElementById('receiptCategory')) {
-        document.getElementById('receiptCategory').textContent = data.note ? data.note : data.category;
+        const catLabel = data.category + (data.note ? ` (${data.note})` : '');
+        document.getElementById('receiptCategory').textContent = catLabel;
       }
 
       const sign = data.type === 'income' ? '+' : '-';
