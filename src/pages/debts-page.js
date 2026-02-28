@@ -559,32 +559,37 @@ async function showDebtDetail(debt, scrollToHistory = false) {
   const botConfig = InterestEngine.getBOTConfig(debt.type);
   const rateValidation = InterestEngine.validateRate(debt.annualRate, debt.type);
   const botInfoHtml = `
-    <div style="background:var(--bg-tertiary); border-radius:var(--border-radius); padding:var(--space-md); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
-      <h4 style="margin: 0 0 12px 0; color:var(--text-accent); font-size:16px; display:flex; align-items:center; gap:6px;"><span>📜</span> ข้อมูลตามหลัก ธปท.</h4>
-      <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
-        <table style="width:100%; border-collapse:collapse; font-size:14px;">
-          <tbody>
-            <tr>
-              <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); width:40%; border-right:1px solid var(--border-color);">วิธีคิดดอกเบี้ย</td>
-              <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.description}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">เพดาน ธปท.</td>
-              <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.maxRate}% ต่อปี</td>
-            </tr>
-            <tr>
-              <td style="padding:10px; ${botConfig.minPaymentPct ? 'border-bottom:1px solid var(--border-color);' : ''} color:var(--text-secondary); border-right:1px solid var(--border-color);">สถานะอัตรา</td>
-              <td style="padding:10px; ${botConfig.minPaymentPct ? 'border-bottom:1px solid var(--border-color);' : ''} font-weight:600; text-align:right; color:${rateValidation.isOverLimit ? 'var(--text-danger)' : 'var(--text-success)'};">${rateValidation.message}</td>
-            </tr>
-            ${botConfig.minPaymentPct ? `
-            <tr>
-              <td style="padding:10px; color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำปัจจุบัน (${botConfig.minPaymentPct}%)</td>
-              <td style="padding:10px; font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(InterestEngine.calculateMinPayment(parseFloat(debt.currentBalance) || 0, debt.type))}</td>
-            </tr>` : ''}
-          </tbody>
-        </table>
+    <details style="background:var(--bg-tertiary); border-radius:var(--border-radius); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
+      <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
+         <span style="display:flex; align-items:center; gap:6px;"><span>📜</span> ข้อมูลตามหลัก ธปท.</span>
+         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </summary>
+      <div style="padding: 0 var(--space-md) var(--space-md) var(--space-md);">
+        <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
+          <table style="width:100%; border-collapse:collapse; font-size:14px;">
+            <tbody>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); width:40%; border-right:1px solid var(--border-color);">วิธีคิดดอกเบี้ย</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.description}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">เพดาน ธปท.</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${botConfig.maxRate}% ต่อปี</td>
+              </tr>
+              <tr>
+                <td style="padding:10px; ${botConfig.minPaymentPct ? 'border-bottom:1px solid var(--border-color);' : ''} color:var(--text-secondary); border-right:1px solid var(--border-color);">สถานะอัตรา</td>
+                <td style="padding:10px; ${botConfig.minPaymentPct ? 'border-bottom:1px solid var(--border-color);' : ''} font-weight:600; text-align:right; color:${rateValidation.isOverLimit ? 'var(--text-danger)' : 'var(--text-success)'};">${rateValidation.message}</td>
+              </tr>
+              ${botConfig.minPaymentPct ? `
+              <tr>
+                <td style="padding:10px; color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำปัจจุบัน (${botConfig.minPaymentPct}%)</td>
+                <td style="padding:10px; font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(InterestEngine.calculateMinPayment(parseFloat(debt.currentBalance) || 0, debt.type))}</td>
+              </tr>` : ''}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </details>
   `;
 
   // Generate schedule
@@ -778,9 +783,9 @@ async function showDebtDetail(debt, scrollToHistory = false) {
         <span>${Utils.formatCurrency(paid)} / ${Utils.formatCurrency(debt.principal)}</span>
       </div>
     </div>
-    ${botInfoHtml}
     ${paymentHtml}
     ${scheduleHtml}
+    ${botInfoHtml}
   `;
 
   document.getElementById('detailModal').classList.add('active');
