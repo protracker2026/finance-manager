@@ -454,15 +454,15 @@ a:hover {
 }
 
 .modal-body {
-    padding: var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
 }
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-sm);
-    padding: var(--space-md) var(--space-lg);
-    border-top: 1px solid var(--border-color);
+    padding: var(--space-xs) var(--space-lg) var(--space-lg) var(--space-lg);
+    border-top: none;
 }
 
 /* === Scrollbar === */
