@@ -231,7 +231,22 @@ function setupTransactionEvents() {
       dateFormat: "d/m/Y H:i",
       time_24hr: true,
       locale: "th",
-      defaultDate: new Date()
+      defaultDate: new Date(),
+      disableMobile: true
+    });
+    flatpickr("#filterStartDate", {
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d/m/Y",
+      disableMobile: true,
+      locale: "th"
+    });
+    flatpickr("#filterEndDate", {
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d/m/Y",
+      disableMobile: true,
+      locale: "th"
     });
   } else {
     console.warn("Flatpickr not loaded");

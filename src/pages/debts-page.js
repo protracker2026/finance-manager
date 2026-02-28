@@ -259,6 +259,24 @@ function setupDebtEvents() {
   document.getElementById('detailModalClose').addEventListener('click', closeDetailModal);
   document.getElementById('detailModal').addEventListener('click', e => { if (e.target.id === 'detailModal') closeDetailModal(); });
 
+  // Initialize Flatpickr for date inputs to force DD/MM/YYYY format globally
+  if (typeof flatpickr !== 'undefined') {
+    flatpickr("#debtStartDate", {
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d/m/Y",
+      disableMobile: true,
+      locale: "th"
+    });
+    flatpickr("#paymentDate", {
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d/m/Y",
+      disableMobile: true,
+      locale: "th"
+    });
+  }
+
   // === Removed event delegation in favor of inline onclick ===
 
   // === Smart Auto-fill ตามประเภทหนี้ (ธปท.) ===
@@ -419,7 +437,15 @@ function openPaymentModal(debt, payment = null) {
     if (title) title.textContent = 'บันทึกการชำระ';
     paymentIdEl.value = '';
     document.getElementById('paymentAmount').value = debt.monthlyPayment || debt.minPayment || '';
-    document.getElementById('paymentDate').value = Utils.today().split('T')[0];
+
+    // Update Flatpickr instance if it exists, otherwise fallback to standard value
+    const dateInput = document.getElementById('paymentDate');
+    if (dateInput._flatpickr) {
+      dateInput._flatpickr.setDate(Utils.today().split('T')[0]);
+    } else {
+      dateInput.value = Utils.today().split('T')[0];
+    }
+
     document.getElementById('paymentNote').value = '';
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
