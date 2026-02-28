@@ -476,6 +476,7 @@ async function openTxnModal(txn = null) {
     await updateCategoryOptions(txn.type);
     document.getElementById('txnCategory').value = txn.category;
     document.getElementById('txnDeleteBtn').style.display = 'block';
+    document.getElementById('txnSaveNextBtn').style.display = 'none';
   } else {
     title.textContent = 'เพิ่มรายการ';
     document.getElementById('txnId').value = '';
@@ -512,6 +513,7 @@ async function openTxnModal(txn = null) {
     if (lastCat) document.getElementById('txnCategory').value = lastCat;
 
     document.getElementById('txnDeleteBtn').style.display = 'none';
+    document.getElementById('txnSaveNextBtn').style.display = 'inline-flex';
   }
 
   modal.classList.add('active');
