@@ -587,6 +587,21 @@ function closeTxnDetailModal() {
   document.body.classList.remove('modal-open');
 }
 
+function _renderTxnItem(t, type) {
+  return `
+    <div class="cat-detail-item" data-id="${t.id}" style="display:flex; align-items:center; padding:10px 8px; border-radius:var(--border-radius); cursor:pointer; transition: background 0.15s; gap:10px;" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:11px; color:var(--text-tertiary);">${Utils.formatDateTimeShort(t.date)}</div>
+        <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.note || '-'}${(t.quantity && t.quantity > 1) ? ` <span style="font-size:0.85em; opacity:0.6;">x${t.quantity}</span>` : ''}</div>
+      </div>
+      <span class="amount ${t.type}" style="font-size:13px; flex-shrink:0; font-weight:600;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</span>
+      <div style="display:flex; gap:4px; flex-shrink:0;">
+        <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข" style="padding:4px 6px;">✏️</button>
+        <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ" style="padding:4px 6px;">🗑️</button>
+      </div>
+    </div>`;
+}
+
 function openCategoryDetailModal(type, category, txnsList) {
   const modal = document.getElementById('categoryDetailModal');
   const title = document.getElementById('categoryDetailTitle');
@@ -594,29 +609,88 @@ function openCategoryDetailModal(type, category, txnsList) {
   const typeLabel = type === 'income' ? 'รายรับ' : 'รายจ่าย';
   const accentColor = type === 'income' ? 'var(--accent-success)' : 'var(--accent-danger)';
   const total = txnsList.reduce((s, t) => s + t.amount, 0);
+  const sign = type === 'income' ? '+' : '-';
 
   title.textContent = `${category} (${typeLabel})`;
-  body.innerHTML = `
+
+  const summaryHtml = `
     <div style="margin-bottom:12px; padding:10px; background:var(--bg-tertiary); border-radius:var(--border-radius); display:flex; justify-content:space-between; align-items:center;">
       <span style="font-size:13px; color:var(--text-secondary);">รวม ${txnsList.length} รายการ</span>
-      <span style="font-weight:700; color:${accentColor}; font-size:15px;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(total)}</span>
-    </div>
-    <div style="display:flex; flex-direction:column; gap:2px;">
-      ${txnsList.map(t => `
-        <div class="cat-detail-item" data-id="${t.id}" style="display:flex; align-items:center; padding:10px 8px; border-radius:var(--border-radius); cursor:pointer; transition: background 0.15s; gap:10px;" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
-          <div style="flex:1; min-width:0;">
-            <div style="font-size:11px; color:var(--text-tertiary);">${Utils.formatDateTimeShort(t.date)}</div>
-            <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.note || '-'}${(t.quantity && t.quantity > 1) ? ` <span style="font-size:0.85em; opacity:0.6;">x${t.quantity}</span>` : ''}</div>
+      <span style="font-weight:700; color:${accentColor}; font-size:15px;">${sign}${Utils.formatCurrency(total)}</span>
+    </div>`;
+
+  // ≤15 items: flat list
+  if (txnsList.length <= 15) {
+    body.innerHTML = summaryHtml + `
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        ${txnsList.map(t => _renderTxnItem(t, type)).join('')}
+      </div>`;
+  } else {
+    // Group by month, then by day inside each month
+    const sorted = [...txnsList].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const byMonth = {};
+    sorted.forEach(t => {
+      const d = new Date(t.date);
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!byMonth[monthKey]) byMonth[monthKey] = [];
+      byMonth[monthKey].push(t);
+    });
+
+    let groupedHtml = '';
+    const monthKeys = Object.keys(byMonth).sort((a, b) => b.localeCompare(a));
+
+    monthKeys.forEach((mk, mIdx) => {
+      const items = byMonth[mk];
+      const monthTotal = items.reduce((s, t) => s + t.amount, 0);
+      const [y, m] = mk.split('-');
+      const monthLabel = Utils.getMonthName(parseInt(m)) + ' ' + (parseInt(y) + 543);
+
+      // Group by day within month
+      const byDay = {};
+      items.forEach(t => {
+        const d = new Date(t.date);
+        const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (!byDay[dayKey]) byDay[dayKey] = [];
+        byDay[dayKey].push(t);
+      });
+      const dayKeys = Object.keys(byDay).sort((a, b) => b.localeCompare(a));
+      const needsDaySplit = items.length > 10 && dayKeys.length > 1;
+
+      let innerHtml = '';
+      if (needsDaySplit) {
+        dayKeys.forEach(dk => {
+          const dayItems = byDay[dk];
+          const dayTotal = dayItems.reduce((s, t) => s + t.amount, 0);
+          const dayDate = new Date(dk + 'T00:00:00');
+          const dayLabel = dayDate.getDate() + ' ' + Utils.getMonthName(dayDate.getMonth() + 1);
+          innerHtml += `
+            <div style="margin-top:6px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 8px; background:rgba(255,255,255,0.03); border-radius:4px; margin-bottom:2px;">
+                <span style="font-size:11px; font-weight:600; color:var(--text-secondary);">📅 ${dayLabel}</span>
+                <span style="font-size:11px; color:${accentColor};">${sign}${Utils.formatCurrency(dayTotal)} (${dayItems.length})</span>
+              </div>
+              ${dayItems.map(t => _renderTxnItem(t, type)).join('')}
+            </div>`;
+        });
+      } else {
+        innerHtml = items.map(t => _renderTxnItem(t, type)).join('');
+      }
+
+      groupedHtml += `
+        <details style="margin-bottom:8px; border:1px solid rgba(255,255,255,0.06); border-radius:var(--border-radius); overflow:hidden;" ${mIdx === 0 ? 'open' : ''}>
+          <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg-tertiary); list-style:none;">
+            <span style="font-weight:600; font-size:13px;">📆 ${monthLabel}</span>
+            <span style="font-size:12px; color:${accentColor}; font-weight:600;">${sign}${Utils.formatCurrency(monthTotal)} <span style="opacity:0.6; font-weight:400;">(${items.length})</span></span>
+          </summary>
+          <div style="padding:4px 4px 8px 4px;">
+            ${innerHtml}
           </div>
-          <span class="amount ${t.type}" style="font-size:13px; flex-shrink:0; font-weight:600;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</span>
-          <div style="display:flex; gap:4px; flex-shrink:0;">
-            <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข" style="padding:4px 6px;">✏️</button>
-            <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ" style="padding:4px 6px;">🗑️</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `;
+        </details>`;
+    });
+
+    body.innerHTML = summaryHtml + groupedHtml;
+  }
+
   modal.classList.add('active');
   document.body.classList.add('modal-open');
 }
