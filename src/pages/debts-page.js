@@ -474,6 +474,19 @@ function openPaymentModal(debt, payment = null) {
   modal.classList.add('active');
 }
 
+// Global function to be called from inline onclick for toggling expanding rows
+window.toggleDebtItem = function (element) {
+  const item = element.closest('.debt-item');
+  if (!item) return;
+  const details = item.querySelector('.debt-item-details');
+  details.toggleAttribute('open');
+  if (details.hasAttribute('open')) {
+    setTimeout(() => {
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }
+}
+
 // Global function to be called from inline onclick in payment history table
 window.editPayment = function (paymentId, debtId) {
   console.log("editPayment called with:", paymentId, debtId);
@@ -947,12 +960,12 @@ async function refreshDebts() {
       return `
         <div class="debt-item" data-id="${d.id}">
           <!-- Name header row at the top -->
-          <div style="padding: 8px 16px 0 16px; display:flex; align-items:center; gap:8px;" onclick="this.parentElement.querySelector('.debt-item-details').toggleAttribute('open')">
+          <div style="padding: 8px 16px 0 16px; display:flex; align-items:center; gap:8px;" onclick="window.toggleDebtItem(this)">
             <span style="font-size:15px; font-weight:700; color:var(--text-primary); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
             <span class="badge" style="font-size:11px; opacity:0.9; background:var(--bg-tertiary); flex-shrink:0; padding: 1px 6px;">${Utils.debtTypeName(d.type)}</span>
           </div>
 
-          <div class="debt-item-main" style="padding-top: 0;" onclick="this.nextElementSibling.toggleAttribute('open')">
+          <div class="debt-item-main" style="padding-top: 0;" onclick="window.toggleDebtItem(this)">
             <div class="debt-item-info">
               <div class="debt-item-meta">
                 <span>ดอกเบี้ย ${d.annualRate}%</span>
