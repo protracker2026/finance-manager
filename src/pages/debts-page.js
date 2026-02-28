@@ -550,7 +550,7 @@ async function deletePayment(paymentId, debtId) {
   }
 }
 
-async function showDebtDetail(debt) {
+async function showDebtDetail(debt, scrollToHistory = false) {
   const payments = await DebtModule.getPayments(debt.id);
   const paid = debt.principal - debt.currentBalance;
   const paidPct = Utils.percentage(paid, debt.principal);
@@ -684,7 +684,7 @@ async function showDebtDetail(debt) {
   let paymentHtml = '';
   if (payments.length > 0) {
     paymentHtml = `
-      <div style="margin-top:20px; color:var(--text-accent);">
+      <div id="paymentHistorySection" style="margin-top:20px; color:var(--text-accent);">
           <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
               <span>💰</span>
               <h4 style="margin:0;">ประวัติการชำระ</h4>
@@ -785,6 +785,13 @@ async function showDebtDetail(debt) {
 
   document.getElementById('detailModal').classList.add('active');
   document.getElementById('paymentDebtId').value = debt.id;
+
+  if (scrollToHistory) {
+    setTimeout(() => {
+      const historyEl = document.getElementById('paymentHistorySection');
+      if (historyEl) historyEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 }
 
 async function refreshDebts() {
@@ -965,8 +972,11 @@ async function refreshDebts() {
           <details class="debt-item-details" style="position: relative;">
             <summary style="display:none"></summary>
             
-            <!-- Pay Button (Top Right Absolute) -->
-            <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="position: absolute; top: 12px; right: 12px; padding: 6px 14px; font-weight: 700; border-radius: 8px; z-index: 5;">💰 ชำระเงิน</button>
+            <!-- Pay and History Buttons (Top Right Absolute) -->
+            <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 5;">
+              <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; width: 100%;">💰 ชำระเงิน</button>
+              <button class="btn btn-sm edit-history-btn" data-id="${d.id}" style="padding: 4px 10px; font-size: 11px; font-weight: 500; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-color);">✏️ แก้ไข/ลบ ประวัติ</button>
+            </div>
 
             <div class="debt-detail-item">
               <div class="label">เงินต้นตั้งต้น</div>
@@ -1034,7 +1044,14 @@ async function refreshDebts() {
   container.querySelectorAll('.detail-debt').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
-      if (debt) showDebtDetail(debt);
+      if (debt) showDebtDetail(debt, false); // No scroll
+    });
+  });
+
+  container.querySelectorAll('.edit-history-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
+      if (debt) showDebtDetail(debt, true); // Auto scroll to history
     });
   });
 
