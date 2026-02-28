@@ -64,7 +64,7 @@ export async function renderDashboard(container) {
 
     <!-- รายการล่าสุด (Collapsible) -->
     <div class="card" style="padding: 0; overflow: hidden;">
-      <details class="dashboard-details">
+      <details class="dashboard-details" open>
         <summary style="padding: var(--space-lg); cursor: pointer; display: flex; align-items: center; justify-content: space-between; list-style: none;">
           <span class="card-title" style="margin-bottom: 0;">รายการล่าสุด</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="toggle-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>

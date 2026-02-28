@@ -67,7 +67,7 @@ export async function renderTransactionsPage(container) {
 
     <!-- Table -->
     <!-- Collapsible Transaction List -->
-    <details class="txn-list-details" id="txnListDetails">
+    <details class="txn-list-details" id="txnListDetails" open>
       <summary class="btn" style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding:var(--space-md);">
         <span style="font-weight:bold;">📋 แสดงรายการทั้งหมด</span>
         <div style="display:flex; align-items:center; gap:10px;">
