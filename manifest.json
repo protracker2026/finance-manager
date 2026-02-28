@@ -1,0 +1,16 @@
+{
+  "name": "จัดการการเงิน & หนี้สิน",
+  "short_name": "Finance",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#12121A",
+  "theme_color": "#12121A",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
