@@ -4,6 +4,7 @@ import { Utils } from '../modules/utils.js';
 
 let currentFilters = {};
 let currentDetailTxn = null;
+let currentCategoryView = null; // Track if we are viewing a category detail full-screen
 let cachedTxns = []; // Cache for event delegation
 let refreshHandler = null; // To avoid stacking event listeners
 
@@ -80,7 +81,7 @@ export async function renderTransactionsPage(container) {
     </details>
 
     <!-- Modal -->
-    <div class="modal-overlay" id="txnModal">
+    <div class="modal-overlay" id="txnModal" style="z-index: 1100;">
       <div class="modal">
         <div class="modal-header">
           <h3 id="txnModalTitle">เพิ่มรายการ</h3>
@@ -294,8 +295,7 @@ function setupTransactionEvents() {
       e.stopPropagation();
       const txnId = btn.dataset.id;
       const all = await TransactionModule.getAll({});
-      const txn = all.find(t => String(t.id) === String(txnId));
-      if (txn) { closeCategoryDetailModal(); openTxnModal(txn); }
+      if (txn) { openTxnModal(txn); }
       return;
     }
     if (btn && btn.classList.contains('delete-txn')) {
@@ -304,8 +304,8 @@ function setupTransactionEvents() {
         const txnId = btn.dataset.id;
         await TransactionModule.delete(txnId);
         Utils.showToast('ลบรายการสำเร็จ', 'success');
-        closeCategoryDetailModal();
         await refreshTransactions();
+        refreshCategoryDetailView();
       }
       return;
     }
@@ -313,9 +313,9 @@ function setupTransactionEvents() {
     const row = e.target.closest('.cat-detail-item');
     if (row && !btn) {
       const txnId = row.dataset.id;
-      const all = await TransactionModule.getAll({});
+      const all = cachedTxns.length ? cachedTxns : await TransactionModule.getAll({});
       const txn = all.find(t => String(t.id) === String(txnId));
-      if (txn) { closeCategoryDetailModal(); openTxnModal(txn); }
+      if (txn) { openTxnModal(txn); }
     }
   });
 
@@ -511,9 +511,18 @@ async function openTxnModal(txn = null) {
   document.body.classList.add('modal-open');
 }
 
+function updateBodyScrollLock() {
+  const activeOverlay = document.querySelector('.modal-overlay.active');
+  if (activeOverlay) {
+    document.body.classList.add('modal-open');
+  } else {
+    document.body.classList.remove('modal-open');
+  }
+}
+
 function closeTxnModal() {
   document.getElementById('txnModal').classList.remove('active');
-  document.body.classList.remove('modal-open');
+  updateBodyScrollLock();
 }
 
 function openTxnDetail(txn) {
@@ -580,7 +589,7 @@ function openTxnDetail(txn) {
 
 function closeTxnDetailModal() {
   document.getElementById('txnDetailModal').classList.remove('active');
-  document.body.classList.remove('modal-open');
+  updateBodyScrollLock();
 }
 
 function _renderTxnItem(t, type) {
@@ -598,7 +607,21 @@ function _renderTxnItem(t, type) {
     </div>`;
 }
 
+function refreshCategoryDetailView() {
+  if (currentCategoryView) {
+    const { type, category } = currentCategoryView;
+    // Use cachedTxns from refreshTransactions logic
+    const filtered = cachedTxns.filter(t => t.type === type && t.category === category);
+    if (filtered.length === 0) {
+      closeCategoryDetailModal();
+    } else {
+      openCategoryDetailModal(type, category, filtered);
+    }
+  }
+}
+
 function openCategoryDetailModal(type, category, txnsList) {
+  currentCategoryView = { type, category };
   const modal = document.getElementById('categoryDetailModal');
   const title = document.getElementById('categoryDetailTitle');
   const body = document.getElementById('categoryDetailBody');
@@ -692,8 +715,9 @@ function openCategoryDetailModal(type, category, txnsList) {
 }
 
 function closeCategoryDetailModal() {
+  currentCategoryView = null;
   document.getElementById('categoryDetailModal').classList.remove('active');
-  document.body.classList.remove('modal-open');
+  updateBodyScrollLock();
 }
 
 async function updateCategoryOptions(type) {
@@ -766,29 +790,20 @@ async function saveTxn(closeModal = true) {
 
       // Only show popup if closing modal, otherwise it might be annoying when adding multiple
       if (closeModal) {
-        const popup = document.getElementById('receiptPopup');
-        if (popup) {
-          popup.classList.add('active');
-          setTimeout(() => popup.classList.remove('active'), 3000);
-        }
+        closeTxnModal();
       } else {
-        Utils.showToast('บันทึกสำเร็จ', 'success');
+        // Reset form for next entry
+        document.getElementById('txnId').value = '';
+        document.getElementById('txnAmount').value = '';
+        document.getElementById('txnUnitPrice').value = '';
+        document.getElementById('txnQuantity').value = '1';
+        document.getElementById('txnNote').value = '';
+        // Keep Date and Type and Category as they are likely similar
+        document.getElementById('txnNote').focus();
       }
     }
-
-    if (closeModal) {
-      closeTxnModal();
-    } else {
-      // Reset form for next entry
-      document.getElementById('txnId').value = '';
-      document.getElementById('txnAmount').value = '';
-      document.getElementById('txnUnitPrice').value = '';
-      document.getElementById('txnQuantity').value = '1';
-      document.getElementById('txnNote').value = '';
-      // Keep Date and Type and Category as they are likely similar
-      document.getElementById('txnNote').focus();
-    }
     await refreshTransactions();
+    refreshCategoryDetailView();
   } catch (e) {
     Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
   }
