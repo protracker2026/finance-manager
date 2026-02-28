@@ -183,7 +183,7 @@ export async function renderDebtsPage(container) {
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">จำนวนเงินที่ชำระ (บาท)</label>
-              <input type="number" class="form-input" id="paymentAmount" step="0.01" min="0" required>
+              <input type="number" class="form-input" id="paymentAmount" step="0.01" min="0" required inputmode="decimal">
               <small id="paymentAmountHint" style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block; opacity: 0.7;"></small>
             </div>
             <div class="form-group">
