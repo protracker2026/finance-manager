@@ -684,50 +684,104 @@ async function refreshTransactions() {
       return;
     }
 
-    tableEl.innerHTML = `
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>วันที่</th>
-          <th>ประเภท</th>
-          <th>หมวดหมู่</th>
-          <th>หมายเหตุ</th>
-          <th style="text-align:right">จำนวน</th>
-          <th style="text-align:center">จัดการ</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${txns.map(t => `
-          <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
-            <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
-            <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
-            <td data-label="หมวดหมู่">
-                ${t.note ? t.note : t.category}
-                ${(t.quantity && t.quantity > 1) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice || (t.amount / t.quantity))}</span>` : ''}
-            </td>
-            <td data-label="หมายเหตุ">${t.note || '-'}</td>
-            <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">
-                ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
-                <div class="mobile-edit-overlay" data-id="${t.id}" title="แก้ไข"></div>
-            </td>
-            <td data-label="จัดการ" style="text-align:center">
-              <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข">✏️</button>
-              <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ">🗑️</button>
-            </td>
+    const activePeriodBtn = document.querySelector('.period-btn.active');
+    const isGroupedView = activePeriodBtn && activePeriodBtn.dataset.period !== 'today';
+
+    if (isGroupedView) {
+      const grouped = {};
+      txns.forEach(t => {
+        const key = `${t.type}_${t.category}`;
+        if (!grouped[key]) {
+          grouped[key] = { type: t.type, category: t.category, amount: 0, count: 0 };
+        }
+        grouped[key].amount += t.amount;
+        grouped[key].count += 1;
+      });
+
+      const groupedArr = Object.values(grouped).sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
+        return b.amount - a.amount;
+      });
+
+      tableEl.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ประเภท</th>
+            <th>หมวดหมู่</th>
+            <th style="text-align:right">จำนวน(ครั้ง)</th>
+            <th style="text-align:right">รวมเป็นเงิน</th>
           </tr>
-        `).join('')}
-        <tr class="receipt-footer">
-            <td colspan="4" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
-            <td colspan="2" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
-                ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
-            </td>
-        </tr>
-      </tbody>
-    </table>
-    <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
-      แสดง ${txns.length} รายการ
-    </div>
-  `;
+        </thead>
+        <tbody>
+          ${groupedArr.map(g => `
+            <tr data-qty="${g.count}">
+              <td data-label="ประเภท"><span class="badge badge-${g.type}">${g.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
+              <td data-label="หมวดหมู่">${g.category}</td>
+              <td data-label="วันที่" style="text-align:right; color:var(--text-tertiary);">${g.count}</td>
+              <td data-label="จำนวน" class="amount ${g.type}" style="text-align:right">
+                  ${g.type === 'income' ? '+' : '-'}${Utils.formatCurrency(g.amount)}
+              </td>
+            </tr>
+          `).join('')}
+          <tr class="receipt-footer">
+              <td colspan="3" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
+              <td colspan="1" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
+                  ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+              </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
+        สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กด 'วันนี้' เพื่อดูรายย่อยปรับแก้ได้)
+      </div>
+      `;
+    } else {
+      tableEl.innerHTML = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>วันที่</th>
+            <th>ประเภท</th>
+            <th>หมวดหมู่</th>
+            <th>หมายเหตุ</th>
+            <th style="text-align:right">จำนวน</th>
+            <th style="text-align:center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${txns.map(t => `
+            <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
+              <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
+              <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
+              <td data-label="หมวดหมู่">
+                  ${t.note ? t.note : t.category}
+                  ${(t.quantity && t.quantity > 1) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice || (t.amount / t.quantity))}</span>` : ''}
+              </td>
+              <td data-label="หมายเหตุ">${t.note || '-'}</td>
+              <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">
+                  ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+                  <div class="mobile-edit-overlay" data-id="${t.id}" title="แก้ไข"></div>
+              </td>
+              <td data-label="จัดการ" style="text-align:center">
+                <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข">✏️</button>
+                <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ">🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+          <tr class="receipt-footer">
+              <td colspan="4" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
+              <td colspan="2" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
+                  ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+              </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
+        แสดง ${txns.length} รายการ
+      </div>
+      `;
+    }
 
     // Update the shared cache so the persistent event handler can find txn objects
     cachedTxns = txns;
