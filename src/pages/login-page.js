@@ -42,10 +42,10 @@ export function renderLoginPage(container) {
             </form>
 
             <!-- Google Login -->
-            <div style="margin-top: var(--space-md); text-align: center;">
+            <div style="margin-top: var(--space-xl); text-align: center;">
                 <p style="color: var(--text-tertiary); font-size: var(--font-size-xs); margin-bottom: var(--space-md);">- หรือ -</p>
-                <button type="button" id="googleBtn" class="auth-btn btn-outline" style="background: white; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 18px; height: 18px;" alt="Google">
+                <button type="button" id="googleBtn" style="width: 100%; max-width: 400px; padding: 12px 16px; border-radius: 8px; border: 1px solid #ccc; background: white; color: #333; font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 20px; height: 20px;" alt="Google">
                     ดำเนินการต่อด้วย Google
                 </button>
             </div>
