@@ -128,7 +128,7 @@ export async function renderTransactionsPage(container) {
         <div class="modal-footer" style="flex-wrap: wrap; row-gap: 8px;">
           <button class="btn btn-danger" id="txnDeleteBtn" style="display:none; margin-right: auto;">ลบ</button>
           <div style="width: 100%; display: flex; gap: 8px; justify-content: flex-end;">
-            <button class="btn" id="txnCancelBtn">ยกเลิก</button>
+            <button class="btn" id="txnCancelBtn">ปิด</button>
             <button class="btn" id="txnSaveNextBtn">บันทึก & ต่อ</button>
             <button class="btn btn-primary" id="txnSaveBtn">บันทึก</button>
           </div>
