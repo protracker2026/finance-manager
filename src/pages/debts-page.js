@@ -184,6 +184,7 @@ export async function renderDebtsPage(container) {
             <div class="form-group">
               <label class="form-label">จำนวนเงินที่ชำระ (บาท)</label>
               <input type="number" class="form-input" id="paymentAmount" step="0.01" min="0" required>
+              <small id="paymentAmountHint" style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block; opacity: 0.7;"></small>
             </div>
             <div class="form-group">
               <label class="form-label">วันที่ชำระ</label>
@@ -436,7 +437,21 @@ function openPaymentModal(debt, payment = null) {
   } else {
     if (title) title.textContent = 'บันทึกการชำระ';
     paymentIdEl.value = '';
-    document.getElementById('paymentAmount').value = debt.monthlyPayment || debt.minPayment || '';
+
+    // Set blank default but show watermarked hint
+    document.getElementById('paymentAmount').value = '';
+    const expectedPayment = debt.monthlyPayment || debt.minPayment || 0;
+    const hintEl = document.getElementById('paymentAmountHint');
+    if (hintEl) {
+      if (expectedPayment > 0) {
+        hintEl.textContent = `* ยอดชำระที่คาดการณ์ / ขั้นต่ำ: ${Utils.formatCurrency(expectedPayment).replace(' ฿', '')}`;
+        // Optional: Click to auto-fill
+        hintEl.style.cursor = 'pointer';
+        hintEl.onclick = () => document.getElementById('paymentAmount').value = expectedPayment;
+      } else {
+        hintEl.textContent = '';
+      }
+    }
 
     // Update Flatpickr instance if it exists, otherwise fallback to standard value
     const dateInput = document.getElementById('paymentDate');
