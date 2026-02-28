@@ -975,7 +975,7 @@ async function refreshDebts() {
             <!-- Pay and History Buttons (Top Right Absolute) -->
             <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 5;">
               <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; width: 100%;">💰 ชำระเงิน</button>
-              <button class="btn btn-sm edit-history-btn" data-id="${d.id}" style="padding: 4px 10px; font-size: 11px; font-weight: 500; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-color);">✏️ แก้ไข/ลบ ประวัติ</button>
+              <button class="btn btn-sm edit-history-btn" data-id="${d.id}" style="padding: 4px 10px; font-size: 11px; font-weight: 500; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-color);">✏️ แก้ไขการชำระล่าสุด</button>
             </div>
 
             <div class="debt-detail-item">
@@ -1051,7 +1051,16 @@ async function refreshDebts() {
   container.querySelectorAll('.edit-history-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const debt = allDebts.find(d => String(d.id) === String(btn.dataset.id));
-      if (debt) showDebtDetail(debt, true); // Auto scroll to history
+      if (debt) {
+        const payments = await DebtModule.getPayments(debt.id);
+        if (payments && payments.length > 0) {
+          // getPayments returns ascending date order, so last is newest
+          const latestPayment = payments[payments.length - 1];
+          openPaymentModal(debt, latestPayment);
+        } else {
+          Utils.showToast('ไม่มีประวัติการชำระ', 'info');
+        }
+      }
     });
   });
 
