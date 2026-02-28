@@ -676,16 +676,21 @@ function openCategoryDetailModal(type, category, txnsList) {
     const m = d.getMonth() + 1;
     const dd = d.getDate();
     if (lv === 'year') return `ปี ${y + 543}`;
-    if (lv === 'month') return `📆 ${Utils.getMonthName(m)} ${y + 543}`;
+    if (lv === 'month') return `${Utils.getMonthName(m)} ${y + 543}`;
     if (lv === 'week') return `สัปดาห์ที่ ${Math.ceil(dd / 7)} (${Utils.getMonthName(m)})`;
-    if (lv === 'day') return `📅 ${dd} ${Utils.getMonthName(m)}`;
+    if (lv === 'day') return `${dd} ${Utils.getMonthName(m)}`;
     return '';
   };
 
   const renderGrouped = (txns, lvs) => {
+    const depth = levels.length - lvs.length;
     if (lvs.length === 0) {
       const sorted = [...txns].sort((a, b) => new Date(b.date) - new Date(a.date));
-      return sorted.map(t => _renderTxnItem(t, type)).join('');
+      return `
+          <div style="display:flex; flex-direction:column; gap:2px; ${depth > 0 ? `margin-left:${depth * 8}px; border-left: 2px solid rgba(255,255,255,0.05); padding-left:4px;` : ''}">
+            ${sorted.map(t => _renderTxnItem(t, type)).join('')}
+          </div>
+        `;
     }
 
     const currentLv = lvs[0];
@@ -705,20 +710,28 @@ function openCategoryDetailModal(type, category, txnsList) {
     return sortedKeys.map(key => {
       const g = groups[key];
       const gTotal = g.items.reduce((sum, item) => sum + item.amount, 0);
+      const isTopLevel = depth === 0;
+
+      const summaryStyle = isTopLevel
+        ? `background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; font-weight: 700;`
+        : `background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.03); font-size: 12px; font-weight: 600; margin-left: ${depth * 10}px;`;
+
       return `
-        <details style="margin-bottom:6px; border:1px solid rgba(255,255,255,0.06); border-radius:var(--border-radius); overflow:hidden;">
-          <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:var(--bg-tertiary); list-style:none;">
-            <span style="font-weight:600; font-size:13px;">${g.label}</span>
-            <span style="font-size:12px; color:${accentColor}; font-weight:600;">
-              ${sign}${Utils.formatCurrency(gTotal)} 
-              <span style="opacity:0.9; font-weight:500; font-size:12px; margin-left:4px; color:var(--text-secondary);">(${g.items.length})</span>
-            </span>
-          </summary>
-          <div style="padding:2px 4px 6px 4px; background:rgba(255,255,255,0.01);">
-            ${renderGrouped(g.items, remainingLvs)}
-          </div>
-        </details>
-      `;
+          <details style="margin-bottom:${isTopLevel ? '12px' : '4px'}; border-radius:var(--border-radius); overflow:hidden;">
+            <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:none; ${summaryStyle}">
+              <span style="display:flex; align-items:center; gap:8px;">
+                ${g.label}
+              </span>
+              <span style="color:${accentColor};">
+                ${sign}${Utils.formatCurrency(gTotal)} 
+                <span style="opacity:0.75; font-weight:400; font-size:11px; color:var(--text-tertiary); margin-left:4px;">(${g.items.length})</span>
+              </span>
+            </summary>
+            <div style="padding:4px 0 8px 0;">
+              ${renderGrouped(g.items, remainingLvs)}
+            </div>
+          </details>
+        `;
     }).join('');
   };
 
