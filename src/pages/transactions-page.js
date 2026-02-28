@@ -151,6 +151,22 @@ export async function renderTransactionsPage(container) {
         </div>
       </div>
     </div>
+
+    <!-- Category Detail Modal -->
+    <div class="modal-overlay" id="categoryDetailModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="categoryDetailTitle">รายการในหมวดหมู่</h3>
+          <button class="modal-close" id="categoryDetailModalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="categoryDetailBody" style="max-height:60vh; overflow-y:auto;">
+          <!-- Content injected via JS -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="categoryDetailCloseBtn">ปิด</button>
+        </div>
+      </div>
+    </div>
   `;
   setupTransactionEvents();
   currentFilters = { startDate: start, endDate: end };
@@ -266,6 +282,45 @@ function setupTransactionEvents() {
   document.getElementById('txnDetailCloseBtn').addEventListener('click', closeTxnDetailModal);
   document.getElementById('txnDetailModal').addEventListener('click', (e) => {
     if (e.target.id === 'txnDetailModal') closeTxnDetailModal();
+  });
+
+  // Category Detail Modal Events
+  document.getElementById('categoryDetailModalClose').addEventListener('click', closeCategoryDetailModal);
+  document.getElementById('categoryDetailCloseBtn').addEventListener('click', closeCategoryDetailModal);
+  document.getElementById('categoryDetailModal').addEventListener('click', (e) => {
+    if (e.target.id === 'categoryDetailModal') closeCategoryDetailModal();
+  });
+
+  // Delegation for clicks inside category detail modal
+  document.getElementById('categoryDetailBody').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (btn && btn.classList.contains('edit-txn')) {
+      e.stopPropagation();
+      const txnId = btn.dataset.id;
+      const all = await TransactionModule.getAll({});
+      const txn = all.find(t => String(t.id) === String(txnId));
+      if (txn) { closeCategoryDetailModal(); openTxnModal(txn); }
+      return;
+    }
+    if (btn && btn.classList.contains('delete-txn')) {
+      e.stopPropagation();
+      if (confirm('คุณต้องการลบรายการนี้?')) {
+        const txnId = btn.dataset.id;
+        await TransactionModule.delete(txnId);
+        Utils.showToast('ลบรายการสำเร็จ', 'success');
+        closeCategoryDetailModal();
+        await refreshTransactions();
+      }
+      return;
+    }
+    // Click on a row item to open edit
+    const row = e.target.closest('.cat-detail-item');
+    if (row && !btn) {
+      const txnId = row.dataset.id;
+      const all = await TransactionModule.getAll({});
+      const txn = all.find(t => String(t.id) === String(txnId));
+      if (txn) { closeCategoryDetailModal(); openTxnModal(txn); }
+    }
   });
 
   document.getElementById('txnDetailEditBtn').addEventListener('click', () => {
@@ -532,6 +587,45 @@ function closeTxnDetailModal() {
   document.body.classList.remove('modal-open');
 }
 
+function openCategoryDetailModal(type, category, txnsList) {
+  const modal = document.getElementById('categoryDetailModal');
+  const title = document.getElementById('categoryDetailTitle');
+  const body = document.getElementById('categoryDetailBody');
+  const typeLabel = type === 'income' ? 'รายรับ' : 'รายจ่าย';
+  const accentColor = type === 'income' ? 'var(--accent-success)' : 'var(--accent-danger)';
+  const total = txnsList.reduce((s, t) => s + t.amount, 0);
+
+  title.textContent = `${category} (${typeLabel})`;
+  body.innerHTML = `
+    <div style="margin-bottom:12px; padding:10px; background:var(--bg-tertiary); border-radius:var(--border-radius); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:13px; color:var(--text-secondary);">รวม ${txnsList.length} รายการ</span>
+      <span style="font-weight:700; color:${accentColor}; font-size:15px;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(total)}</span>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:2px;">
+      ${txnsList.map(t => `
+        <div class="cat-detail-item" data-id="${t.id}" style="display:flex; align-items:center; padding:10px 8px; border-radius:var(--border-radius); cursor:pointer; transition: background 0.15s; gap:10px;" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:11px; color:var(--text-tertiary);">${Utils.formatDateTimeShort(t.date)}</div>
+            <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.note || '-'}${(t.quantity && t.quantity > 1) ? ` <span style="font-size:0.85em; opacity:0.6;">x${t.quantity}</span>` : ''}</div>
+          </div>
+          <span class="amount ${t.type}" style="font-size:13px; flex-shrink:0; font-weight:600;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</span>
+          <div style="display:flex; gap:4px; flex-shrink:0;">
+            <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข" style="padding:4px 6px;">✏️</button>
+            <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ" style="padding:4px 6px;">🗑️</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+}
+
+function closeCategoryDetailModal() {
+  document.getElementById('categoryDetailModal').classList.remove('active');
+  document.body.classList.remove('modal-open');
+}
+
 async function updateCategoryOptions(type) {
   const cats = await TransactionModule.getCategories(type);
   const select = document.getElementById('txnCategory');
@@ -692,16 +786,20 @@ async function refreshTransactions() {
       txns.forEach(t => {
         const key = `${t.type}_${t.category}`;
         if (!grouped[key]) {
-          grouped[key] = { type: t.type, category: t.category, amount: 0, count: 0 };
+          grouped[key] = { type: t.type, category: t.category, amount: 0, count: 0, txns: [] };
         }
         grouped[key].amount += t.amount;
         grouped[key].count += 1;
+        grouped[key].txns.push(t);
       });
 
       const groupedArr = Object.values(grouped).sort((a, b) => {
         if (a.type !== b.type) return a.type === 'income' ? -1 : 1;
         return b.amount - a.amount;
       });
+
+      // Store grouped data so click handler can access it
+      window._groupedTxnData = groupedArr;
 
       tableEl.innerHTML = `
       <table class="data-table">
@@ -714,10 +812,10 @@ async function refreshTransactions() {
           </tr>
         </thead>
         <tbody>
-          ${groupedArr.map(g => `
-            <tr data-qty="${g.count}">
+          ${groupedArr.map((g, idx) => `
+            <tr data-qty="${g.count}" data-group-idx="${idx}" class="grouped-row" style="cursor:pointer;">
               <td data-label="ประเภท"><span class="badge badge-${g.type}">${g.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
-              <td data-label="หมวดหมู่">${g.category}</td>
+              <td data-label="หมวดหมู่">${g.category} <span style="font-size:0.7em; opacity:0.5;">▸</span></td>
               <td data-label="วันที่" style="text-align:right; color:var(--text-tertiary);">${g.count}</td>
               <td data-label="จำนวน" class="amount ${g.type}" style="text-align:right">
                   ${g.type === 'income' ? '+' : '-'}${Utils.formatCurrency(g.amount)}
@@ -733,9 +831,18 @@ async function refreshTransactions() {
         </tbody>
       </table>
       <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
-        สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กด 'วันนี้' เพื่อดูรายย่อยปรับแก้ได้)
+        สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กดที่หมวดหมู่เพื่อดูรายย่อยและแก้ไข)
       </div>
       `;
+
+      // Attach click handlers to grouped rows
+      tableEl.querySelectorAll('.grouped-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const idx = parseInt(row.dataset.groupIdx);
+          const g = window._groupedTxnData[idx];
+          if (g) openCategoryDetailModal(g.type, g.category, g.txns);
+        });
+      });
     } else {
       tableEl.innerHTML = `
       <table class="data-table">
