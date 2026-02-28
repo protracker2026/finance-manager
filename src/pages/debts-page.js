@@ -440,14 +440,20 @@ function openPaymentModal(debt, payment = null) {
 
     // Set blank default but show watermarked hint
     document.getElementById('paymentAmount').value = '';
-    const expectedPayment = debt.monthlyPayment || debt.minPayment || 0;
+    const expected = parseFloat(debt.monthlyPayment) || 0;
+    const minPay = parseFloat(debt.minPayment) || 0;
+
     const hintEl = document.getElementById('paymentAmountHint');
     if (hintEl) {
-      if (expectedPayment > 0) {
-        hintEl.textContent = `* ยอดชำระที่คาดการณ์ / ขั้นต่ำ: ${Utils.formatCurrency(expectedPayment).replace(' ฿', '')}`;
-        // Optional: Click to auto-fill
+      let hintText = [];
+      if (expected > 0) hintText.push(`ยอดชำระคาดการณ์: ${Utils.formatCurrency(expected).replace(' ฿', '')}`);
+      if (minPay > 0) hintText.push(`ขั้นต่ำ: ${Utils.formatCurrency(minPay).replace(' ฿', '')}`);
+
+      if (hintText.length > 0) {
+        hintEl.textContent = `* ${hintText.join(' | ')}`;
+        // Optional: Click to auto-fill the highest realistic amount
         hintEl.style.cursor = 'pointer';
-        hintEl.onclick = () => document.getElementById('paymentAmount').value = expectedPayment;
+        hintEl.onclick = () => document.getElementById('paymentAmount').value = expected > 0 ? expected : minPay;
       } else {
         hintEl.textContent = '';
       }
