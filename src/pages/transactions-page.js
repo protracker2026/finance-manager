@@ -9,7 +9,7 @@ let refreshHandler = null; // To avoid stacking event listeners
 
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
-  const { start, end } = Utils.getMonthRange();
+  const { start, end } = Utils.getTodayRange();
 
   container.innerHTML = `
     <div class="page-header">
@@ -35,9 +35,9 @@ export async function renderTransactionsPage(container) {
     <!-- Filters -->
     <!-- Period Selector -->
     <div style="display:flex; gap:10px; margin-bottom:10px; padding-bottom:5px;">
-        <button class="btn btn-outline period-btn" data-period="today" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">วันนี้</button>
+        <button class="btn btn-primary period-btn active" data-period="today" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">วันนี้</button>
         <button class="btn btn-outline period-btn" data-period="week" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">สัปดาห์นี้</button>
-        <button class="btn btn-primary period-btn active" data-period="month" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">เดือนนี้</button>
+        <button class="btn btn-outline period-btn" data-period="month" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">เดือนนี้</button>
         <button class="btn btn-outline period-btn" data-period="all" style="flex:1; padding:6px 10px; font-size:13px; border-radius:20px; justify-content:center;">ทั้งหมด</button>
     </div>
 
