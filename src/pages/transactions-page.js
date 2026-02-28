@@ -607,10 +607,6 @@ function _renderTxnItem(t, type) {
         <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.note || '-'}${(t.quantity && t.quantity > 1) ? ` <span style="font-size:0.85em; opacity:0.6;">x${t.quantity}</span>` : ''}</div>
       </div>
       <span class="amount ${t.type}" style="font-size:13px; flex-shrink:0; font-weight:600;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</span>
-      <div style="display:flex; gap:4px; flex-shrink:0;">
-        <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข" style="padding:4px 6px;">✏️</button>
-        <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ" style="padding:4px 6px;">🗑️</button>
-      </div>
     </div>`;
 }
 
