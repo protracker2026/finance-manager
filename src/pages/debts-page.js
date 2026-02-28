@@ -155,7 +155,7 @@ export async function renderDebtsPage(container) {
             </div>
             <div class="form-group">
               <label class="form-label">วันที่เริ่มต้น</label>
-              <input type="date" class="form-input" id="debtStartDate" value="${Utils.today()}" required>
+              <input type="date" class="form-input" id="debtStartDate" value="${Utils.today().split('T')[0]}" required>
             </div>
             <div class="form-group">
               <label class="form-label">หมายเหตุ</label>
@@ -187,7 +187,7 @@ export async function renderDebtsPage(container) {
             </div>
             <div class="form-group">
               <label class="form-label">วันที่ชำระ</label>
-              <input type="date" class="form-input" id="paymentDate" value="${Utils.today()}" required>
+              <input type="date" class="form-input" id="paymentDate" value="${Utils.today().split('T')[0]}" required>
             </div>
           </div>
           <div class="form-group">
@@ -419,7 +419,7 @@ function openPaymentModal(debt, payment = null) {
     if (title) title.textContent = 'บันทึกการชำระ';
     paymentIdEl.value = '';
     document.getElementById('paymentAmount').value = debt.monthlyPayment || debt.minPayment || '';
-    document.getElementById('paymentDate').value = Utils.today();
+    document.getElementById('paymentDate').value = Utils.today().split('T')[0];
     document.getElementById('paymentNote').value = '';
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
