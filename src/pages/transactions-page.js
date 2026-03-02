@@ -1,6 +1,7 @@
 // Transactions Page
 import { TransactionModule } from '../modules/transactions.js';
 import { Utils } from '../modules/utils.js';
+import { AIModule } from '../modules/ai.js';
 
 let currentFilters = {};
 let currentDetailTxn = null;
@@ -94,6 +95,10 @@ export async function renderTransactionsPage(container) {
               <button type="button" class="tab-btn active" data-type="expense">รายจ่าย</button>
               <button type="button" class="tab-btn" data-type="income">รายรับ</button>
             </div>
+            <button type="button" id="aiVoiceBtn" class="btn btn-outline" style="width: 100%; margin-bottom: var(--space-md); border-color: var(--text-tertiary); display: flex; justify-content: center; align-items: center; gap: 8px;">
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+               <span>พูดเพื่อบันทึกรายการอัตโนมัติ (AI)</span>
+            </button>
             <input type="hidden" id="txnType" value="expense">
             <div class="form-group">
                 <label class="form-label">หมายเหตุ (ชื่อรายการ)</label>
@@ -239,6 +244,96 @@ function setupTransactionEvents() {
 
   // Open modal
   document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
+
+  // AI Voice Button Logic
+  const aiVoiceBtn = document.getElementById('aiVoiceBtn');
+  if (aiVoiceBtn) {
+    aiVoiceBtn.addEventListener('click', async () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        Utils.showToast('เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง', 'danger');
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'th-TH';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      const originalHtml = aiVoiceBtn.innerHTML;
+      const originalBorder = aiVoiceBtn.style.borderColor;
+
+      const setVoiceState = (state, text) => {
+        if (state === 'listening') {
+          aiVoiceBtn.innerHTML = `<span>🗣️ ${text}</span>`;
+          aiVoiceBtn.style.borderColor = 'var(--accent-info)';
+          aiVoiceBtn.style.color = 'var(--text-primary)';
+          aiVoiceBtn.style.background = 'rgba(29, 78, 216, 0.2)';
+        } else if (state === 'analyzing') {
+          aiVoiceBtn.innerHTML = `<span>⏳ ${text}</span>`;
+          aiVoiceBtn.style.borderColor = 'var(--accent-warning)';
+          aiVoiceBtn.style.color = 'var(--text-primary)';
+          aiVoiceBtn.style.background = 'rgba(180, 83, 9, 0.2)';
+        } else {
+          aiVoiceBtn.innerHTML = originalHtml;
+          aiVoiceBtn.style.borderColor = originalBorder;
+          aiVoiceBtn.style.color = 'inherit';
+          aiVoiceBtn.style.background = 'transparent';
+        }
+      };
+
+      recognition.onstart = () => {
+        setVoiceState('listening', 'กำลังฟัง...');
+      };
+
+      recognition.onresult = async (event) => {
+        const transcript = event.results[0][0].transcript;
+        setVoiceState('analyzing', `ประมวลผล: "${transcript}"`);
+
+        try {
+          const parsed = await AIModule.parseTransaction(transcript);
+          // Auto-fill fields
+          if (parsed.type) {
+            document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
+              b.classList.toggle('active', b.dataset.type === parsed.type);
+            });
+            document.getElementById('txnType').value = parsed.type;
+            await updateCategoryOptions(parsed.type);
+          }
+          if (parsed.amount) document.getElementById('txnAmount').value = parsed.amount;
+          if (parsed.note) document.getElementById('txnNote').value = parsed.note;
+
+          if (parsed.category) {
+            const catSelect = document.getElementById('txnCategory');
+            const exactOption = Array.from(catSelect.options).find(o => o.value === parsed.category || o.textContent.includes(parsed.category));
+            if (exactOption) {
+              catSelect.value = exactOption.value;
+            }
+          }
+
+          Utils.showToast(`AI จัดการข้อมูลสำเร็จ ✨`, 'success');
+          if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+          setVoiceState('reset');
+        } catch (error) {
+          console.error(error);
+          Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้', 'danger');
+          setVoiceState('reset');
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        Utils.showToast('เกิดข้อผิดพลาดในการฟังเสียง: ' + event.error, 'danger');
+        setVoiceState('reset');
+      };
+
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  }
 
   // Initialize Flatpickr
   if (typeof flatpickr !== 'undefined') {

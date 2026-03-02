@@ -8,3 +8,7 @@ Thumbs.db
 # Editor
 .vscode/
 *.swp
+
+# Backend
+server/.env
+server/node_modules/
