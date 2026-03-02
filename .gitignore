@@ -1,5 +1,4 @@
-# Firebase config (contains secrets, auto-generated during deploy)
-src/modules/firebase-config.js
+# Firebase configuration is public and needed for frontend deployments
 
 # OS files
 .DS_Store
