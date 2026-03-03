@@ -313,7 +313,9 @@ function setupTransactionEvents() {
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        Utils.showToast('เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง', 'danger');
+        // Fallback to text prompt if Speech API is completely unavailable
+        const text = prompt('เบราว์เซอร์นี้ไม่รองรับไมโครโฟน กรุณาพิมพ์ข้อความที่ต้องการให้ AI จัดการ (เช่น "กินข้าว 50 บาท"):');
+        if (text) processAudio(text);
         return;
       }
 
@@ -321,9 +323,12 @@ function setupTransactionEvents() {
       window._activeRecognition = recognition;
       window._activeTranscript = '';
 
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
       recognition.lang = 'th-TH';
       recognition.continuous = false; // Stops automatically when speaking ends
-      recognition.interimResults = true;
+      // iOS Safari has known bugs with interimResults
+      recognition.interimResults = !isIOS;
       recognition.maxAlternatives = 1;
 
       const originalHtml = aiVoiceBtn.innerHTML;
@@ -448,7 +453,12 @@ function setupTransactionEvents() {
         console.error('Speech recognition error', event.error);
 
         if (event.error !== 'aborted') {
-          Utils.showToast('เกิดข้อผิดพลาดในการฟังเสียง: ' + event.error, 'danger');
+          Utils.showToast('ไมค์ขัดข้อง: ' + event.error + ' (หากใช้ LINE/FB ให้เปิดด้วย Safari)', 'danger');
+          // Offer fallback if mic fails (common on iPhone)
+          setTimeout(() => {
+            const text = prompt('ไม่สามารถใช้ไมค์ได้ กรุณาพิมพ์ข้อความแทน (เช่น "ค่าไฟ 500"):');
+            if (text) processAudio(text);
+          }, 500);
         }
 
         if (window._activeRecognition === recognition) {
@@ -463,7 +473,10 @@ function setupTransactionEvents() {
         console.error('Mic start error:', err);
         window._activeRecognition = null;
         setVoiceState('reset');
-        Utils.showToast('ไม่สามารถเปิดใช้งานไมโครโฟนได้: ' + err.message, 'danger');
+
+        // Immediate fallback
+        const text = prompt('ไมค์ถูกบล็อก กรุณาพิมพ์ข้อความแทน:');
+        if (text) processAudio(text);
       }
     });
   }
