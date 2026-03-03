@@ -9,6 +9,22 @@ let currentCategoryView = null; // Track if we are viewing a category detail ful
 let cachedTxns = []; // Cache for event delegation
 let refreshHandler = null; // To avoid stacking event listeners
 
+// Global iOS Lifecycle Fix: Force reset mic state when returning to the app
+const resetMicHardware = () => {
+  if (window._activeRecognition) {
+    try { window._activeRecognition.abort(); } catch (e) { }
+    window._activeRecognition = null;
+  }
+  window._isVoiceProcessing = false;
+  // Trigger a global UI reset event
+  document.dispatchEvent(new CustomEvent('mic-lifecycle-reset'));
+};
+window.addEventListener('pageshow', resetMicHardware);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) resetMicHardware();
+});
+
+
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
   const { start, end } = Utils.getTodayRange();
@@ -318,6 +334,20 @@ function setupTransactionEvents() {
 
       const recognition = new SpeechRecognition();
       window._activeRecognition = recognition;
+
+      // iOS Lifecycle Fix: Reset if user leaves the tab
+      const handleVisibilityChange = () => {
+        if (document.hidden && window._activeRecognition === recognition) {
+          try {
+            recognition.abort(); // Stop immediately in background
+          } catch (e) { }
+          window._activeRecognition = null;
+          setVoiceState('reset');
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
+      window.addEventListener('blur', handleVisibilityChange, { once: true });
       window._activeTranscript = '';
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -350,6 +380,9 @@ function setupTransactionEvents() {
           aiVoiceBtn.style.background = 'transparent';
         }
       }
+
+      // Reset UI on lifecycle events
+      document.addEventListener('mic-lifecycle-reset', () => setVoiceState('reset'));
 
       window.processAudio = async (text) => {
         if (window._isVoiceProcessing) return;
@@ -481,6 +514,7 @@ function setupTransactionEvents() {
       };
 
       try {
+        if (isIOS) await new Promise(r => setTimeout(r, 150)); // Hardware breathe room
         recognition.start();
       } catch (err) {
         console.error('Mic start error:', err);
