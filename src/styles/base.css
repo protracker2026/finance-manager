@@ -415,7 +415,10 @@ a:hover {
     width: 90%;
     max-width: 560px;
     max-height: 90vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Content will scroll in body */
     transform: translateY(20px) scale(0.97);
     transition: transform var(--transition-base);
     box-shadow: var(--shadow-lg);
@@ -455,6 +458,9 @@ a:hover {
 
 .modal-body {
     padding: var(--space-md) var(--space-lg);
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-footer {
@@ -580,6 +586,7 @@ a:hover {
         height: 100%;
         max-height: 100%;
         border-radius: 0;
+        margin: 0;
     }
 }
 
