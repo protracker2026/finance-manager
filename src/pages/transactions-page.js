@@ -403,8 +403,15 @@ function setupTransactionEvents() {
             }
           }
 
-          Utils.showToast(`AI จัดการข้อมูลสำเร็จ ✨`, 'success');
           if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+
+          // Visual feedback on the button
+          if (aiVoiceBtn) {
+            aiVoiceBtn.classList.remove('success-flash');
+            void aiVoiceBtn.offsetWidth; // Trigger reflow
+            aiVoiceBtn.classList.add('success-flash');
+            setTimeout(() => aiVoiceBtn.classList.remove('success-flash'), 1500);
+          }
         } catch (error) {
           console.error('AI Processing Error:', error);
           Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้', 'danger');

@@ -1126,3 +1126,23 @@ details[open] .toggle-icon {
     user-select: none;
     pointer-events: none;
 }
+
+.success-flash {
+    animation: borderPulseGreen 1.2s ease-out;
+}
+
+@keyframes borderPulseGreen {
+    0% {
+        box-shadow: 0 0 0 0px rgba(34, 197, 94, 0.8);
+        border-color: #22c55e;
+    }
+
+    30% {
+        box-shadow: 0 0 0 15px rgba(34, 197, 94, 0);
+        border-color: #22c55e;
+    }
+
+    100% {
+        box-shadow: 0 0 0 0px rgba(34, 197, 94, 0);
+    }
+}
