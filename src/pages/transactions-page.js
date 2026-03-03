@@ -16,25 +16,41 @@ const resetMicHardware = () => {
     try { window._activeRecognition.abort(); } catch (e) { }
     window._activeRecognition = null;
   }
+  // iOS Fix: Explicitly stop all MediaStream tracks to release hardware mic
+  // This is what actually makes the orange dot disappear on iOS
+  if (window._activeMicStream) {
+    console.log('[DEBUG] Stopping mic stream tracks to release hardware...');
+    try {
+      window._activeMicStream.getTracks().forEach(track => {
+        track.stop();
+        console.log('[DEBUG] Track stopped:', track.label, track.readyState);
+      });
+    } catch (e) { console.warn('Track stop failed:', e); }
+    window._activeMicStream = null;
+  }
   window._isVoiceProcessing = false;
   document.dispatchEvent(new CustomEvent('mic-lifecycle-reset'));
 };
 
 // iOS requires a "user gesture" to unlock or resume audio context if Safari suspended it
+let _iosAudioCtx = null;
 const iosReviveAudio = () => {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   if (!isIOS) return;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
-      const ctx = new AudioContext();
-      if (ctx.state === 'suspended') ctx.resume();
+      // Reuse or create a single AudioContext to avoid orphaned sessions
+      if (!_iosAudioCtx || _iosAudioCtx.state === 'closed') {
+        _iosAudioCtx = new AudioContext();
+      }
+      if (_iosAudioCtx.state === 'suspended') _iosAudioCtx.resume();
       // Brief silent oscillator to wake up the audio session
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const osc = _iosAudioCtx.createOscillator();
+      const gain = _iosAudioCtx.createGain();
       gain.gain.value = 0;
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(_iosAudioCtx.destination);
       osc.start(0);
       osc.stop(0.001);
     }
@@ -544,6 +560,13 @@ function setupTransactionEvents() {
           try { recognition.abort(); } catch (e) { }
         }
 
+        // iOS Fix: Stop mic stream tracks immediately when recognition ends
+        // This is the key to making the orange dot disappear
+        if (window._activeMicStream) {
+          window._activeMicStream.getTracks().forEach(t => t.stop());
+          window._activeMicStream = null;
+        }
+
         if (window._activeRecognition === recognition) {
           window._activeRecognition = null;
           if (window._activeTranscript && !window._isVoiceProcessing) {
@@ -557,6 +580,11 @@ function setupTransactionEvents() {
       recognition.onerror = (event) => {
         if (silenceTimer) clearTimeout(silenceTimer);
         console.error('Speech recognition error', event.error);
+        // Stop mic stream on error too
+        if (window._activeMicStream) {
+          window._activeMicStream.getTracks().forEach(t => t.stop());
+          window._activeMicStream = null;
+        }
         if (window._activeRecognition === recognition) {
           window._activeRecognition = null;
           setVoiceState('reset');
@@ -565,6 +593,17 @@ function setupTransactionEvents() {
       };
       try {
         if (isIOS) await new Promise(r => setTimeout(r, 150));
+        // iOS Fix: Acquire mic stream via getUserMedia BEFORE starting recognition
+        // This gives us explicit control over the hardware mic to stop it later
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            window._activeMicStream = stream;
+            console.log('[DEBUG] Mic stream acquired, tracks:', stream.getTracks().length);
+          } catch (micErr) {
+            console.warn('[DEBUG] getUserMedia failed (non-fatal):', micErr);
+          }
+        }
         recognition.start();
       } catch (err) {
         console.error('Mic start error:', err);
