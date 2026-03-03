@@ -209,28 +209,46 @@ export const db = new FirebaseDB();
 
 export async function seedCategories() {
     await db.ensureInit();
-    const count = await db.categories.count();
-    if (count === 0) {
-        await db.categories.bulkAdd([
-            // รายรับ
-            { name: 'เงินเดือน', type: 'income', icon: '💰' },
-            { name: 'โบนัส', type: 'income', icon: '🎁' },
-            { name: 'งานฟรีแลนซ์', type: 'income', icon: '💻' },
-            { name: 'ดอกเบี้ยรับ', type: 'income', icon: '🏦' },
-            { name: 'รายได้อื่นๆ', type: 'income', icon: '📈' },
-            // รายจ่าย
-            { name: 'อาหาร', type: 'expense', icon: '🍜' },
-            { name: 'ขนม/ของหวาน', type: 'expense', icon: '🍰' },
-            { name: 'ค่าเดินทาง', type: 'expense', icon: '🚗' },
-            { name: 'ค่าที่พัก', type: 'expense', icon: '🏠' },
-            { name: 'ค่าน้ำ-ไฟ', type: 'expense', icon: '💡' },
-            { name: 'ค่ามือถือ/เน็ต', type: 'expense', icon: '📱' },
-            { name: 'ค่ารักษาพยาบาล', type: 'expense', icon: '🏥' },
-            { name: 'ช้อปปิ้ง', type: 'expense', icon: '🛍️' },
-            { name: 'ความบันเทิง', type: 'expense', icon: '🎬' },
-            { name: 'การศึกษา', type: 'expense', icon: '📚' },
-            { name: 'ชำระหนี้', type: 'expense', icon: '💳' },
-            { name: 'อื่นๆ', type: 'expense', icon: '📋' },
-        ]);
+
+    // Check if user already completed the initial setup phase
+    if (db.currentUid && db.dbRef) {
+        const configRef = db.database.ref(`users/${db.currentUid}/config`);
+        const configSnap = await configRef.once('value');
+        const configData = configSnap.val() || {};
+
+        if (configData.hasInitConfig) {
+            // User has been initialized before. Even if categories count is 0,
+            // they may have intentionally deleted them. Do NOT re-seed.
+            return;
+        }
+
+        // Proceed to check count and seed since this is their first time
+        const count = await db.categories.count();
+        if (count === 0) {
+            await db.categories.bulkAdd([
+                // รายรับ
+                { name: 'เงินเดือน', type: 'income', icon: '💰' },
+                { name: 'โบนัส', type: 'income', icon: '🎁' },
+                { name: 'งานฟรีแลนซ์', type: 'income', icon: '💻' },
+                { name: 'ดอกเบี้ยรับ', type: 'income', icon: '🏦' },
+                { name: 'รายได้อื่นๆ', type: 'income', icon: '📈' },
+                // รายจ่าย
+                { name: 'อาหาร', type: 'expense', icon: '🍜' },
+                { name: 'ขนม/ของหวาน', type: 'expense', icon: '🍰' },
+                { name: 'ค่าเดินทาง', type: 'expense', icon: '🚗' },
+                { name: 'ค่าที่พัก', type: 'expense', icon: '🏠' },
+                { name: 'ค่าน้ำ-ไฟ', type: 'expense', icon: '💡' },
+                { name: 'ค่ามือถือ/เน็ต', type: 'expense', icon: '📱' },
+                { name: 'ค่ารักษาพยาบาล', type: 'expense', icon: '🏥' },
+                { name: 'ช้อปปิ้ง', type: 'expense', icon: '🛍️' },
+                { name: 'ความบันเทิง', type: 'expense', icon: '🎬' },
+                { name: 'การศึกษา', type: 'expense', icon: '📚' },
+                { name: 'ชำระหนี้', type: 'expense', icon: '💳' },
+                { name: 'อื่นๆ', type: 'expense', icon: '📋' },
+            ]);
+
+            // Mark user as initialized so we don't seed again
+            await configRef.update({ hasInitConfig: true });
+        }
     }
 }

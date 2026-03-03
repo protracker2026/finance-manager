@@ -291,21 +291,25 @@ function setupTransactionEvents() {
   const aiVoiceBtn = document.getElementById('aiVoiceBtn');
   if (aiVoiceBtn) {
     aiVoiceBtn.addEventListener('click', async () => {
-      // If currently listening, stop IMMEDIATELY (abort kills mic instantly)
+      if (window._isVoiceProcessing) return;
+
+      // If already listening, stop to process
       if (window._activeRecognition) {
         const textToProcess = window._activeTranscript;
-        window._activeRecognition.abort();
+        try {
+          // Use stop instead of abort to gracefully release hardware mic
+          window._activeRecognition.stop();
+        } catch (e) { }
+
         window._activeRecognition = null;
 
-        if (textToProcess && !window._isVoiceProcessing) {
+        if (textToProcess) {
           processAudio(textToProcess);
         } else {
           setVoiceState('reset');
         }
         return;
       }
-
-      if (window._isVoiceProcessing) return;
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -318,14 +322,15 @@ function setupTransactionEvents() {
       window._activeTranscript = '';
 
       recognition.lang = 'th-TH';
-      recognition.continuous = false; // Stops automatically when user stops speaking
+      recognition.continuous = false; // Stops automatically when speaking ends
       recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
       const originalHtml = aiVoiceBtn.innerHTML;
       const originalBorder = aiVoiceBtn.style.borderColor;
 
-      const setVoiceState = (state, text) => {
+      function setVoiceState(state, text) {
+        if (!aiVoiceBtn) return;
         if (state === 'listening') {
           aiVoiceBtn.innerHTML = `<span>🗣️ ${text}</span>`;
           aiVoiceBtn.style.borderColor = 'var(--accent-info)';
@@ -342,14 +347,11 @@ function setupTransactionEvents() {
           aiVoiceBtn.style.color = 'inherit';
           aiVoiceBtn.style.background = 'transparent';
         }
-      };
+      }
 
-      const processAudio = async (text) => {
+      window.processAudio = async (text) => {
         if (window._isVoiceProcessing) return;
         window._isVoiceProcessing = true;
-
-        // Ensure mic is fully shut off
-        try { recognition.abort(); } catch (e) { }
 
         setVoiceState('analyzing', `ประมวลผล: "${text}"`);
 
@@ -398,18 +400,15 @@ function setupTransactionEvents() {
 
           Utils.showToast(`AI จัดการข้อมูลสำเร็จ ✨`, 'success');
           if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-          setVoiceState('reset');
         } catch (error) {
-          console.error(error);
+          console.error('AI Processing Error:', error);
           Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้', 'danger');
-          setVoiceState('reset');
         } finally {
+          setVoiceState('reset');
           window._isVoiceProcessing = false;
-          window._activeRecognition = null;
         }
       };
 
-      // Set up event handlers
       recognition.onstart = () => {
         setVoiceState('listening', 'กำลังฟัง... (พูดเสร็จกดปุ่มเพื่อจบ)');
       };
@@ -427,37 +426,44 @@ function setupTransactionEvents() {
         }
 
         const fullTranscript = (currentFinal + currentInterim).trim();
-
         if (fullTranscript) {
           window._activeTranscript = fullTranscript;
-          setVoiceState('listening', `🗣️ ${fullTranscript} (กดเพื่อส่งทันที)`);
+          setVoiceState('listening', `🗣️ ${fullTranscript} (กดอีกครั้งเพื่อส่ง)`);
         }
       };
 
       recognition.onend = () => {
-        window._activeRecognition = null;
-        if (window._activeTranscript && !window._isVoiceProcessing) {
-          processAudio(window._activeTranscript);
-        } else if (!window._isVoiceProcessing) {
-          setVoiceState('reset');
+        // Only automatically process if we were still the active recognition
+        if (window._activeRecognition === recognition) {
+          window._activeRecognition = null;
+          if (window._activeTranscript && !window._isVoiceProcessing) {
+            processAudio(window._activeTranscript);
+          } else if (!window._isVoiceProcessing) {
+            setVoiceState('reset');
+          }
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error', event.error);
 
-        // If it's just 'aborted', ignore it since we handled it gracefully
         if (event.error !== 'aborted') {
           Utils.showToast('เกิดข้อผิดพลาดในการฟังเสียง: ' + event.error, 'danger');
         }
-        setVoiceState('reset');
-        window._activeRecognition = null;
+
+        if (window._activeRecognition === recognition) {
+          window._activeRecognition = null;
+          setVoiceState('reset');
+        }
       };
 
       try {
         recognition.start();
       } catch (err) {
-        console.error(err);
+        console.error('Mic start error:', err);
+        window._activeRecognition = null;
+        setVoiceState('reset');
+        Utils.showToast('ไม่สามารถเปิดใช้งานไมโครโฟนได้: ' + err.message, 'danger');
       }
     });
   }
