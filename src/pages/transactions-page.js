@@ -46,28 +46,38 @@ export async function renderTransactionsPage(container) {
 
 
     <!-- Filters -->
-    <div class="filter-bar">
-      <div class="filter-group date-range-group">
-        <input type="date" class="date-no-border" id="filterStartDate" value="${start}">
-        <span>-</span>
-        <input type="date" class="date-no-border" id="filterEndDate" value="${end}">
+    <details style="margin-bottom: 20px; background: var(--bg-card); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color);">
+      <summary style="padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; color: var(--text-secondary); list-style: none; outline: none; user-select: none;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          <span>ตัวกรอง และค้นหา...</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </summary>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 15px 15px 15px;">
+        <div style="height: 1px; background: var(--border-color); margin: 0 -15px 5px -15px;"></div>
+        <div class="date-range-group" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0;">
+          <input type="date" class="date-no-border" id="filterStartDate" value="${start}" style="text-align: center; flex: 1;">
+          <span style="padding: 0 10px; color: var(--text-tertiary); font-weight: bold;">-</span>
+          <input type="date" class="date-no-border" id="filterEndDate" value="${end}" style="text-align: center; flex: 1;">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <select class="form-select" id="filterType" style="width: 100%;">
+            <option value="">ทุกประเภท</option>
+            <option value="income">รายรับ</option>
+            <option value="expense">รายจ่าย</option>
+          </select>
+          <select class="form-select" id="filterCategory" style="width: 100%;">
+            <option value="">ทุกหมวดหมู่</option>
+            ${categories.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="search-input" style="width: 100%;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-input" id="filterSearch" placeholder="ค้นหา..." style="padding-left:36px; width: 100%;">
+        </div>
       </div>
-      <div class="filter-group selects">
-        <select class="form-select" id="filterType" style="width:auto;min-width:120px">
-          <option value="">ทุกประเภท</option>
-          <option value="income">รายรับ</option>
-          <option value="expense">รายจ่าย</option>
-        </select>
-        <select class="form-select" id="filterCategory" style="width:auto;min-width:140px">
-          <option value="">ทุกหมวดหมู่</option>
-          ${categories.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('')}
-        </select>
-      </div>
-      <div class="search-input" style="flex:1;min-width:150px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" class="form-input" id="filterSearch" placeholder="ค้นหา..." style="padding-left:36px">
-      </div>
-    </div>
+    </details>
 
     <!-- Table -->
     <!-- Collapsible Transaction List -->
@@ -123,7 +133,13 @@ export async function renderTransactionsPage(container) {
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">หมวดหมู่</label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="form-label" style="margin-bottom: 0;">หมวดหมู่</label>
+                <button type="button" class="btn btn-sm btn-outline" id="manageCategoryBtn" style="padding: 2px 8px; font-size: 11px; border-radius: 4px; border: none; background: rgba(255,255,255,0.05);">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                   จัดการ
+                </button>
+              </div>
               <select class="form-select" id="txnCategory" required>
                 <option value="">เลือกหมวดหมู่</option>
               </select>
@@ -167,6 +183,32 @@ export async function renderTransactionsPage(container) {
         </div>
         <div class="modal-body" id="categoryDetailBody" style="flex:1; overflow-y:auto; padding-bottom:100px;">
           <!-- Content injected via JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Categories Modal -->
+    <div class="modal-overlay" id="manageCategoryModal" style="z-index: 1200;">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>จัดการหมวดหมู่</h3>
+          <button class="modal-close" id="manageCategoryModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="tabs" id="manageCatTypeTabs" style="margin-bottom: 10px;">
+            <button type="button" class="tab-btn active" data-type="expense">รายจ่าย</button>
+            <button type="button" class="tab-btn" data-type="income">รายรับ</button>
+          </div>
+          
+          <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+             <input type="text" id="newCatIconi" class="form-input" placeholder="🍔" style="width: 50px; text-align: center;">
+             <input type="text" id="newCatName" class="form-input" placeholder="ชื่อหมวดหมู่ใหม่..." style="flex: 1;">
+             <button class="btn btn-primary" id="addNewCatBtn">+</button>
+          </div>
+
+          <div id="catListContainer" style="max-height: 60vh; min-height: 250px; overflow-y: auto; background: var(--bg-tertiary); border-radius: var(--border-radius); padding: 5px;">
+             <!-- Categories will be injected here -->
+          </div>
         </div>
       </div>
     </div>
@@ -249,6 +291,12 @@ function setupTransactionEvents() {
   const aiVoiceBtn = document.getElementById('aiVoiceBtn');
   if (aiVoiceBtn) {
     aiVoiceBtn.addEventListener('click', async () => {
+      if (window._activeRecognition) {
+        window._activeRecognition.stop();
+        return;
+      }
+      if (window._isVoiceProcessing) return;
+
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         Utils.showToast('เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง', 'danger');
@@ -256,8 +304,10 @@ function setupTransactionEvents() {
       }
 
       const recognition = new SpeechRecognition();
+      window._activeRecognition = recognition;
       recognition.lang = 'th-TH';
-      recognition.interimResults = false;
+      recognition.continuous = false; // Let built-in browser detection know when you stop speaking
+      recognition.interimResults = true;
       recognition.maxAlternatives = 1;
 
       const originalHtml = aiVoiceBtn.innerHTML;
@@ -282,16 +332,16 @@ function setupTransactionEvents() {
         }
       };
 
-      recognition.onstart = () => {
-        setVoiceState('listening', 'กำลังฟัง...');
-      };
+      let finalTranscript = '';
 
-      recognition.onresult = async (event) => {
-        const transcript = event.results[0][0].transcript;
-        setVoiceState('analyzing', `ประมวลผล: "${transcript}"`);
+      const processAudio = async (text) => {
+        if (window._isVoiceProcessing) return;
+        window._isVoiceProcessing = true;
+        recognition.stop();
+        setVoiceState('analyzing', `ประมวลผล: "${text}"`);
 
         try {
-          const parsed = await AIModule.parseTransaction(transcript);
+          const parsed = await AIModule.parseTransaction(text);
           // Auto-fill fields
           if (parsed.type) {
             document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
@@ -301,11 +351,33 @@ function setupTransactionEvents() {
             await updateCategoryOptions(parsed.type);
           }
           if (parsed.amount) document.getElementById('txnAmount').value = parsed.amount;
+
+          if (parsed.quantity) {
+            document.getElementById('txnQuantity').value = parsed.quantity;
+          } else {
+            document.getElementById('txnQuantity').value = 1;
+          }
+
+          if (parsed.unitPrice) {
+            document.getElementById('txnUnitPrice').value = parsed.unitPrice;
+          } else {
+            const currentQty = parseFloat(document.getElementById('txnQuantity').value) || 1;
+            if (currentQty === 1 && parsed.amount) {
+              document.getElementById('txnUnitPrice').value = parsed.amount;
+            } else {
+              document.getElementById('txnUnitPrice').value = '';
+            }
+          }
           if (parsed.note) document.getElementById('txnNote').value = parsed.note;
 
           if (parsed.category) {
             const catSelect = document.getElementById('txnCategory');
-            const exactOption = Array.from(catSelect.options).find(o => o.value === parsed.category || o.textContent.includes(parsed.category));
+            const exactOption = Array.from(catSelect.options).find(o => {
+              if (!o.value) return false;
+              return o.value === parsed.category ||
+                o.textContent.includes(parsed.category) ||
+                parsed.category.includes(o.value);
+            });
             if (exactOption) {
               catSelect.value = exactOption.value;
             }
@@ -318,6 +390,42 @@ function setupTransactionEvents() {
           console.error(error);
           Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้', 'danger');
           setVoiceState('reset');
+        } finally {
+          window._isVoiceProcessing = false;
+          window._activeRecognition = null;
+        }
+      };
+
+      recognition.onstart = () => {
+        setVoiceState('listening', 'กำลังฟัง... (พูดเสร็จกดปุ่มเพื่อจบ)');
+      };
+
+      recognition.onresult = (event) => {
+        let currentFinal = '';
+        let currentInterim = '';
+
+        for (let i = 0; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            currentFinal += event.results[i][0].transcript + ' ';
+          } else {
+            currentInterim += event.results[i][0].transcript;
+          }
+        }
+
+        const fullTranscript = (currentFinal + currentInterim).trim();
+
+        if (fullTranscript) {
+          finalTranscript = fullTranscript;
+          setVoiceState('listening', `🗣️ ${fullTranscript} (กดเพื่อส่งทันที)`);
+        }
+      };
+
+      recognition.onend = () => {
+        if (finalTranscript && !window._isVoiceProcessing) {
+          processAudio(finalTranscript);
+        } else if (!window._isVoiceProcessing) {
+          setVoiceState('reset');
+          window._activeRecognition = null;
         }
       };
 
@@ -522,6 +630,122 @@ function setupTransactionEvents() {
   };
   document.getElementById('txnUnitPrice').addEventListener('input', calculateTotal);
   document.getElementById('txnQuantity').addEventListener('input', calculateTotal);
+
+  // Manage Categories UI Logic
+  const manageModal = document.getElementById('manageCategoryModal');
+  let currentManageType = 'expense';
+
+  document.getElementById('manageCategoryBtn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('txnType').value;
+    currentManageType = document.getElementById('txnType').value || 'expense';
+
+    // Sync tabs
+    document.querySelectorAll('#manageCatTypeTabs .tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === currentManageType);
+    });
+
+    refreshManageCategoryList();
+    manageModal.classList.add('active');
+  });
+
+  document.getElementById('manageCategoryModalClose')?.addEventListener('click', () => {
+    manageModal.classList.remove('active');
+    updateCategoryOptions(document.getElementById('txnType').value); // Re-sync dropdown
+  });
+
+  document.querySelectorAll('#manageCatTypeTabs .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#manageCatTypeTabs .tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentManageType = btn.dataset.type;
+      refreshManageCategoryList();
+    });
+  });
+
+  document.getElementById('addNewCatBtn')?.addEventListener('click', async () => {
+    const nameInput = document.getElementById('newCatName');
+    const iconInput = document.getElementById('newCatIconi');
+    const name = nameInput.value.trim();
+    const icon = iconInput.value.trim();
+
+    if (!name) {
+      Utils.showToast('กรุณาระบุชื่อหมวดหมู่', 'danger');
+      return;
+    }
+
+    try {
+      await TransactionModule.addCategory({ name, icon, type: currentManageType });
+      nameInput.value = '';
+      iconInput.value = '';
+      Utils.showToast('เพิ่มหมวดหมู่สำเร็จ', 'success');
+      refreshManageCategoryList();
+      updateCategoryOptions(document.getElementById('txnType').value);
+    } catch (e) {
+      console.error(e);
+      Utils.showToast('เพิ่มหมวดหมู่ไม่สำเร็จ', 'danger');
+    }
+  });
+
+  async function refreshManageCategoryList() {
+    const listContainer = document.getElementById('catListContainer');
+    const cats = await TransactionModule.getCategories(currentManageType);
+
+    if (cats.length === 0) {
+      listContainer.innerHTML = '<div style="padding:10px; text-align:center; color:var(--text-tertiary); font-size:12px;">ไม่มีหมวดหมู่</div>';
+      return;
+    }
+
+    listContainer.innerHTML = cats.map(c => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--bg-card); margin-bottom:4px; border-radius:4px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:16px;">${c.icon || '📝'}</span>
+          <span>${c.name}</span>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="btn btn-sm btn-outline edit-cat-btn" data-id="${c.id}" data-name="${c.name}" data-icon="${c.icon || ''}" style="padding:4px 8px; font-size:11px; border:none; background:rgba(255,255,255,0.05);">แก้ไข</button>
+          <button type="button" class="btn btn-sm btn-danger delete-cat-btn" data-id="${c.id}" style="padding:4px 8px; font-size:11px;">ลบ</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Attach edit listeners
+    listContainer.querySelectorAll('.edit-cat-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = parseInt(e.target.dataset.id);
+        const oldName = e.target.dataset.name;
+        const oldIcon = e.target.dataset.icon;
+
+        const newName = prompt('แก้ไขชื่อหมวดหมู่ (หรือเว้นว่างเพื่อยกเลิก):', oldName);
+        if (!newName || newName.trim() === '') return;
+
+        const newIcon = prompt('แก้ไขไอคอน/อีโมจิ:', oldIcon);
+
+        try {
+          await TransactionModule.updateCategory(id, { name: newName.trim(), icon: newIcon ? newIcon.trim() : '' });
+          Utils.showToast('อัปเดตหมวดหมู่สำเร็จ', 'success');
+          refreshManageCategoryList();
+          updateCategoryOptions(document.getElementById('txnType').value);
+        } catch (err) {
+          console.error(err);
+          Utils.showToast('อัปเดตไม่สำเร็จ', 'danger');
+        }
+      });
+    });
+
+    // Attach delete listeners
+    listContainer.querySelectorAll('.delete-cat-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = parseInt(e.target.dataset.id);
+        if (confirm('ยืนยันการลบหมวดหมู่นี้? (รายการเก่าจะไม่ถูกอัปเดตอัตโนมัติ)')) {
+          await TransactionModule.deleteCategory(id);
+          Utils.showToast('ลบหมวดหมู่สำเร็จ', 'success');
+          refreshManageCategoryList();
+          updateCategoryOptions(document.getElementById('txnType').value);
+        }
+      });
+    });
+  }
 }
 
 function debounce(fn, ms) {
@@ -675,7 +899,7 @@ function openTxnDetail(txn) {
         ${(txn.quantity && txn.quantity > 1) ? `
         <div class="debt-detail-item" style="flex-direction:row; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
            <span class="label">รายละเอียดราคา</span>
-           <span class="value" style="font-size:var(--font-size-xs);">${txn.quantity} หน่วย x ${Utils.formatCurrency(txn.unitPrice || (txn.amount / txn.quantity))}</span>
+           <span class="value" style="font-size:var(--font-size-xs);">${txn.quantity} หน่วย ${txn.unitPrice ? `x ${Utils.formatCurrency(txn.unitPrice)}` : '(หลายราคา)'}</span>
         </div>
         ` : ''}
 
@@ -1075,7 +1299,7 @@ async function refreshTransactions() {
               <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
               <td data-label="หมวดหมู่">
                   ${t.note ? t.note : t.category}
-                  ${(t.quantity && t.quantity > 1) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice || (t.amount / t.quantity))}</span>` : ''}
+                  ${(t.quantity && t.quantity > 1 && t.unitPrice) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice)}</span>` : ''}
               </td>
               <td data-label="หมายเหตุ">${t.note || '-'}</td>
               <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">

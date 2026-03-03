@@ -98,6 +98,12 @@ export const TransactionModule = {
         return result;
     },
 
+    async updateCategory(id, data) {
+        const result = await db.categories.update(id, data);
+        SyncModule.notifyDataChange();
+        return result;
+    },
+
     async deleteCategory(id) {
         const result = await db.categories.delete(id);
         SyncModule.notifyDataChange();
