@@ -12,16 +12,46 @@ let refreshHandler = null; // To avoid stacking event listeners
 // Global iOS Lifecycle Fix: Force reset mic state when returning to the app
 const resetMicHardware = () => {
   if (window._activeRecognition) {
+    console.log('[DEBUG] Force aborting active recognition for recovery...');
     try { window._activeRecognition.abort(); } catch (e) { }
     window._activeRecognition = null;
   }
   window._isVoiceProcessing = false;
-  // Trigger a global UI reset event
   document.dispatchEvent(new CustomEvent('mic-lifecycle-reset'));
 };
+
+// iOS requires a "user gesture" to unlock or resume audio context if Safari suspended it
+const iosReviveAudio = () => {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if (!isIOS) return;
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const ctx = new AudioContext();
+      if (ctx.state === 'suspended') ctx.resume();
+      // Brief silent oscillator to wake up the audio session
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(0);
+      osc.stop(0.001);
+    }
+  } catch (e) {
+    console.warn('Audio revival failed:', e);
+  }
+};
+
 window.addEventListener('pageshow', resetMicHardware);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) resetMicHardware();
+  // If the app is hiding, ABORT immediately to prevent Safari from freezing the mic session
+  if (document.hidden) {
+    resetMicHardware();
+  } else {
+    // Returning to foreground
+    resetMicHardware();
+  }
 });
 
 
@@ -445,6 +475,9 @@ function setupTransactionEvents() {
 
   if (aiVoiceBtn) {
     aiVoiceBtn.addEventListener('click', async () => {
+      // Step 1: Kickstart audio session (Crucial for iOS Safari after backgrounding)
+      iosReviveAudio();
+
       if (window._isVoiceProcessing) return;
       if (window._activeRecognition) {
         const text = window._activeTranscript;
