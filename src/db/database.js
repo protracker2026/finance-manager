@@ -220,6 +220,7 @@ export async function seedCategories() {
             { name: 'รายได้อื่นๆ', type: 'income', icon: '📈' },
             // รายจ่าย
             { name: 'อาหาร', type: 'expense', icon: '🍜' },
+            { name: 'ขนม/ของหวาน', type: 'expense', icon: '🍰' },
             { name: 'ค่าเดินทาง', type: 'expense', icon: '🚗' },
             { name: 'ค่าที่พัก', type: 'expense', icon: '🏠' },
             { name: 'ค่าน้ำ-ไฟ', type: 'expense', icon: '💡' },

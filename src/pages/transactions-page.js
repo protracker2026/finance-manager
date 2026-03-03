@@ -290,25 +290,42 @@ function setupTransactionEvents() {
   // AI Voice Button Logic
   const aiVoiceBtn = document.getElementById('aiVoiceBtn');
   if (aiVoiceBtn) {
+    if (!window._globalSpeechRec) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        window._globalSpeechRec = new SpeechRecognition();
+        window._globalSpeechRec.lang = 'th-TH';
+        window._globalSpeechRec.continuous = false; // Stops automatically when user stops speaking
+        window._globalSpeechRec.interimResults = true;
+        window._globalSpeechRec.maxAlternatives = 1;
+      }
+    }
+
     aiVoiceBtn.addEventListener('click', async () => {
+      // If currently listening, stop IMMEDIATELY (abort kills mic instantly)
       if (window._activeRecognition) {
-        window._activeRecognition.stop();
+        const textToProcess = window._activeTranscript;
+        window._activeRecognition.abort();
+        window._activeRecognition = null;
+
+        if (textToProcess && !window._isVoiceProcessing) {
+          processAudio(textToProcess);
+        } else {
+          setVoiceState('reset');
+        }
         return;
       }
+
       if (window._isVoiceProcessing) return;
 
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
+      if (!window._globalSpeechRec) {
         Utils.showToast('เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง', 'danger');
         return;
       }
 
-      const recognition = new SpeechRecognition();
+      const recognition = window._globalSpeechRec;
       window._activeRecognition = recognition;
-      recognition.lang = 'th-TH';
-      recognition.continuous = false; // Let built-in browser detection know when you stop speaking
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
+      window._activeTranscript = '';
 
       const originalHtml = aiVoiceBtn.innerHTML;
       const originalBorder = aiVoiceBtn.style.borderColor;
@@ -332,12 +349,13 @@ function setupTransactionEvents() {
         }
       };
 
-      let finalTranscript = '';
-
       const processAudio = async (text) => {
         if (window._isVoiceProcessing) return;
         window._isVoiceProcessing = true;
-        recognition.stop();
+
+        // Ensure mic is fully shut off
+        try { recognition.abort(); } catch (e) { }
+
         setVoiceState('analyzing', `ประมวลผล: "${text}"`);
 
         try {
@@ -396,6 +414,7 @@ function setupTransactionEvents() {
         }
       };
 
+      // Set up event handlers
       recognition.onstart = () => {
         setVoiceState('listening', 'กำลังฟัง... (พูดเสร็จกดปุ่มเพื่อจบ)');
       };
@@ -415,24 +434,29 @@ function setupTransactionEvents() {
         const fullTranscript = (currentFinal + currentInterim).trim();
 
         if (fullTranscript) {
-          finalTranscript = fullTranscript;
+          window._activeTranscript = fullTranscript;
           setVoiceState('listening', `🗣️ ${fullTranscript} (กดเพื่อส่งทันที)`);
         }
       };
 
       recognition.onend = () => {
-        if (finalTranscript && !window._isVoiceProcessing) {
-          processAudio(finalTranscript);
+        window._activeRecognition = null;
+        if (window._activeTranscript && !window._isVoiceProcessing) {
+          processAudio(window._activeTranscript);
         } else if (!window._isVoiceProcessing) {
           setVoiceState('reset');
-          window._activeRecognition = null;
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-        Utils.showToast('เกิดข้อผิดพลาดในการฟังเสียง: ' + event.error, 'danger');
+
+        // If it's just 'aborted', ignore it since we handled it gracefully
+        if (event.error !== 'aborted') {
+          Utils.showToast('เกิดข้อผิดพลาดในการฟังเสียง: ' + event.error, 'danger');
+        }
         setVoiceState('reset');
+        window._activeRecognition = null;
       };
 
       try {
@@ -712,7 +736,7 @@ function setupTransactionEvents() {
     // Attach edit listeners
     listContainer.querySelectorAll('.edit-cat-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const id = parseInt(e.target.dataset.id);
+        const id = e.target.dataset.id;
         const oldName = e.target.dataset.name;
         const oldIcon = e.target.dataset.icon;
 
@@ -736,7 +760,7 @@ function setupTransactionEvents() {
     // Attach delete listeners
     listContainer.querySelectorAll('.delete-cat-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const id = parseInt(e.target.dataset.id);
+        const id = e.target.dataset.id;
         if (confirm('ยืนยันการลบหมวดหมู่นี้? (รายการเก่าจะไม่ถูกอัปเดตอัตโนมัติ)')) {
           await TransactionModule.deleteCategory(id);
           Utils.showToast('ลบหมวดหมู่สำเร็จ', 'success');
