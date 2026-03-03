@@ -470,6 +470,7 @@ function setupTransactionEvents() {
     } finally {
       setVoiceState('reset');
       window._isVoiceProcessing = false;
+      resetMicHardware(); // Ensure hardware is released after processing
     }
   };
 
@@ -481,8 +482,10 @@ function setupTransactionEvents() {
       if (window._isVoiceProcessing) return;
       if (window._activeRecognition) {
         const text = window._activeTranscript;
-        try { window._activeRecognition.stop(); } catch (e) { }
+        console.log('[DEBUG] Manual stop - Aborting recognition');
+        try { window._activeRecognition.abort(); } catch (e) { }
         window._activeRecognition = null;
+        resetMicHardware(); // Immediate hardware cleanup for iOS
         if (text) processAudio(text);
         else setVoiceState('reset');
         return;
@@ -524,23 +527,40 @@ function setupTransactionEvents() {
         if (fullTranscript) {
           window._activeTranscript = fullTranscript;
           setVoiceState('listening', `🗣️ ${fullTranscript}`);
+          // Auto-stop after silence
           silenceTimer = setTimeout(() => {
-            if (window._activeRecognition === recognition) recognition.stop();
-          }, 900);
+            if (window._activeRecognition === recognition) {
+              console.log('[DEBUG] STT Silence timeout - Stopping recognition');
+              try { recognition.stop(); } catch (e) { }
+            }
+          }, isIOS ? 800 : 900); // Slightly faster on iOS
         }
       };
       recognition.onend = () => {
+        if (silenceTimer) clearTimeout(silenceTimer);
+
+        // iOS Safari Cleanup Fix: Ensure the session is officially discharged
+        if (isIOS) {
+          try { recognition.abort(); } catch (e) { }
+        }
+
         if (window._activeRecognition === recognition) {
           window._activeRecognition = null;
-          if (window._activeTranscript && !window._isVoiceProcessing) processAudio(window._activeTranscript);
-          else if (!window._isVoiceProcessing) setVoiceState('reset');
+          if (window._activeTranscript && !window._isVoiceProcessing) {
+            processAudio(window._activeTranscript);
+          } else if (!window._isVoiceProcessing) {
+            setVoiceState('reset');
+            resetMicHardware(); // Full hardware reset if nothing to process
+          }
         }
       };
       recognition.onerror = (event) => {
+        if (silenceTimer) clearTimeout(silenceTimer);
         console.error('Speech recognition error', event.error);
         if (window._activeRecognition === recognition) {
           window._activeRecognition = null;
           setVoiceState('reset');
+          resetMicHardware();
         }
       };
       try {
@@ -550,6 +570,7 @@ function setupTransactionEvents() {
         console.error('Mic start error:', err);
         window._activeRecognition = null;
         setVoiceState('reset');
+        resetMicHardware();
       }
     });
   }
