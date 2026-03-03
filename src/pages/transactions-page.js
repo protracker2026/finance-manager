@@ -228,6 +228,42 @@ export async function renderTransactionsPage(container) {
         </div>
       </div>
     </div>
+    
+    <!-- AI Receipt Confirmation Modal -->
+    <div class="ai-receipt-overlay" id="aiReceiptOverlay">
+      <div class="ai-receipt-paper">
+        <div class="ai-receipt-header">
+          <h3>บันทึกสำเร็จ?</h3>
+          <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;">AI PREVIEW RECEIPT</div>
+        </div>
+        <div class="ai-receipt-body">
+          <div class="ai-receipt-row">
+            <span class="ai-receipt-label">รายการ</span>
+            <div class="ai-receipt-dots"></div>
+            <span class="ai-receipt-value" id="receiptNote">-</span>
+          </div>
+          <div class="ai-receipt-row">
+            <span class="ai-receipt-label">หมวดหมู่</span>
+            <div class="ai-receipt-dots"></div>
+            <span class="ai-receipt-value" id="receiptCategory">-</span>
+          </div>
+          <div class="ai-receipt-row" style="margin-top: 20px;">
+            <span class="ai-receipt-label">ยอดรวม</span>
+            <div class="ai-receipt-dots"></div>
+            <span class="ai-receipt-value amount" id="receiptAmount">0.00</span>
+          </div>
+          <div id="receiptQtyRow" class="ai-receipt-row" style="display:none;">
+            <span class="ai-receipt-label">จำนวน</span>
+            <div class="ai-receipt-dots"></div>
+            <span class="ai-receipt-value" id="receiptQty">1</span>
+          </div>
+        </div>
+        <div class="ai-receipt-footer">
+          <button class="btn btn-receipt-edit" id="receiptEditBtn">⚙️ แก้ไขเอง</button>
+          <button class="btn btn-receipt-confirm" id="receiptConfirmBtn">✅ บันทึกเลย</button>
+        </div>
+      </div>
+    </div>
   `;
   setupTransactionEvents();
   currentFilters = { startDate: start, endDate: end };
@@ -303,218 +339,179 @@ function setupTransactionEvents() {
   // Open modal
   document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
 
-  // AI Voice Button Logic
+  // AI Voice & Receipt Logic helpers
   const aiVoiceBtn = document.getElementById('aiVoiceBtn');
+  const originalHtml = aiVoiceBtn ? aiVoiceBtn.innerHTML : '';
+  const originalBorder = aiVoiceBtn ? aiVoiceBtn.style.borderColor : '';
+
+  function setVoiceState(state, text) {
+    if (!aiVoiceBtn) return;
+    if (state === 'listening') {
+      aiVoiceBtn.innerHTML = `<span>🗣️ ${text}</span>`;
+      aiVoiceBtn.style.borderColor = 'var(--accent-info)';
+      aiVoiceBtn.style.color = 'var(--text-primary)';
+      aiVoiceBtn.style.background = 'rgba(29, 78, 216, 0.2)';
+    } else if (state === 'analyzing') {
+      aiVoiceBtn.innerHTML = `<span>⏳ ${text}</span>`;
+      aiVoiceBtn.style.borderColor = 'var(--accent-warning)';
+      aiVoiceBtn.style.color = 'var(--text-primary)';
+      aiVoiceBtn.style.background = 'rgba(180, 83, 9, 0.2)';
+    } else {
+      aiVoiceBtn.innerHTML = originalHtml;
+      aiVoiceBtn.style.borderColor = originalBorder;
+      aiVoiceBtn.style.color = 'inherit';
+      aiVoiceBtn.style.background = 'transparent';
+    }
+  }
+
+  // Reset UI on lifecycle events
+  document.addEventListener('mic-lifecycle-reset', () => setVoiceState('reset'));
+
+  async function fillFormWithAiData(parsed) {
+    if (parsed.type) {
+      document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === parsed.type);
+      });
+      document.getElementById('txnType').value = parsed.type;
+      await updateCategoryOptions(parsed.type);
+    }
+    if (parsed.amount) document.getElementById('txnAmount').value = parsed.amount;
+    if (parsed.quantity) document.getElementById('txnQuantity').value = parsed.quantity;
+    else document.getElementById('txnQuantity').value = 1;
+
+    if (parsed.unitPrice) {
+      document.getElementById('txnUnitPrice').value = parsed.unitPrice;
+    } else {
+      const currentQty = parseFloat(document.getElementById('txnQuantity').value) || 1;
+      if (currentQty === 1 && parsed.amount) {
+        document.getElementById('txnUnitPrice').value = parsed.amount;
+      } else {
+        document.getElementById('txnUnitPrice').value = '';
+      }
+    }
+    if (parsed.note) document.getElementById('txnNote').value = parsed.note;
+
+    if (parsed.category) {
+      const catSelect = document.getElementById('txnCategory');
+      const exactOption = Array.from(catSelect.options).find(o => {
+        if (!o.value) return false;
+        return o.value === parsed.category ||
+          o.textContent.includes(parsed.category) ||
+          parsed.category.includes(o.value);
+      });
+      if (exactOption) catSelect.value = exactOption.value;
+    }
+  }
+
+  window.processAudio = async (text) => {
+    if (window._isVoiceProcessing) return;
+    window._isVoiceProcessing = true;
+    setVoiceState('analyzing', `ประมวลผล: "${text}"`);
+    try {
+      const parsed = await AIModule.parseTransaction(text);
+      // Show Receipt Modal
+      const overlay = document.getElementById('aiReceiptOverlay');
+      if (overlay) {
+        document.getElementById('receiptNote').textContent = parsed.note || '-';
+        document.getElementById('receiptAmount').textContent = Utils.formatNumber(parsed.amount);
+        document.getElementById('receiptCategory').textContent = parsed.category || 'อื่นๆ';
+        const qtyRow = document.getElementById('receiptQtyRow');
+        if (parsed.quantity && parsed.quantity > 1) {
+          qtyRow.style.display = 'flex';
+          document.getElementById('receiptQty').textContent = parsed.quantity;
+        } else {
+          qtyRow.style.display = 'none';
+        }
+      }
+      if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+
+      // Fill the form FIRST, then show receipt
+      await fillFormWithAiData(parsed);
+
+      if (overlay) overlay.classList.add('active');
+      if (aiVoiceBtn) {
+        aiVoiceBtn.classList.remove('success-flash');
+        void aiVoiceBtn.offsetWidth;
+        aiVoiceBtn.classList.add('success-flash');
+        setTimeout(() => aiVoiceBtn.classList.remove('success-flash'), 1500);
+      }
+    } catch (error) {
+      console.error('AI Processing Error:', error);
+    } finally {
+      setVoiceState('reset');
+      window._isVoiceProcessing = false;
+    }
+  };
+
   if (aiVoiceBtn) {
     aiVoiceBtn.addEventListener('click', async () => {
       if (window._isVoiceProcessing) return;
-
-      // If already listening, stop to process
       if (window._activeRecognition) {
-        const textToProcess = window._activeTranscript;
-        try {
-          // Use stop instead of abort to gracefully release hardware mic
-          window._activeRecognition.stop();
-        } catch (e) { }
-
+        const text = window._activeTranscript;
+        try { window._activeRecognition.stop(); } catch (e) { }
         window._activeRecognition = null;
-
-        if (textToProcess) {
-          processAudio(textToProcess);
-        } else {
-          setVoiceState('reset');
-        }
+        if (text) processAudio(text);
+        else setVoiceState('reset');
         return;
       }
-
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        return;
-      }
-
+      if (!SpeechRecognition) return;
       const recognition = new SpeechRecognition();
       window._activeRecognition = recognition;
 
-      // iOS Lifecycle Fix: Reset if user leaves the tab
+      // Consume the continuous flag passed from saveTxn
+      window._isContinuousAi = window._nextClickIsContinuous || false;
+      window._nextClickIsContinuous = false; // Reset for next time
       const handleVisibilityChange = () => {
         if (document.hidden && window._activeRecognition === recognition) {
-          try {
-            recognition.abort(); // Stop immediately in background
-          } catch (e) { }
+          try { recognition.abort(); } catch (e) { }
           window._activeRecognition = null;
           setVoiceState('reset');
         }
       };
-
       document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
       window.addEventListener('blur', handleVisibilityChange, { once: true });
       window._activeTranscript = '';
-
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
       recognition.lang = 'th-TH';
-      recognition.continuous = false; // Stops automatically when speaking ends
-      // iOS Safari has known bugs with interimResults
+      recognition.continuous = false;
       recognition.interimResults = !isIOS;
       recognition.maxAlternatives = 1;
 
-      const originalHtml = aiVoiceBtn.innerHTML;
-      const originalBorder = aiVoiceBtn.style.borderColor;
-
-      function setVoiceState(state, text) {
-        if (!aiVoiceBtn) return;
-        if (state === 'listening') {
-          aiVoiceBtn.innerHTML = `<span>🗣️ ${text}</span>`;
-          aiVoiceBtn.style.borderColor = 'var(--accent-info)';
-          aiVoiceBtn.style.color = 'var(--text-primary)';
-          aiVoiceBtn.style.background = 'rgba(29, 78, 216, 0.2)';
-        } else if (state === 'analyzing') {
-          aiVoiceBtn.innerHTML = `<span>⏳ ${text}</span>`;
-          aiVoiceBtn.style.borderColor = 'var(--accent-warning)';
-          aiVoiceBtn.style.color = 'var(--text-primary)';
-          aiVoiceBtn.style.background = 'rgba(180, 83, 9, 0.2)';
-        } else {
-          aiVoiceBtn.innerHTML = originalHtml;
-          aiVoiceBtn.style.borderColor = originalBorder;
-          aiVoiceBtn.style.color = 'inherit';
-          aiVoiceBtn.style.background = 'transparent';
-        }
-      }
-
-      // Reset UI on lifecycle events
-      document.addEventListener('mic-lifecycle-reset', () => setVoiceState('reset'));
-
-      window.processAudio = async (text) => {
-        if (window._isVoiceProcessing) return;
-        window._isVoiceProcessing = true;
-
-        setVoiceState('analyzing', `ประมวลผล: "${text}"`);
-
-        try {
-          const parsed = await AIModule.parseTransaction(text);
-          // Auto-fill fields
-          if (parsed.type) {
-            document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
-              b.classList.toggle('active', b.dataset.type === parsed.type);
-            });
-            document.getElementById('txnType').value = parsed.type;
-            await updateCategoryOptions(parsed.type);
-          }
-          if (parsed.amount) document.getElementById('txnAmount').value = parsed.amount;
-
-          if (parsed.quantity) {
-            document.getElementById('txnQuantity').value = parsed.quantity;
-          } else {
-            document.getElementById('txnQuantity').value = 1;
-          }
-
-          if (parsed.unitPrice) {
-            document.getElementById('txnUnitPrice').value = parsed.unitPrice;
-          } else {
-            const currentQty = parseFloat(document.getElementById('txnQuantity').value) || 1;
-            if (currentQty === 1 && parsed.amount) {
-              document.getElementById('txnUnitPrice').value = parsed.amount;
-            } else {
-              document.getElementById('txnUnitPrice').value = '';
-            }
-          }
-          if (parsed.note) document.getElementById('txnNote').value = parsed.note;
-
-          if (parsed.category) {
-            const catSelect = document.getElementById('txnCategory');
-            const exactOption = Array.from(catSelect.options).find(o => {
-              if (!o.value) return false;
-              return o.value === parsed.category ||
-                o.textContent.includes(parsed.category) ||
-                parsed.category.includes(o.value);
-            });
-            if (exactOption) {
-              catSelect.value = exactOption.value;
-            }
-          }
-
-          if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-
-          // Visual feedback on the button
-          if (aiVoiceBtn) {
-            aiVoiceBtn.classList.remove('success-flash');
-            void aiVoiceBtn.offsetWidth; // Trigger reflow
-            aiVoiceBtn.classList.add('success-flash');
-            setTimeout(() => aiVoiceBtn.classList.remove('success-flash'), 1500);
-          }
-        } catch (error) {
-          console.error('AI Processing Error:', error);
-          Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้', 'danger');
-        } finally {
-          setVoiceState('reset');
-          window._isVoiceProcessing = false;
-        }
-      };
-
-      recognition.onstart = () => {
-        setVoiceState('listening', 'กำลังฟัง... (พูดเสร็จกดปุ่มเพื่อจบ)');
-      };
-
+      recognition.onstart = () => setVoiceState('listening', 'กำลังฟัง... (พูดเสร็จกดปุ่มเพื่อจบ)');
       let silenceTimer = null;
-      const SILENCE_TIMEOUT = 900; // ms to wait before auto-stopping
-
       recognition.onresult = (event) => {
-        // Clear previous silence timer
         if (silenceTimer) clearTimeout(silenceTimer);
-
-        let currentFinal = '';
-        let currentInterim = '';
-
+        let currentFinal = '', currentInterim = '';
         for (let i = 0; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            currentFinal += event.results[i][0].transcript + ' ';
-          } else {
-            currentInterim += event.results[i][0].transcript;
-          }
+          if (event.results[i].isFinal) currentFinal += event.results[i][0].transcript + ' ';
+          else currentInterim += event.results[i][0].transcript;
         }
-
         const fullTranscript = (currentFinal + currentInterim).trim();
         if (fullTranscript) {
           window._activeTranscript = fullTranscript;
           setVoiceState('listening', `🗣️ ${fullTranscript}`);
-
-          // Start silence detection timer
           silenceTimer = setTimeout(() => {
-            console.log('[DEBUG] Silence detected, stopping mic...');
-            if (window._activeRecognition === recognition) {
-              recognition.stop();
-            }
-          }, SILENCE_TIMEOUT);
+            if (window._activeRecognition === recognition) recognition.stop();
+          }, 900);
         }
       };
-
       recognition.onend = () => {
-        // Only automatically process if we were still the active recognition
         if (window._activeRecognition === recognition) {
           window._activeRecognition = null;
-          if (window._activeTranscript && !window._isVoiceProcessing) {
-            processAudio(window._activeTranscript);
-          } else if (!window._isVoiceProcessing) {
-            setVoiceState('reset');
-          }
+          if (window._activeTranscript && !window._isVoiceProcessing) processAudio(window._activeTranscript);
+          else if (!window._isVoiceProcessing) setVoiceState('reset');
         }
       };
-
       recognition.onerror = (event) => {
         console.error('Speech recognition error', event.error);
-
-        if (event.error !== 'aborted') {
-          console.warn('Mic Error:', event.error);
-        }
-
         if (window._activeRecognition === recognition) {
           window._activeRecognition = null;
           setVoiceState('reset');
         }
       };
-
       try {
-        if (isIOS) await new Promise(r => setTimeout(r, 150)); // Hardware breathe room
+        if (isIOS) await new Promise(r => setTimeout(r, 150));
         recognition.start();
       } catch (err) {
         console.error('Mic start error:', err);
@@ -523,6 +520,34 @@ function setupTransactionEvents() {
       }
     });
   }
+
+  // Receipt Button Listeners (Set once per render)
+  const receiptConfirmBtn = document.getElementById('receiptConfirmBtn');
+  if (receiptConfirmBtn) {
+    receiptConfirmBtn.addEventListener('click', () => {
+      const overlay = document.getElementById('aiReceiptOverlay');
+      if (overlay) overlay.classList.remove('active');
+
+      // If we are in continuous mode, trigger Save & Next, else Save & Close
+      if (window._isContinuousAi) {
+        const saveNextBtn = document.getElementById('txnSaveNextBtn');
+        if (saveNextBtn) saveNextBtn.click();
+      } else {
+        const saveBtn = document.getElementById('txnSaveBtn');
+        if (saveBtn) saveBtn.click();
+      }
+    });
+  }
+
+  const receiptEditBtn = document.getElementById('receiptEditBtn');
+  if (receiptEditBtn) {
+    receiptEditBtn.addEventListener('click', () => {
+      const overlay = document.getElementById('aiReceiptOverlay');
+      if (overlay) overlay.classList.remove('active');
+      document.getElementById('txnNote').focus();
+    });
+  }
+
 
   // Initialize Flatpickr
   if (typeof flatpickr !== 'undefined') {
@@ -579,6 +604,7 @@ function setupTransactionEvents() {
       e.stopPropagation();
       const txnId = btn.dataset.id;
       const all = await TransactionModule.getAll({});
+      const txn = all.find(t => String(t.id) === String(txnId));
       if (txn) { openTxnModal(txn); }
       return;
     }
@@ -1232,7 +1258,10 @@ async function saveTxn(closeModal = true) {
         // Keep Date and Type and Category as they are likely similar
         document.getElementById('txnNote').focus();
         // Automatically start next voice entry
-        if (aiVoiceBtn) aiVoiceBtn.click();
+        if (aiVoiceBtn) {
+          window._nextClickIsContinuous = true; // Signal the next click
+          aiVoiceBtn.click();
+        }
       }
     }
     await refreshTransactions();
