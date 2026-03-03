@@ -290,17 +290,6 @@ function setupTransactionEvents() {
   // AI Voice Button Logic
   const aiVoiceBtn = document.getElementById('aiVoiceBtn');
   if (aiVoiceBtn) {
-    if (!window._globalSpeechRec) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        window._globalSpeechRec = new SpeechRecognition();
-        window._globalSpeechRec.lang = 'th-TH';
-        window._globalSpeechRec.continuous = false; // Stops automatically when user stops speaking
-        window._globalSpeechRec.interimResults = true;
-        window._globalSpeechRec.maxAlternatives = 1;
-      }
-    }
-
     aiVoiceBtn.addEventListener('click', async () => {
       // If currently listening, stop IMMEDIATELY (abort kills mic instantly)
       if (window._activeRecognition) {
@@ -318,14 +307,20 @@ function setupTransactionEvents() {
 
       if (window._isVoiceProcessing) return;
 
-      if (!window._globalSpeechRec) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
         Utils.showToast('เบราว์เซอร์ของคุณไม่รองรับการสั่งงานด้วยเสียง', 'danger');
         return;
       }
 
-      const recognition = window._globalSpeechRec;
+      const recognition = new SpeechRecognition();
       window._activeRecognition = recognition;
       window._activeTranscript = '';
+
+      recognition.lang = 'th-TH';
+      recognition.continuous = false; // Stops automatically when user stops speaking
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
 
       const originalHtml = aiVoiceBtn.innerHTML;
       const originalBorder = aiVoiceBtn.style.borderColor;
