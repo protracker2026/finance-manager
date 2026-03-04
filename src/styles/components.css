@@ -1361,10 +1361,12 @@ button.ai-analyzing {
 /* === Debt Page Sort Buttons === */
 .debt-sort-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-md);
     margin-bottom: var(--space-md);
-    flex-wrap: wrap;
+    padding: 4px 0;
 }
 
 .debt-sort-controls {
@@ -1374,20 +1376,23 @@ button.ai-analyzing {
 }
 
 .sort-btn {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: var(--font-size-xs);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-tertiary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    letter-spacing: 0.1px;
 }
 
 .sort-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--text-tertiary);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-secondary);
 }
 
 .sort-btn.active {
@@ -1395,5 +1400,36 @@ button.ai-analyzing {
     border-color: var(--accent-primary);
     color: white;
     font-weight: 600;
-    box-shadow: 0 0 12px rgba(66, 133, 244, 0.3);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.25);
+}
+
+#debtFilter {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 5px 10px;
+}
+
+@media (max-width: 480px) {
+    .debt-sort-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .debt-sort-controls {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .debt-sort-controls::-webkit-scrollbar {
+        display: none;
+    }
+
+    .debt-sort-controls .label {
+        font-size: 11px;
+        flex-shrink: 0;
+        margin-right: 4px;
+    }
 }
