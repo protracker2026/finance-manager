@@ -820,6 +820,15 @@ function setupTransactionEvents() {
       else document.getElementById('filterEndDate').value = r.end || '';
 
       applyFilters();
+
+      // Auto-scroll to receipt list
+      setTimeout(() => {
+        const target = document.getElementById('txnListDetails');
+        if (target) {
+          const y = target.getBoundingClientRect().top + window.scrollY - 60; // Offset for header
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
     });
   });
 
