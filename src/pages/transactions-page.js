@@ -116,7 +116,7 @@ export async function renderTransactionsPage(container) {
               </label>
               <div style="display: flex; gap: 8px;">
                 <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." style="flex: 1;">
-                <button type="button" id="aiVoiceSubmitBtn" class="btn btn-primary" style="white-space: nowrap;">ส่งให้ AI</button>
+                <button type="button" id="aiVoiceSubmitBtn" class="btn btn-primary" style="white-space: nowrap; padding: 4px 12px; font-size: 12px; height: auto;">ส่งให้ AI</button>
               </div>
             </div>
             <input type="hidden" id="txnType" value="expense">
@@ -375,7 +375,7 @@ function setupTransactionEvents() {
   function setSimulatedVoiceState(state) {
     if (!aiVoiceSubmitBtn) return;
     if (state === 'analyzing') {
-      aiVoiceSubmitBtn.innerHTML = `✨ กำลังประมวลผล...`;
+      aiVoiceSubmitBtn.innerHTML = `กำลังประมวลผล...`;
       aiVoiceSubmitBtn.disabled = true;
       aiVoiceSubmitBtn.classList.add('ai-analyzing');
       if (aiVoiceInput) aiVoiceInput.disabled = true;
