@@ -375,12 +375,14 @@ function setupTransactionEvents() {
   function setSimulatedVoiceState(state) {
     if (!aiVoiceSubmitBtn) return;
     if (state === 'analyzing') {
-      aiVoiceSubmitBtn.innerHTML = `⏳ กำลังประมวลผล...`;
+      aiVoiceSubmitBtn.innerHTML = `✨ กำลังประมวลผล...`;
       aiVoiceSubmitBtn.disabled = true;
+      aiVoiceSubmitBtn.classList.add('ai-analyzing');
       if (aiVoiceInput) aiVoiceInput.disabled = true;
     } else {
       aiVoiceSubmitBtn.innerHTML = `ส่งให้ AI`;
       aiVoiceSubmitBtn.disabled = false;
+      aiVoiceSubmitBtn.classList.remove('ai-analyzing');
       if (aiVoiceInput) aiVoiceInput.disabled = false;
     }
   }
