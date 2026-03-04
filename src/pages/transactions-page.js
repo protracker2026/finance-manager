@@ -21,6 +21,10 @@ export async function renderTransactionsPage(container) {
         <p class="subtitle">บันทึกและติดตามรายรับ-รายจ่ายของคุณ</p>
       </div>
       <div style="display:flex; gap:10px;">
+        <button class="btn btn-outline" id="openBulkDeleteBtn" style="padding: 0 10px; border-color: var(--accent-danger); color: var(--accent-danger); background: transparent;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6L18 20a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+            เลือกลบ
+        </button>
         <button class="btn btn-secondary" id="exportReceiptBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Export PDF
@@ -255,6 +259,31 @@ export async function renderTransactionsPage(container) {
             <button class="btn btn-receipt-confirm" id="receiptConfirmBtn">✅ บันทึกเลย</button>
           </div>
           <button class="btn btn-receipt-cancel" id="receiptCancelBtn">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+    <!-- Bulk Delete Modal -->
+    <div class="modal-overlay" id="bulkDeleteModal" style="z-index: 1300;">
+      <div class="modal" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="modal-header" style="flex-shrink:0; border-bottom: 1px solid rgba(255,255,255,0.05); background: var(--bg-primary);">
+          <h3>เลือกลบหลายรายการ</h3>
+          <button class="modal-close" id="bulkDeleteModalClose">&times;</button>
+        </div>
+        <div class="modal-body" style="flex:1; overflow-y:auto; padding:0; background: var(--bg-secondary);">
+          <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; position: sticky; top: 0; background: var(--bg-secondary); z-index: 10;">
+             <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                 <input type="checkbox" id="bulkSelectAllCheckbox" style="width: 18px; height: 18px;">
+                 <span style="font-weight: 500;">เลือกทั้งหมด</span>
+             </label>
+             <span id="bulkSelectedCount" style="color: var(--text-tertiary);">เลือก 0 รายการ</span>
+          </div>
+          <div id="bulkDeleteListContainer" style="padding: 10px;">
+             <!-- Transaction List for deletion will be injected here -->
+          </div>
+        </div>
+        <div class="modal-footer" style="flex-shrink:0; border-top: 1px solid var(--border-color); justify-content: space-between; background: var(--bg-primary);">
+           <button class="btn btn-secondary" id="bulkDeleteCancelBtn">ยกเลิก</button>
+           <button class="btn btn-danger" id="bulkDeleteConfirmBtn" disabled>ลบที่เลือก (0)</button>
         </div>
       </div>
     </div>
@@ -562,6 +591,101 @@ function setupTransactionEvents() {
   document.getElementById('categoryDetailModal').addEventListener('click', (e) => {
     if (e.target.id === 'categoryDetailModal') closeCategoryDetailModal();
   });
+
+  // Bulk Delete Modal Events
+  if (!window._bulkSelectedIds) window._bulkSelectedIds = new Set();
+
+  document.getElementById('openBulkDeleteBtn').addEventListener('click', async () => {
+    window._bulkSelectedIds.clear();
+    document.getElementById('bulkSelectAllCheckbox').checked = false;
+    updateBulkDeleteUI();
+
+    const container = document.getElementById('bulkDeleteListContainer');
+    container.innerHTML = '<div style="text-align:center; padding: 20px;">กำลังโหลด...</div>';
+
+    document.getElementById('bulkDeleteModal').classList.add('active');
+
+    const txns = cachedTxns && cachedTxns.length ? cachedTxns : await TransactionModule.getAll(currentFilters);
+
+    if (txns.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--text-tertiary);">ไม่มีรายการให้ลบ</div>';
+      return;
+    }
+
+    container.innerHTML = txns.map(t => {
+      const sign = t.type === 'income' ? '+' : '-';
+      const amountColor = t.type === 'income' ? 'var(--text-success)' : 'var(--text-danger)';
+      return `
+          <label style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--border-radius); margin-bottom: 8px; cursor: pointer;">
+              <input type="checkbox" class="bulk-item-checkbox" value="${t.id}" style="width: 18px; height: 18px; flex-shrink: 0;">
+              <div style="flex: 1; display:flex; flex-direction:column; gap:4px;">
+                  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                      <strong style="font-size: 14px;">${t.category} ${t.note ? `<span style="font-weight:normal; opacity:0.8;">- ${t.note}</span>` : ''}</strong>
+                      <strong style="color: ${amountColor};">${sign}${Utils.formatCurrency(t.amount)}</strong>
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-tertiary);">
+                      ${Utils.formatDateTimeShort(t.date)}
+                  </div>
+              </div>
+          </label>
+          `;
+    }).join('');
+  });
+
+  const closeBulkDeleteModal = () => document.getElementById('bulkDeleteModal').classList.remove('active');
+  document.getElementById('bulkDeleteModalClose').addEventListener('click', closeBulkDeleteModal);
+  document.getElementById('bulkDeleteCancelBtn').addEventListener('click', closeBulkDeleteModal);
+
+  document.getElementById('bulkSelectAllCheckbox').addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    const checkboxes = document.querySelectorAll('.bulk-item-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = isChecked;
+      if (isChecked) window._bulkSelectedIds.add(cb.value);
+      else window._bulkSelectedIds.delete(cb.value);
+    });
+    updateBulkDeleteUI();
+  });
+
+  document.getElementById('bulkDeleteListContainer').addEventListener('change', (e) => {
+    if (e.target.classList.contains('bulk-item-checkbox')) {
+      if (e.target.checked) window._bulkSelectedIds.add(e.target.value);
+      else window._bulkSelectedIds.delete(e.target.value);
+
+      const allCheckboxes = document.querySelectorAll('.bulk-item-checkbox');
+      document.getElementById('bulkSelectAllCheckbox').checked = window._bulkSelectedIds.size === allCheckboxes.length && allCheckboxes.length > 0;
+
+      updateBulkDeleteUI();
+    }
+  });
+
+  document.getElementById('bulkDeleteConfirmBtn').addEventListener('click', async () => {
+    if (window._bulkSelectedIds.size === 0) return;
+    if (confirm(`คุณต้องการลบรายการที่เลือกจำนวน ${window._bulkSelectedIds.size} รายการใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {
+      const btn = document.getElementById('bulkDeleteConfirmBtn');
+      const originalText = btn.textContent;
+      btn.textContent = 'กำลังลบ...';
+      btn.disabled = true;
+
+      for (let id of window._bulkSelectedIds) {
+        await TransactionModule.delete(parseInt(id));
+      }
+
+      Utils.showToast(`ลบแล้ว ${window._bulkSelectedIds.size} รายการ`, 'success');
+      closeBulkDeleteModal();
+      await refreshTransactions();
+
+      btn.textContent = originalText;
+    }
+  });
+
+  function updateBulkDeleteUI() {
+    const count = window._bulkSelectedIds.size;
+    document.getElementById('bulkSelectedCount').textContent = `เลือก ${count} รายการ`;
+    const btn = document.getElementById('bulkDeleteConfirmBtn');
+    btn.textContent = `ลบที่เลือก (${count})`;
+    btn.disabled = count === 0;
+  }
 
   // Delegation for clicks inside category detail modal
   document.getElementById('categoryDetailBody').addEventListener('click', async (e) => {
