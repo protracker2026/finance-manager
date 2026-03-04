@@ -1312,7 +1312,10 @@ details[open] .toggle-icon {
 }
 
 /* === AI Voice Button Animation === */
-.ai-analyzing {
+.ai-analyzing,
+.ai-analyzing:disabled,
+.ai-analyzing[disabled],
+button.ai-analyzing {
     background: linear-gradient(90deg,
             #4285f4,
             #9b72cb,
@@ -1325,6 +1328,9 @@ details[open] .toggle-icon {
     color: white !important;
     border: none !important;
     box-shadow: 0 4px 15px rgba(155, 114, 203, 0.4) !important;
+    opacity: 1 !important;
+    pointer-events: none;
+    cursor: wait !important;
 }
 
 @keyframes geminiRainbow {
@@ -1333,6 +1339,6 @@ details[open] .toggle-icon {
     }
 
     100% {
-        background-position: 100% 50%;
+        background-position: 300% 50%;
     }
 }
