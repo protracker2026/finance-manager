@@ -1357,3 +1357,43 @@ button.ai-analyzing {
         border-color: #4285f4;
     }
 }
+
+/* === Debt Page Sort Buttons === */
+.debt-sort-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.debt-sort-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.sort-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.sort-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-tertiary);
+}
+
+.sort-btn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 0 12px rgba(66, 133, 244, 0.3);
+}

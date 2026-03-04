@@ -314,8 +314,9 @@ function setupDebtEvents() {
   // === Sort & Filter Events ===
   document.querySelectorAll('.sort-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      const clickedBtn = e.currentTarget;
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
+      clickedBtn.classList.add('active');
       refreshDebts();
     });
   });
