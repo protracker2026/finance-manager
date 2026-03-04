@@ -183,8 +183,8 @@
         min-width: 60px;
         text-align: right;
         font-weight: normal;
-        color: #333 !important;
-        /* Make amount dark like a real receipt */
+        color: #444 !important;
+        /* Make amount slightly less black (lighter) */
     }
 
     /* Hide other columns to keep it clean */
@@ -287,14 +287,7 @@
         display: none;
     }
 
-    /* Fix text contrast on light receipt background */
-    .data-table .amount.income {
-        color: #15803d !important;
-    }
-
-    .data-table .amount.expense {
-        color: #b91c1c !important;
-    }
+    /* Text color for receipt amounts is handled by .data-table td.amount above */
 }
 
 /* === Badges === */
