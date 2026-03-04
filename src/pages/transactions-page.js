@@ -9,68 +9,7 @@ let currentCategoryView = null; // Track if we are viewing a category detail ful
 let cachedTxns = []; // Cache for event delegation
 let refreshHandler = null; // To avoid stacking event listeners
 
-// Global iOS Lifecycle Fix: Force reset mic state when returning to the app
-const resetMicHardware = () => {
-  if (window._activeRecognition) {
-    console.log('[DEBUG] Force aborting active recognition for recovery...');
-    try { window._activeRecognition.abort(); } catch (e) { }
-    window._activeRecognition = null;
-  }
-  // iOS Fix: Explicitly stop all MediaStream tracks to release hardware mic
-  // This is what actually makes the orange dot disappear on iOS
-  if (window._activeMicStream) {
-    console.log('[DEBUG] Stopping mic stream tracks to release hardware...');
-    try {
-      window._activeMicStream.getTracks().forEach(track => {
-        track.stop();
-        console.log('[DEBUG] Track stopped:', track.label, track.readyState);
-      });
-    } catch (e) { console.warn('Track stop failed:', e); }
-    window._activeMicStream = null;
-  }
-  window._isVoiceProcessing = false;
-  document.dispatchEvent(new CustomEvent('mic-lifecycle-reset'));
-};
-
-// iOS requires a "user gesture" to unlock or resume audio context if Safari suspended it
-let _iosAudioCtx = null;
-const iosReviveAudio = () => {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (!isIOS) return;
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) {
-      // Reuse or create a single AudioContext to avoid orphaned sessions
-      if (!_iosAudioCtx || _iosAudioCtx.state === 'closed') {
-        _iosAudioCtx = new AudioContext();
-      }
-      if (_iosAudioCtx.state === 'suspended') _iosAudioCtx.resume();
-      // Brief silent oscillator to wake up the audio session
-      const osc = _iosAudioCtx.createOscillator();
-      const gain = _iosAudioCtx.createGain();
-      gain.gain.value = 0;
-      osc.connect(gain);
-      gain.connect(_iosAudioCtx.destination);
-      osc.start(0);
-      osc.stop(0.001);
-    }
-  } catch (e) {
-    console.warn('Audio revival failed:', e);
-  }
-};
-
-window.addEventListener('pageshow', resetMicHardware);
-document.addEventListener('visibilitychange', () => {
-  // If the app is hiding, ABORT immediately to prevent Safari from freezing the mic session
-  if (document.hidden) {
-    resetMicHardware();
-  } else {
-    // Returning to foreground
-    resetMicHardware();
-  }
-});
-
-
+// Voice typing uses native keyboard, no browser mic APIs needed.
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
   const { start, end } = Utils.getTodayRange();
@@ -167,10 +106,16 @@ export async function renderTransactionsPage(container) {
               <button type="button" class="tab-btn active" data-type="expense">รายจ่าย</button>
               <button type="button" class="tab-btn" data-type="income">รายรับ</button>
             </div>
-            <button type="button" id="aiVoiceBtn" class="btn btn-outline" style="width: 100%; margin-bottom: var(--space-md); border-color: var(--text-tertiary); display: flex; justify-content: center; align-items: center; gap: 8px;">
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-               <span>พูดเพื่อบันทึกรายการอัตโนมัติ (AI)</span>
-            </button>
+            <div class="voice-typing-container" style="margin-bottom: var(--space-md);">
+              <label class="form-label" style="display: flex; align-items: center; gap: 6px;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                 พิมพ์ด้วยเสียง (กดไมค์ที่คีย์บอร์ดชั่วคราว)
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." style="flex: 1;">
+                <button type="button" id="aiVoiceSubmitBtn" class="btn btn-primary" style="white-space: nowrap;">ส่งให้ AI</button>
+              </div>
+            </div>
             <input type="hidden" id="txnType" value="expense">
             <div class="form-group">
                 <label class="form-label">หมายเหตุ (ชื่อรายการ)</label>
@@ -385,33 +330,22 @@ function setupTransactionEvents() {
   // Open modal
   document.getElementById('addTransactionBtn').addEventListener('click', () => openTxnModal());
 
-  // AI Voice & Receipt Logic helpers
-  const aiVoiceBtn = document.getElementById('aiVoiceBtn');
-  const originalHtml = aiVoiceBtn ? aiVoiceBtn.innerHTML : '';
-  const originalBorder = aiVoiceBtn ? aiVoiceBtn.style.borderColor : '';
+  // AI Voice Typing Logic helpers
+  const aiVoiceSubmitBtn = document.getElementById('aiVoiceSubmitBtn');
+  const aiVoiceInput = document.getElementById('aiVoiceInput');
 
-  function setVoiceState(state, text) {
-    if (!aiVoiceBtn) return;
-    if (state === 'listening') {
-      aiVoiceBtn.innerHTML = `<span>🗣️ ${text}</span>`;
-      aiVoiceBtn.style.borderColor = 'var(--accent-info)';
-      aiVoiceBtn.style.color = 'var(--text-primary)';
-      aiVoiceBtn.style.background = 'rgba(29, 78, 216, 0.2)';
-    } else if (state === 'analyzing') {
-      aiVoiceBtn.innerHTML = `<span>⏳ ${text}</span>`;
-      aiVoiceBtn.style.borderColor = 'var(--accent-warning)';
-      aiVoiceBtn.style.color = 'var(--text-primary)';
-      aiVoiceBtn.style.background = 'rgba(180, 83, 9, 0.2)';
+  function setSimulatedVoiceState(state) {
+    if (!aiVoiceSubmitBtn) return;
+    if (state === 'analyzing') {
+      aiVoiceSubmitBtn.innerHTML = `⏳ กำลังประมวลผล...`;
+      aiVoiceSubmitBtn.disabled = true;
+      if (aiVoiceInput) aiVoiceInput.disabled = true;
     } else {
-      aiVoiceBtn.innerHTML = originalHtml;
-      aiVoiceBtn.style.borderColor = originalBorder;
-      aiVoiceBtn.style.color = 'inherit';
-      aiVoiceBtn.style.background = 'transparent';
+      aiVoiceSubmitBtn.innerHTML = `ส่งให้ AI`;
+      aiVoiceSubmitBtn.disabled = false;
+      if (aiVoiceInput) aiVoiceInput.disabled = false;
     }
   }
-
-  // Reset UI on lifecycle events
-  document.addEventListener('mic-lifecycle-reset', () => setVoiceState('reset'));
 
   async function fillFormWithAiData(parsed) {
     if (parsed.type) {
@@ -452,7 +386,7 @@ function setupTransactionEvents() {
   window.processAudio = async (text) => {
     if (window._isVoiceProcessing) return;
     window._isVoiceProcessing = true;
-    setVoiceState('analyzing', `ประมวลผล: "${text}"`);
+    setSimulatedVoiceState('analyzing');
     try {
       const parsed = await AIModule.parseTransaction(text);
       // Show Receipt Modal
@@ -475,141 +409,35 @@ function setupTransactionEvents() {
       await fillFormWithAiData(parsed);
 
       if (overlay) overlay.classList.add('active');
-      if (aiVoiceBtn) {
-        aiVoiceBtn.classList.remove('success-flash');
-        void aiVoiceBtn.offsetWidth;
-        aiVoiceBtn.classList.add('success-flash');
-        setTimeout(() => aiVoiceBtn.classList.remove('success-flash'), 1500);
-      }
     } catch (error) {
       console.error('AI Processing Error:', error);
+      Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้ กรุณาลองใหม่', 'danger');
     } finally {
-      setVoiceState('reset');
+      setSimulatedVoiceState('reset');
+      if (aiVoiceInput) aiVoiceInput.value = ''; // clear input
       window._isVoiceProcessing = false;
-      resetMicHardware(); // Ensure hardware is released after processing
     }
   };
 
-  if (aiVoiceBtn) {
-    aiVoiceBtn.addEventListener('click', async () => {
-      // Step 1: Kickstart audio session (Crucial for iOS Safari after backgrounding)
-      iosReviveAudio();
-
-      if (window._isVoiceProcessing) return;
-      if (window._activeRecognition) {
-        const text = window._activeTranscript;
-        console.log('[DEBUG] Manual stop - Aborting recognition');
-        try { window._activeRecognition.abort(); } catch (e) { }
-        window._activeRecognition = null;
-        resetMicHardware(); // Immediate hardware cleanup for iOS
-        if (text) processAudio(text);
-        else setVoiceState('reset');
-        return;
-      }
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return;
-      const recognition = new SpeechRecognition();
-      window._activeRecognition = recognition;
-
+  if (aiVoiceSubmitBtn && aiVoiceInput) {
+    aiVoiceSubmitBtn.addEventListener('click', () => {
       // Consume the continuous flag passed from saveTxn
       window._isContinuousAi = window._nextClickIsContinuous || false;
       window._nextClickIsContinuous = false; // Reset for next time
-      const handleVisibilityChange = () => {
-        if (document.hidden && window._activeRecognition === recognition) {
-          try { recognition.abort(); } catch (e) { }
-          window._activeRecognition = null;
-          setVoiceState('reset');
-        }
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
-      window.addEventListener('blur', handleVisibilityChange, { once: true });
-      window._activeTranscript = '';
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      recognition.lang = 'th-TH';
-      recognition.continuous = false;
-      recognition.interimResults = !isIOS;
-      recognition.maxAlternatives = 1;
 
-      recognition.onstart = () => setVoiceState('listening', 'กำลังฟัง... (พูดเสร็จกดปุ่มเพื่อจบ)');
-      let silenceTimer = null;
-      recognition.onresult = (event) => {
-        if (silenceTimer) clearTimeout(silenceTimer);
-        let currentFinal = '', currentInterim = '';
-        for (let i = 0; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) currentFinal += event.results[i][0].transcript + ' ';
-          else currentInterim += event.results[i][0].transcript;
-        }
-        const fullTranscript = (currentFinal + currentInterim).trim();
-        if (fullTranscript) {
-          window._activeTranscript = fullTranscript;
-          setVoiceState('listening', `🗣️ ${fullTranscript}`);
-          // Auto-stop after silence
-          silenceTimer = setTimeout(() => {
-            if (window._activeRecognition === recognition) {
-              console.log('[DEBUG] STT Silence timeout - Stopping recognition');
-              try { recognition.stop(); } catch (e) { }
-            }
-          }, isIOS ? 800 : 900); // Slightly faster on iOS
-        }
-      };
-      recognition.onend = () => {
-        if (silenceTimer) clearTimeout(silenceTimer);
+      const text = aiVoiceInput.value.trim();
+      if (text) {
+        processAudio(text);
+      } else {
+        // If empty, auto focus it for them to type
+        aiVoiceInput.focus();
+      }
+    });
 
-        // iOS Safari Cleanup Fix: Ensure the session is officially discharged
-        if (isIOS) {
-          try { recognition.abort(); } catch (e) { }
-        }
-
-        // iOS Fix: Stop mic stream tracks immediately when recognition ends
-        // This is the key to making the orange dot disappear
-        if (window._activeMicStream) {
-          window._activeMicStream.getTracks().forEach(t => t.stop());
-          window._activeMicStream = null;
-        }
-
-        if (window._activeRecognition === recognition) {
-          window._activeRecognition = null;
-          if (window._activeTranscript && !window._isVoiceProcessing) {
-            processAudio(window._activeTranscript);
-          } else if (!window._isVoiceProcessing) {
-            setVoiceState('reset');
-            resetMicHardware(); // Full hardware reset if nothing to process
-          }
-        }
-      };
-      recognition.onerror = (event) => {
-        if (silenceTimer) clearTimeout(silenceTimer);
-        console.error('Speech recognition error', event.error);
-        // Stop mic stream on error too
-        if (window._activeMicStream) {
-          window._activeMicStream.getTracks().forEach(t => t.stop());
-          window._activeMicStream = null;
-        }
-        if (window._activeRecognition === recognition) {
-          window._activeRecognition = null;
-          setVoiceState('reset');
-          resetMicHardware();
-        }
-      };
-      try {
-        if (isIOS) await new Promise(r => setTimeout(r, 150));
-        // iOS Fix: Acquire mic stream via getUserMedia BEFORE starting recognition
-        // This gives us explicit control over the hardware mic to stop it later
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            window._activeMicStream = stream;
-            console.log('[DEBUG] Mic stream acquired, tracks:', stream.getTracks().length);
-          } catch (micErr) {
-            console.warn('[DEBUG] getUserMedia failed (non-fatal):', micErr);
-          }
-        }
-        recognition.start();
-      } catch (err) {
-        console.error('Mic start error:', err);
-        window._activeRecognition = null;
-        setVoiceState('reset');
-        resetMicHardware();
+    aiVoiceInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        aiVoiceSubmitBtn.click();
       }
     });
   }
@@ -1351,9 +1179,10 @@ async function saveTxn(closeModal = true) {
         // Keep Date and Type and Category as they are likely similar
         document.getElementById('txnNote').focus();
         // Automatically start next voice entry
-        if (aiVoiceBtn) {
-          window._nextClickIsContinuous = true; // Signal the next click
-          aiVoiceBtn.click();
+        const aiVoiceInput = document.getElementById('aiVoiceInput');
+        if (aiVoiceInput) {
+          aiVoiceInput.value = '';
+          aiVoiceInput.focus();
         }
       }
     }
