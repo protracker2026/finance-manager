@@ -82,7 +82,8 @@
     .data-table {
         background: #f5e6ca;
         /* Darker Eye-friendly paper color */
-        padding: 24px 18px;
+        padding: 24px 24px 24px 14px;
+        /* Shifted left */
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         font-family: 'Inconsolata', 'Space Mono', 'Courier New', monospace;
 
@@ -182,6 +183,8 @@
         min-width: 60px;
         text-align: right;
         font-weight: normal;
+        color: #333 !important;
+        /* Make amount dark like a real receipt */
     }
 
     /* Hide other columns to keep it clean */
