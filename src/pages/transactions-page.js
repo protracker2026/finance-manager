@@ -1307,6 +1307,9 @@ async function saveTxn(closeModal = true) {
       const result = await TransactionModule.update(id, data);
       console.log('[DEBUG] Update result:', result);
       Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
+      if (closeModal) {
+        closeTxnModal();
+      }
     } else {
       await TransactionModule.add(data);
 
@@ -1360,6 +1363,20 @@ async function saveTxn(closeModal = true) {
     }
     await refreshTransactions();
     refreshCategoryDetailView();
+
+    // Ensure we are on the transactions page
+    if (closeModal || id) {
+      window.location.hash = '#transactions';
+
+      // Auto-scroll to receipt view after saving or updating
+      setTimeout(() => {
+        const target = document.getElementById('txnListDetails');
+        if (target) {
+          const y = target.getBoundingClientRect().top + window.scrollY - 60; // Offset for header
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 150); // Give router time to render if it was on a different page
+    }
   } catch (e) {
     Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
   }
