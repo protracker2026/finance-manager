@@ -668,7 +668,7 @@ function setupTransactionEvents() {
       btn.disabled = true;
 
       for (let id of window._bulkSelectedIds) {
-        await TransactionModule.delete(parseInt(id));
+        await TransactionModule.delete(id);
       }
 
       Utils.showToast(`ลบแล้ว ${window._bulkSelectedIds.size} รายการ`, 'success');
