@@ -2,6 +2,7 @@
 import { db } from '../db/database.js';
 import { InterestEngine } from './interest.js';
 import { SyncModule } from './sync.js';
+import { TransactionModule } from './transactions.js';
 
 export const DebtModule = {
     async getAll() {
@@ -75,16 +76,30 @@ export const DebtModule = {
         // SyncModule.notifyDataChange(); // Handled by DB adapter now
         return result;
     },
-
     async recordPayment(debtId, payment) {
         const paymentAmount = parseFloat(payment.amount);
+
+        // Get debt info to create a helpful transaction note
+        const debt = await db.debts.get(debtId);
+        const debtName = debt ? debt.name : 'หนี้';
+
+        // Create a linked expense transaction
+        const txnId = await TransactionModule.add({
+            type: 'expense',
+            amount: paymentAmount,
+            date: payment.date,
+            category: 'ชำระหนี้',
+            note: `ชำระหนี้: ${debtName}${payment.note ? ` (${payment.note})` : ''}`
+        });
+
         await db.debtPayments.add({
             debtId,
             date: payment.date,
             amount: paymentAmount,
-            interestPortion: 0, // Will be calculated in recalculateDebt
+            interestPortion: 0,
             principalPortion: 0,
             balanceAfter: 0,
+            transactionId: txnId, // Link to the transaction
             note: payment.note || '',
             createdAt: new Date().toISOString()
         });
@@ -97,6 +112,12 @@ export const DebtModule = {
         const p = await db.debtPayments.get(paymentId);
         if (!p) return;
         const debtId = p.debtId;
+
+        // Delete linked transaction if exists
+        if (p.transactionId) {
+            await TransactionModule.delete(p.transactionId);
+        }
+
         await db.debtPayments.delete(paymentId);
         await this.recalculateDebt(debtId);
         SyncModule.notifyDataChange();

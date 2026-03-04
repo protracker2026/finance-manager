@@ -848,6 +848,20 @@ function setupTransactionEvents() {
 
       applyFilters();
 
+      // Auto-calculate Total Amount
+      const updateAmount = () => {
+        const qty = parseFloat(document.getElementById('txnQuantity').value) || 0;
+        const price = parseFloat(document.getElementById('txnUnitPrice').value) || 0;
+        if (qty > 0 && price > 0) {
+          document.getElementById('txnAmount').value = (qty * price).toFixed(2);
+        }
+      };
+
+      document.getElementById('txnQuantity').addEventListener('input', updateAmount);
+      document.getElementById('txnUnitPrice').addEventListener('input', updateAmount);
+
+      applyFilters();
+
       // Auto-scroll to receipt list
       setTimeout(() => {
         const target = document.getElementById('txnListDetails');
@@ -1345,8 +1359,9 @@ async function saveTxn(closeModal = true) {
 
   try {
     if (id) {
-      console.log('[DEBUG] Updating txn, id:', id, 'type:', typeof id, 'data:', data);
-      const result = await TransactionModule.update(id, data);
+      const numericId = parseInt(id, 10);
+      console.log('[DEBUG] Updating txn, id:', numericId, 'data:', data);
+      const result = await TransactionModule.update(numericId, data);
       console.log('[DEBUG] Update result:', result);
       Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
       if (closeModal) {

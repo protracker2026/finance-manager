@@ -966,64 +966,72 @@ async function refreshDebts() {
       else if (paidPct >= 25) statusColor = '#fb923c'; // 25-50% (Orange)
 
       return `
-        <div class="debt-item" data-id="${d.id}">
-          <!-- Name header row at the top -->
-          <div style="padding: 8px 16px 0 16px; display:flex; align-items:center; gap:8px;" onclick="window.toggleDebtItem(this)">
-            <span style="font-size:15px; font-weight:700; color:var(--text-primary); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
-            <span class="badge" style="font-size:11px; opacity:0.9; background:var(--bg-tertiary); flex-shrink:0; padding: 1px 6px;">${Utils.debtTypeName(d.type)}</span>
-          </div>
-
-          <div class="debt-item-main" style="padding-top: 0;" onclick="window.toggleDebtItem(this)">
-            <div class="debt-item-info">
-              <div class="debt-item-meta">
+        <div class="debt-item" data-id="${d.id}" style="padding: 16px; position: relative; cursor: pointer; transition: all 0.2s ease;">
+          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;" onclick="window.toggleDebtItem(this)">
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 16px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
+                <span class="badge" style="font-size: 10px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">${Utils.debtTypeName(d.type)}</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-tertiary); display: flex; gap: 8px; align-items: center;">
                 <span>ดอกเบี้ย ${d.annualRate}%</span>
-                <span>•</span>
+                <span style="opacity: 0.3;">•</span>
                 <span>จ่าย ~${Utils.formatCurrency(paymentAmountForCalc).replace(' ฿', '')}</span>
               </div>
             </div>
+            <div style="text-align: right; flex-shrink: 0;">
+              <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">คงเหลือ</div>
+              <div style="font-size: 18px; font-weight: 700; color: ${statusColor}; letter-spacing: -0.5px;">${Utils.formatCurrency(d.currentBalance)}</div>
+            </div>
+          </div>
+
+          <div class="progress-container" style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0;" onclick="window.toggleDebtItem(this)">
+            <div class="progress-fill" style="width: ${paidPct}%; height: 100%; background: ${statusColor}; border-radius: 2px; opacity: 0.6; transition: width 0.8s ease;"></div>
+          </div>
+          
+          <details class="debt-item-details" style="margin-top: 0; border-top: none;">
+            <summary style="display:none"></summary>
             
-            <div class="debt-item-balance">
-              <div style="text-align: right;">
-                <span class="label">คงเหลือ</span>
-                <span class="amount" style="color: ${statusColor};">${Utils.formatCurrency(d.currentBalance)}</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
+              <div>
+                <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">เงินต้นตั้งต้น</div>
+                <div style="font-size: 14px; font-weight: 500;">${Utils.formatCurrency(d.principal)}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">วิธีคิดดอกเบี้ย</div>
+                <div style="font-size: 14px; font-weight: 500;">${Utils.interestTypeName(d.interestType)}</div>
               </div>
             </div>
 
-            <!-- Neutral but Clear Progress Bar at Bottom -->
-            <div class="progress-bar" style="position: absolute; bottom: 0; left: 0; right: 0; height: 1.5px; background: rgba(255,255,255,0.05); border-radius: 0; overflow: hidden;">
-               <div class="progress-fill" style="width:${paidPct}%; height: 100%; border-radius: 0; background: #fff; transition: width 0.8s ease-in-out;"></div>
-            </div>
-          </div>
-          
-          <details class="debt-item-details" style="position: relative;">
-            <summary style="display:none"></summary>
-            
-            <!-- Pay and History Buttons (Top Right Absolute) -->
-            <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; z-index: 5;">
-              <button class="btn btn-sm btn-success pay-debt" data-id="${d.id}" style="padding: 6px 14px; font-weight: 700; border-radius: 8px; width: 100%;">💰 ชำระเงิน</button>
-              <button class="btn btn-sm edit-history-btn" data-id="${d.id}" style="padding: 4px 10px; font-size: 11px; font-weight: 500; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border-color);">✏️ แก้ไขการชำระล่าสุด</button>
-            </div>
-
-            <div class="debt-detail-item">
-              <div class="label">เงินต้นตั้งต้น</div>
-              <div class="value">${Utils.formatCurrency(d.principal)}</div>
-            </div>
-            <div class="debt-detail-item">
-              <div class="label">วิธีคิดดอกเบี้ย</div>
-              <div class="value">${Utils.interestTypeName(d.interestType)}</div>
-            </div>
-            
             ${predictionSummaryHtml}
 
-            <!-- Bottom Actions Bar -->
-            <div class="debt-item-actions" style="grid-column: 1 / -1; display:flex; gap:8px; margin-top:12px; border-top: 1px solid var(--border-color); padding-top:12px; justify-content: space-between; align-items: center;">
-               <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background: var(--bg-tertiary); padding: 8px 12px; font-weight: 600;">📋 ตารางผ่อน & ประวัติ</button>
-               
-               <div style="display:flex; gap:6px;">
-                 <button class="btn btn-sm btn-icon export-single-pdf" data-id="${d.id}" title="Export PDF">📄</button>
-                 <button class="btn btn-sm btn-icon edit-debt" data-id="${d.id}" title="แก้ไข">✏️</button>
-                 <button class="btn btn-sm btn-icon btn-danger delete-debt" data-id="${d.id}" title="ลบ">🗑️</button>
-               </div>
+            <div style="display: flex; gap: 8px; margin-top: 20px;">
+              <button class="btn btn-primary pay-debt" data-id="${d.id}" style="flex: 2; height: 38px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                 ชำระเงิน
+              </button>
+              <button class="btn edit-history-btn" data-id="${d.id}" style="flex: 1; height: 38px; font-size: 12px; background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.1);">
+                แก้ไขล่าสุด
+              </button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
+              <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background: none; padding: 0; color: var(--text-accent); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                ตารางผ่อน & ประวัติ
+              </button>
+              
+              <div style="display: flex; gap: 12px;">
+                <button class="export-single-pdf" data-id="${d.id}" style="background:none; border:none; color:var(--text-tertiary); cursor:pointer; padding:4px;" title="Export PDF">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button class="edit-debt" data-id="${d.id}" style="background:none; border:none; color:var(--text-tertiary); cursor:pointer; padding:4px;" title="แก้ไข">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="delete-debt" data-id="${d.id}" style="background:none; border:none; color:var(--text-danger-soft); cursor:pointer; padding:4px;" title="ลบ">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+              </div>
             </div>
           </details>
         </div>

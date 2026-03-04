@@ -9,52 +9,73 @@ export async function renderDashboard(container) {
   const debtSummary = await DebtModule.getDebtSummary();
 
   container.innerHTML = `
-    <div class="page-header">
+    <div class="page-header" style="margin-bottom: var(--space-xl);">
       <div>
-        <h2>แดชบอร์ด</h2>
-        <p class="subtitle">${Utils.getFullMonthName(month)} ${year + 543} — ภาพรวมการเงินของคุณ</p>
+        <h2 style="font-size: 2rem; letter-spacing: -0.5px;">สวัสดีครับ 👋</h2>
+        <p class="subtitle" style="font-size: var(--font-size-sm); color: var(--text-tertiary);">
+          สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
+        </p>
       </div>
     </div>
 
-    <!-- สรุปตัวเลข (Compact) -->
-    <div class="debt-summary-compact">
+    <!-- สรุปตัวเลข (Redesigned) -->
+    <div class="dashboard-summary-premium">
       <div class="summary-main">
-        <div class="label">คงเหลือ (เดือนนี้)</div>
-        <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}" style="color: var(--text-${summary.balance >= 0 ? 'success' : 'danger'})">${Utils.formatCurrency(summary.balance)}</div>
-        <div class="sub-label">สภาพคล่องสุทธิ</div>
+        <div class="label">ยอดคงเหลือสุทธิ</div>
+        <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}">
+          ${Utils.formatCurrency(summary.balance)}
+        </div>
+        <div class="sub-label">
+           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+           สภาพคล่องเดือนนี้
+        </div>
       </div>
       
       <div class="summary-divider"></div>
 
       <div class="summary-metrics">
-        <div class="metric-item">
-          <span class="metric-label">รายรับ</span>
-          <span class="metric-value success" style="color:var(--text-success)">${Utils.formatCurrency(summary.income)}</span>
+        <div class="metric-card">
+          <span class="m-label">รายรับเดือนนี้</span>
+          <span class="m-value" style="color:var(--text-success)">+${Utils.formatCurrency(summary.income)}</span>
         </div>
-        <div class="metric-item">
-          <span class="metric-label">รายจ่าย</span>
-          <span class="metric-value danger" style="color:var(--text-danger)">${Utils.formatCurrency(summary.expense)}</span>
+        <div class="metric-card">
+          <span class="m-label">รายจ่ายเดือนนี้</span>
+          <span class="m-value" style="color:var(--text-danger)">-${Utils.formatCurrency(summary.expense)}</span>
         </div>
-         <div class="metric-item">
-          <span class="metric-label">หนี้สินคงค้าง</span>
-          <span class="metric-value" style="color:var(--text-danger-soft)">${Utils.formatCurrency(debtSummary.totalDebt)}</span>
+        <div class="metric-card">
+          <span class="m-label">จ่ายดอกเบี้ยสะสม</span>
+          <span class="m-value" style="color:#fb923c">-${Utils.formatCurrency(debtSummary.totalInterestPaid)}</span>
+          <div style="font-size: 9px; color: var(--text-tertiary); margin-top: 4px; opacity: 0.6;">เงินที่จ่ายทิ้งเปล่าไปแล้ว</div>
+        </div>
+        <div class="metric-card">
+          <span class="m-label">ชำระเงินต้นแล้ว</span>
+          <div style="display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap;">
+            <span class="m-value" style="color:var(--text-success)">${Utils.formatCurrency(debtSummary.totalPaid - debtSummary.totalInterestPaid)}</span>
+            <span style="font-size: 10px; color: var(--text-tertiary); opacity: 0.6;">/ ${Utils.formatCurrency(debtSummary.totalOriginal)}</span>
+          </div>
+          <div style="margin-top: 8px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+            <div style="width: ${Math.min(100, ((debtSummary.totalPaid - debtSummary.totalInterestPaid) / debtSummary.totalOriginal * 100)) || 0}%; height: 100%; background: var(--text-success); box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);"></div>
+          </div>
+          <div style="margin-top: 2px; font-size: 9px; color: var(--text-success); font-weight: 600; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--text-tertiary); font-weight: normal; opacity: 0.6;">จ่ายรวม: ${Utils.formatCurrency(debtSummary.totalPaid)}</span>
+            <span>${(((debtSummary.totalPaid - debtSummary.totalInterestPaid) / debtSummary.totalOriginal) * 100).toFixed(1)}%</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- กราฟ -->
     <div class="charts-grid">
-      <div class="card">
+      <div class="card" style="border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);">
         <div class="card-header">
-          <span class="card-title">รายรับ vs รายจ่าย (6 เดือน)</span>
+          <span class="card-title">แนวโน้มรายรับ-รายจ่าย (6 เดือน)</span>
         </div>
         <div class="chart-container">
           <canvas id="incomeExpenseChart"></canvas>
         </div>
       </div>
-      <div class="card">
+      <div class="card" style="border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);">
         <div class="card-header">
-          <span class="card-title">รายจ่ายตามหมวดหมู่</span>
+          <span class="card-title">สัดส่วนรายจ่ายรายหมวด</span>
         </div>
         <div class="chart-container">
           <canvas id="categoryChart"></canvas>
@@ -62,40 +83,45 @@ export async function renderDashboard(container) {
       </div>
     </div>
 
-    <!-- รายการล่าสุด (Collapsible) -->
-    <div class="card" style="padding: 0; overflow: hidden;">
-      <details class="dashboard-details" open>
-        <summary style="padding: var(--space-lg); cursor: pointer; display: flex; align-items: center; justify-content: space-between; list-style: none;">
-          <span class="card-title" style="margin-bottom: 0;">รายการล่าสุด</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="toggle-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </summary>
-        <div id="recentTransactions" style="padding: 0 var(--space-lg) var(--space-lg);"></div>
-      </details>
+    <!-- รายการล่าสุด -->
+    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02);">
+      <div style="padding: var(--space-lg); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
+        <span class="card-title" style="margin-bottom: 0;">ธุรกรรมล่าสุด</span>
+        <button class="btn btn-secondary btn-sm" onclick="window.location.hash='#transactions'" style="font-size: 11px; padding: 4px 12px; border-radius: 6px;">ดูทั้งหมด</button>
+      </div>
+      <div id="recentTransactions" style="padding: 0;"></div>
     </div>
   `;
 
-  // Render recent transactions
+  // Render recent transactions with more modern look
   const recent = await TransactionModule.getAll({});
-  const recentSlice = recent.slice(0, 8);
+  const recentSlice = recent.slice(0, 5); // Just top 5 for dashboard
   const recentEl = document.getElementById('recentTransactions');
 
   if (recentSlice.length === 0) {
-    recentEl.innerHTML = `<div class="empty-state"><p>ยังไม่มีรายการ — เริ่มบันทึกรายรับ-รายจ่ายของคุณ</p></div>`;
+    recentEl.innerHTML = `<div class="empty-state" style="padding: var(--space-xl);"><p>ยังไม่มีรายการบันทึก</p></div>`;
   } else {
     recentEl.innerHTML = `
-      <table class="data-table">
-        <thead><tr><th>วันที่</th><th>หมวดหมู่</th><th>หมายเหตุ</th><th style="text-align:right">จำนวน</th></tr></thead>
-        <tbody>
-          ${recentSlice.map(t => `
-            <tr>
-              <td>${Utils.formatDateShort(t.date)}</td>
-              <td><span class="badge badge-${t.type}">${t.category}</span></td>
-              <td>${t.note || '-'}</td>
-              <td class="amount ${t.type}" style="text-align:right">${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+      <div class="txn-list" style="display: flex; flex-direction: column;">
+        ${recentSlice.map(t => `
+          <div style="display: flex; align-items: center; padding: 10px var(--space-lg); border-bottom: 1px solid rgba(255,255,255,0.02);">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 1rem; flex-shrink: 0;">
+              ${t.type === 'income' ? '💰' : '💸'}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${t.type === 'income' ? 'color: var(--text-success);' : ''}">
+                ${t.category} <span style="font-weight: 400; font-size: 11px; color: ${t.type === 'income' ? 'var(--text-success)' : 'var(--text-tertiary)'}; margin-left: 4px; opacity: 0.7;">${t.note ? `• ${t.note}` : ''}</span>
+              </div>
+            </div>
+            <div style="text-align: right; flex-shrink: 0; margin-left: 12px;">
+              <div class="amount ${t.type}" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px;">
+                ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+              </div>
+              <div style="font-size: 9px; color: var(--text-tertiary); opacity: 0.4;">${Utils.formatDateShort(t.date)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
     `;
   }
 
@@ -119,6 +145,14 @@ async function renderCharts(currentYear, currentMonth) {
 
   const ctx1 = document.getElementById('incomeExpenseChart');
   if (ctx1) {
+    const incomeGradient = ctx1.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    incomeGradient.addColorStop(0, 'rgba(34, 197, 94, 0.4)');
+    incomeGradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+
+    const expenseGradient = ctx1.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    expenseGradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
+    expenseGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
     new Chart(ctx1, {
       type: 'bar',
       data: {
@@ -127,18 +161,20 @@ async function renderCharts(currentYear, currentMonth) {
           {
             label: 'รายรับ',
             data: incomeData,
-            backgroundColor: 'rgba(34, 197, 94, 0.7)', /* Green 500 */
-            borderColor: 'rgba(34, 197, 94, 1)',
-            borderWidth: 1,
-            borderRadius: 6,
+            backgroundColor: incomeGradient,
+            borderColor: '#22c55e',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
           },
           {
             label: 'รายจ่าย',
             data: expenseData,
-            backgroundColor: 'rgba(239, 68, 68, 0.7)', /* Red 500 */
-            borderColor: 'rgba(239, 68, 68, 1)',
-            borderWidth: 1,
-            borderRadius: 6,
+            backgroundColor: expenseGradient,
+            borderColor: '#ef4444',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
           }
         ]
       },
@@ -146,11 +182,21 @@ async function renderCharts(currentYear, currentMonth) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: '#a1a1aa', font: { family: 'Inter' } } }
+          legend: {
+            position: 'top',
+            align: 'end',
+            labels: { boxWidth: 10, usePointStyle: true, color: '#a1a1aa', font: { family: 'Inter', size: 11 } }
+          }
         },
         scales: {
-          x: { ticks: { color: '#71717a' }, grid: { color: 'rgba(63, 63, 70, 0.3)' } },
-          y: { ticks: { color: '#71717a' }, grid: { color: 'rgba(63, 63, 70, 0.3)' } }
+          x: {
+            ticks: { color: '#71717a', font: { size: 10 } },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { color: '#71717a', font: { size: 10 }, callback: v => Utils.formatCurrency(v) },
+            grid: { color: 'rgba(255, 255, 255, 0.03)' }
+          }
         }
       }
     });
@@ -161,11 +207,9 @@ async function renderCharts(currentYear, currentMonth) {
   const summary = await TransactionModule.getSummary(start, end);
   const catLabels = [];
   const catData = [];
-  // Muted/Pastel Palette
   const catColors = [
-    '#94a3b8', '#cbd5e1', '#fca5a5', '#fdba74', '#fcd34d',
-    '#86efac', '#67e8f9', '#93c5fd', '#c4b5fd', '#f9a8d4',
-    '#fda4af', '#d6d3d1', '#a8a29e', '#78716c', '#57534e'
+    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+    '#ec4899', '#06b6d4', '#f97316', '#a855f7', '#64748b'
   ];
 
   Object.entries(summary.byCategory).forEach(([cat, vals]) => {
@@ -184,23 +228,31 @@ async function renderCharts(currentYear, currentMonth) {
         datasets: [{
           data: catData,
           backgroundColor: catColors.slice(0, catData.length),
-          borderWidth: 0,
-          spacing: 2
+          borderWidth: 2,
+          borderColor: '#18181b', // Match bg-primary
+          hoverOffset: 12
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '65%',
+        cutout: '75%',
         plugins: {
           legend: {
             position: 'right',
-            labels: { color: '#a0a0b8', font: { family: 'Inter', size: 11 }, padding: 12 }
+            labels: {
+              color: '#d4d4d8',
+              font: { family: 'Inter', size: 11 },
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
           }
         }
       }
     });
-  } else if (ctx2) {
+  }
+  else if (ctx2) {
     ctx2.parentElement.innerHTML = '<div class="empty-state"><p>ยังไม่มีข้อมูลรายจ่าย</p></div>';
   }
 }

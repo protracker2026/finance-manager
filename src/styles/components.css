@@ -843,6 +843,73 @@ details[open].txn-list-details summary svg {
 }
 
 /* === Debt Summary & Redesign Styles === */
+/* === Dashboard Premium Summary (Dedicated for Dashboard Only) === */
+.dashboard-summary-premium {
+    display: flex;
+    background: linear-gradient(135deg, rgba(39, 39, 42, 0.9), rgba(24, 24, 27, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: var(--space-xl);
+    margin-bottom: var(--space-xl);
+    align-items: center;
+    gap: var(--space-2xl);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-summary-premium .summary-main {
+    flex: 1;
+}
+
+.dashboard-summary-premium .summary-main .label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.dashboard-summary-premium .summary-main .value-huge {
+    font-size: 3rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    margin-bottom: 4px;
+    letter-spacing: -1px;
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+}
+
+.dashboard-summary-premium .summary-main .value-huge.success {
+    color: var(--text-success);
+}
+
+.dashboard-summary-premium .summary-main .value-huge.danger {
+    color: var(--text-danger);
+}
+
+.dashboard-summary-premium .summary-main .sub-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dashboard-summary-premium .summary-divider {
+    width: 1px;
+    height: 80px;
+    background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.dashboard-summary-premium .summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+    min-width: 350px;
+}
+
+/* === Original Debt Summary (Restored for Debt Page) === */
 .debt-summary-compact {
     display: flex;
     background: var(--bg-secondary);
@@ -854,11 +921,12 @@ details[open].txn-list-details summary svg {
     gap: var(--space-xl);
 }
 
-.summary-main {
+.debt-summary-compact .summary-main {
     flex: 1;
+    text-align: center;
 }
 
-.summary-main .label {
+.debt-summary-compact .summary-main .label {
     font-size: var(--font-size-sm);
     color: var(--text-tertiary);
     text-transform: uppercase;
@@ -866,27 +934,27 @@ details[open].txn-list-details summary svg {
     margin-bottom: 4px;
 }
 
-.summary-main .value-huge {
+.debt-summary-compact .summary-main .value-huge {
     font-size: var(--font-size-3xl);
     font-weight: var(--font-weight-bold);
     font-family: var(--font-mono);
     line-height: 1.1;
 }
 
-.summary-main .sub-label {
+.debt-summary-compact .summary-main .sub-label {
     font-size: var(--font-size-xs);
     color: var(--text-tertiary);
     margin-top: 4px;
     opacity: 0.7;
 }
 
-.summary-divider {
+.debt-summary-compact .summary-divider {
     width: 1px;
     height: 60px;
     background: var(--border-color);
 }
 
-.summary-metrics {
+.debt-summary-compact .summary-metrics {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -909,21 +977,66 @@ details[open].txn-list-details summary svg {
     font-family: var(--font-mono);
 }
 
-@media (max-width: 768px) {
+/* === Common Metrics Elements === */
+.metric-card {
+    background: rgba(255, 255, 255, 0.03);
+    padding: var(--space-md);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.metric-card .m-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.metric-card .m-value {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+
+@media (max-width: 900px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-summary-premium,
     .debt-summary-compact {
         flex-direction: column;
         align-items: stretch;
-        gap: var(--space-md);
-        padding: var(--space-md);
+        gap: var(--space-lg);
+        padding: var(--space-lg);
     }
 
-    .summary-divider {
+    .dashboard-summary-premium .summary-metrics {
+        min-width: 100%;
+        grid-template-columns: 1fr;
+        gap: var(--space-sm);
+    }
+
+    .debt-summary-compact .summary-metrics {
+        min-width: 100%;
+    }
+
+    .dashboard-summary-premium .summary-divider,
+    .debt-summary-compact .summary-divider {
         width: 100%;
         height: 1px;
+        background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
     }
 
-    .summary-main .value-huge {
-        font-size: var(--font-size-2xl);
+    .dashboard-summary-premium .summary-main .value-huge {
+        font-size: 2.25rem;
     }
 }
 
@@ -1152,7 +1265,7 @@ details[open] .toggle-icon {
 }
 
 .ai-receipt-paper {
-    background: #fdfaf2;
+    background: #f5e6ca;
     width: 100%;
     max-width: 340px;
     padding: 30px 25px;
