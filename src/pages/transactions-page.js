@@ -225,7 +225,7 @@ export async function renderTransactionsPage(container) {
       <div class="ai-receipt-paper">
         <div class="ai-receipt-header">
           <h3>บันทึกสำเร็จ?</h3>
-          <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;">AI PREVIEW RECEIPT</div>
+          <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;" id="receiptDateTime">AI PREVIEW RECEIPT</div>
         </div>
         <div class="ai-receipt-body">
           <div class="ai-receipt-row">
@@ -250,8 +250,11 @@ export async function renderTransactionsPage(container) {
           </div>
         </div>
         <div class="ai-receipt-footer">
-          <button class="btn btn-receipt-edit" id="receiptEditBtn">⚙️ แก้ไขเอง</button>
-          <button class="btn btn-receipt-confirm" id="receiptConfirmBtn">✅ บันทึกเลย</button>
+          <div class="btn-group">
+            <button class="btn btn-receipt-edit" id="receiptEditBtn">⚙️ แก้ไขเอง</button>
+            <button class="btn btn-receipt-confirm" id="receiptConfirmBtn">✅ บันทึกเลย</button>
+          </div>
+          <button class="btn btn-receipt-cancel" id="receiptCancelBtn">ยกเลิก</button>
         </div>
       </div>
     </div>
@@ -395,6 +398,12 @@ function setupTransactionEvents() {
         document.getElementById('receiptNote').textContent = parsed.note || '-';
         document.getElementById('receiptAmount').textContent = Utils.formatNumber(parsed.amount);
         document.getElementById('receiptCategory').textContent = parsed.category || 'อื่นๆ';
+
+        // Add current date/time to receipt preview
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('th-TH', { year: '2-digit', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('receiptDateTime').textContent = formattedDate;
+
         const qtyRow = document.getElementById('receiptQtyRow');
         if (parsed.quantity && parsed.quantity > 1) {
           qtyRow.style.display = 'flex';
@@ -449,6 +458,8 @@ function setupTransactionEvents() {
       const overlay = document.getElementById('aiReceiptOverlay');
       if (overlay) overlay.classList.remove('active');
 
+      window._preventNormalReceiptPopup = true;
+
       // If we are in continuous mode, trigger Save & Next, else Save & Close
       if (window._isContinuousAi) {
         const saveNextBtn = document.getElementById('txnSaveNextBtn');
@@ -457,6 +468,14 @@ function setupTransactionEvents() {
         const saveBtn = document.getElementById('txnSaveBtn');
         if (saveBtn) saveBtn.click();
       }
+    });
+  }
+
+  const receiptCancelBtn = document.getElementById('receiptCancelBtn');
+  if (receiptCancelBtn) {
+    receiptCancelBtn.addEventListener('click', () => {
+      const overlay = document.getElementById('aiReceiptOverlay');
+      if (overlay) overlay.classList.remove('active');
     });
   }
 
@@ -1164,11 +1183,14 @@ async function saveTxn(closeModal = true) {
       // Only show popup if closing modal, otherwise it might be annoying when adding multiple
       if (closeModal) {
         closeTxnModal();
-        const popup = document.getElementById('receiptPopup');
-        if (popup) {
-          popup.classList.add('active');
-          setTimeout(() => popup.classList.remove('active'), 3000);
+        if (!window._preventNormalReceiptPopup) {
+          const popup = document.getElementById('receiptPopup');
+          if (popup) {
+            popup.classList.add('active');
+            setTimeout(() => popup.classList.remove('active'), 3000);
+          }
         }
+        window._preventNormalReceiptPopup = false;
       } else {
         // Reset form for next entry
         document.getElementById('txnId').value = '';
