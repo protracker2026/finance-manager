@@ -879,15 +879,22 @@ async function refreshDebts() {
 
   // 3. Grouping
   const groups = {
+    priority: { title: '🎯 ลำดับการชำระ (Priority)', items: [], sum: 0 },
     credit_card: { title: '💳 บัตรเครดิต (หมุนเวียน)', items: [], sum: 0 },
     personal_loan: { title: '🏦 สินเชื่อ / ผ่อนชำระ', items: [], sum: 0 },
     paid: { title: '✅ ชำระหมดแล้ว', items: [], sum: 0 }
   };
 
+  const isPrioritySort = (sort === 'avalanche' || sort === 'snowball');
+
   debts.forEach(d => {
     if (d.status === 'paid') {
       groups.paid.items.push(d);
       groups.paid.sum += d.principal;
+    } else if (isPrioritySort && filter === 'all') {
+      // Global priority group
+      groups.priority.items.push(d);
+      groups.priority.sum += d.currentBalance;
     } else if (d.type === 'credit_card') {
       groups.credit_card.items.push(d);
       groups.credit_card.sum += d.currentBalance;
@@ -1046,6 +1053,7 @@ async function refreshDebts() {
     return `<div class="debt-group">${headerHtml}${listHtml}</div>`;
   };
 
+  html += renderGroup('priority', groups.priority);
   html += renderGroup('credit_card', groups.credit_card);
   html += renderGroup('personal_loan', groups.personal_loan);
   html += renderGroup('paid', groups.paid, true); // Render paid as details
