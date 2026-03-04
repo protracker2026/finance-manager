@@ -852,7 +852,7 @@ function setupTransactionEvents() {
       setTimeout(() => {
         const target = document.getElementById('txnListDetails');
         if (target) {
-          const y = target.getBoundingClientRect().top + window.scrollY - 60; // Offset for header
+          const y = target.getBoundingClientRect().top + window.scrollY - 120;
           window.scrollTo({ top: y, behavior: 'smooth' });
         }
       }, 100);
@@ -1414,7 +1414,7 @@ async function saveTxn(closeModal = true) {
       setTimeout(() => {
         const target = document.getElementById('txnListDetails');
         if (target) {
-          const y = target.getBoundingClientRect().top + window.scrollY - 60; // Offset for header
+          const y = target.getBoundingClientRect().top + window.scrollY - 120;
           window.scrollTo({ top: y, behavior: 'smooth' });
         }
       }, 150); // Give router time to render if it was on a different page
