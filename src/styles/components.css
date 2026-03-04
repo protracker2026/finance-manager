@@ -1195,7 +1195,7 @@ details[open] .toggle-icon {
 
 .ai-receipt-label {
     color: #666;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     flex-shrink: 0;
 }
 
@@ -1207,14 +1207,9 @@ details[open] .toggle-icon {
 }
 
 .ai-receipt-value {
-    font-weight: bold;
-    color: #000;
-}
-
-.ai-receipt-value.amount {
-    font-size: 1.4rem;
-    color: #b91c1c;
-    /* receipt red */
+    font-weight: normal;
+    font-size: 0.9rem;
+    color: #666;
 }
 
 .ai-receipt-footer {

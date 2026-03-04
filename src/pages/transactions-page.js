@@ -225,28 +225,28 @@ export async function renderTransactionsPage(container) {
       <div class="ai-receipt-paper">
         <div class="ai-receipt-header">
           <h3>บันทึกสำเร็จ?</h3>
-          <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;" id="receiptDateTime">AI PREVIEW RECEIPT</div>
+          <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;" id="aiReceiptDateTime">AI PREVIEW RECEIPT</div>
         </div>
         <div class="ai-receipt-body">
           <div class="ai-receipt-row">
             <span class="ai-receipt-label">รายการ</span>
             <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value" id="receiptNote">-</span>
+            <span class="ai-receipt-value" id="aiReceiptNote">-</span>
           </div>
           <div class="ai-receipt-row">
             <span class="ai-receipt-label">หมวดหมู่</span>
             <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value" id="receiptCategory">-</span>
+            <span class="ai-receipt-value" id="aiReceiptCategory">-</span>
           </div>
           <div class="ai-receipt-row" style="margin-top: 20px;">
             <span class="ai-receipt-label">ยอดรวม</span>
             <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value amount" id="receiptAmount">0.00</span>
+            <span class="ai-receipt-value amount" id="aiReceiptAmount">0.00</span>
           </div>
-          <div id="receiptQtyRow" class="ai-receipt-row" style="display:none;">
+          <div id="aiReceiptQtyRow" class="ai-receipt-row" style="display:none;">
             <span class="ai-receipt-label">จำนวน</span>
             <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value" id="receiptQty">1</span>
+            <span class="ai-receipt-value" id="aiReceiptQty">1</span>
           </div>
         </div>
         <div class="ai-receipt-footer">
@@ -395,19 +395,19 @@ function setupTransactionEvents() {
       // Show Receipt Modal
       const overlay = document.getElementById('aiReceiptOverlay');
       if (overlay) {
-        document.getElementById('receiptNote').textContent = parsed.note || '-';
-        document.getElementById('receiptAmount').textContent = Utils.formatNumber(parsed.amount);
-        document.getElementById('receiptCategory').textContent = parsed.category || 'อื่นๆ';
+        document.getElementById('aiReceiptNote').textContent = parsed.note || '-';
+        document.getElementById('aiReceiptAmount').textContent = Utils.formatNumber(parsed.amount);
+        document.getElementById('aiReceiptCategory').textContent = parsed.category || 'อื่นๆ';
 
         // Add current date/time to receipt preview
         const now = new Date();
         const formattedDate = now.toLocaleDateString('th-TH', { year: '2-digit', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('receiptDateTime').textContent = formattedDate;
+        document.getElementById('aiReceiptDateTime').textContent = formattedDate;
 
-        const qtyRow = document.getElementById('receiptQtyRow');
+        const qtyRow = document.getElementById('aiReceiptQtyRow');
         if (parsed.quantity && parsed.quantity > 1) {
           qtyRow.style.display = 'flex';
-          document.getElementById('receiptQty').textContent = parsed.quantity;
+          document.getElementById('aiReceiptQty').textContent = parsed.quantity;
         } else {
           qtyRow.style.display = 'none';
         }
@@ -417,7 +417,18 @@ function setupTransactionEvents() {
       // Fill the form FIRST, then show receipt
       await fillFormWithAiData(parsed);
 
-      if (overlay) overlay.classList.add('active');
+      if (overlay) {
+        overlay.classList.add('active');
+
+        // Auto-save logic
+        if (window._aiReceiptTimer) clearTimeout(window._aiReceiptTimer);
+        window._aiReceiptTimer = setTimeout(() => {
+          const receiptConfirmBtn = document.getElementById('receiptConfirmBtn');
+          if (receiptConfirmBtn && overlay.classList.contains('active')) {
+            receiptConfirmBtn.click();
+          }
+        }, 2000);
+      }
     } catch (error) {
       console.error('AI Processing Error:', error);
       Utils.showToast('ไม่สามารถวิเคราะห์ข้อมูลด้วย AI ได้ กรุณาลองใหม่', 'danger');
@@ -455,6 +466,11 @@ function setupTransactionEvents() {
   const receiptConfirmBtn = document.getElementById('receiptConfirmBtn');
   if (receiptConfirmBtn) {
     receiptConfirmBtn.addEventListener('click', () => {
+      if (window._aiReceiptTimer) {
+        clearTimeout(window._aiReceiptTimer);
+        window._aiReceiptTimer = null;
+      }
+
       const overlay = document.getElementById('aiReceiptOverlay');
       if (overlay) overlay.classList.remove('active');
 
@@ -474,6 +490,11 @@ function setupTransactionEvents() {
   const receiptCancelBtn = document.getElementById('receiptCancelBtn');
   if (receiptCancelBtn) {
     receiptCancelBtn.addEventListener('click', () => {
+      if (window._aiReceiptTimer) {
+        clearTimeout(window._aiReceiptTimer);
+        window._aiReceiptTimer = null;
+      }
+
       const overlay = document.getElementById('aiReceiptOverlay');
       if (overlay) overlay.classList.remove('active');
     });
@@ -482,6 +503,11 @@ function setupTransactionEvents() {
   const receiptEditBtn = document.getElementById('receiptEditBtn');
   if (receiptEditBtn) {
     receiptEditBtn.addEventListener('click', () => {
+      if (window._aiReceiptTimer) {
+        clearTimeout(window._aiReceiptTimer);
+        window._aiReceiptTimer = null;
+      }
+
       const overlay = document.getElementById('aiReceiptOverlay');
       if (overlay) overlay.classList.remove('active');
       document.getElementById('txnNote').focus();
@@ -1348,7 +1374,7 @@ async function refreshTransactions() {
           </tr>
         </thead>
         <tbody>
-          ${txns.map(t => `
+          ${[...txns].sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)).map(t => `
             <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
               <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
               <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
