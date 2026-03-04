@@ -9,10 +9,9 @@ export async function renderDashboard(container) {
   const debtSummary = await DebtModule.getDebtSummary();
 
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: var(--space-xl);">
-      <div>
-        <h2 style="font-size: 2rem; letter-spacing: -0.5px;">สวัสดีครับ 👋</h2>
-        <p class="subtitle" style="font-size: var(--font-size-sm); color: var(--text-tertiary);">
+    <div class="page-header" style="margin-bottom: var(--space-xl); display: flex; justify-content: center; align-items: center; width: 100%; text-align: center;">
+      <div style="width: 100%;">
+        <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0; font-weight: 500;">
           สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
         </p>
       </div>
