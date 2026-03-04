@@ -1316,29 +1316,44 @@ details[open] .toggle-icon {
 .ai-analyzing:disabled,
 .ai-analyzing[disabled],
 button.ai-analyzing {
-    background: linear-gradient(90deg,
-            #4285f4,
-            #9b72cb,
-            #d96570,
-            #f4b400,
-            #0f9d58,
-            #4285f4) !important;
-    background-size: 300% 100% !important;
-    animation: geminiRainbow 2s linear infinite !important;
+    background: var(--bg-tertiary) !important;
     color: white !important;
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(155, 114, 203, 0.4) !important;
+    border: 2px solid transparent !important;
+    animation: geminiGlow 2s linear infinite !important;
     opacity: 1 !important;
     pointer-events: none;
     cursor: wait !important;
+    position: relative;
 }
 
-@keyframes geminiRainbow {
+@keyframes geminiGlow {
     0% {
-        background-position: 0% 50%;
+        box-shadow: 0 0 6px 2px #4285f4, 0 0 12px 4px rgba(66, 133, 244, 0.3);
+        border-color: #4285f4;
+    }
+
+    20% {
+        box-shadow: 0 0 6px 2px #9b72cb, 0 0 12px 4px rgba(155, 114, 203, 0.3);
+        border-color: #9b72cb;
+    }
+
+    40% {
+        box-shadow: 0 0 6px 2px #d96570, 0 0 12px 4px rgba(217, 101, 112, 0.3);
+        border-color: #d96570;
+    }
+
+    60% {
+        box-shadow: 0 0 6px 2px #f4b400, 0 0 12px 4px rgba(244, 180, 0, 0.3);
+        border-color: #f4b400;
+    }
+
+    80% {
+        box-shadow: 0 0 6px 2px #0f9d58, 0 0 12px 4px rgba(15, 157, 88, 0.3);
+        border-color: #0f9d58;
     }
 
     100% {
-        background-position: 300% 50%;
+        box-shadow: 0 0 6px 2px #4285f4, 0 0 12px 4px rgba(66, 133, 244, 0.3);
+        border-color: #4285f4;
     }
 }

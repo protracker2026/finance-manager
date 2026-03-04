@@ -413,13 +413,38 @@ function setupTransactionEvents() {
 
     if (parsed.category) {
       const catSelect = document.getElementById('txnCategory');
-      const exactOption = Array.from(catSelect.options).find(o => {
+      const aiCat = parsed.category.trim();
+      console.log('[AI] Trying to match category:', aiCat, 'Options:', Array.from(catSelect.options).map(o => o.value));
+
+      // Try exact match first
+      let matched = Array.from(catSelect.options).find(o => {
         if (!o.value) return false;
-        return o.value === parsed.category ||
-          o.textContent.includes(parsed.category) ||
-          parsed.category.includes(o.value);
+        return o.value === aiCat;
       });
-      if (exactOption) catSelect.value = exactOption.value;
+
+      // Try partial match (includes)
+      if (!matched) {
+        matched = Array.from(catSelect.options).find(o => {
+          if (!o.value) return false;
+          const optVal = o.value.trim().toLowerCase();
+          const optText = o.textContent.trim().toLowerCase();
+          const target = aiCat.toLowerCase();
+          return optVal.includes(target) || optText.includes(target) || target.includes(optVal);
+        });
+      }
+
+      // Fallback: try "อื่นๆ", or first non-empty option
+      if (!matched) {
+        matched = Array.from(catSelect.options).find(o => o.value === 'อื่นๆ');
+      }
+      if (!matched) {
+        matched = Array.from(catSelect.options).find(o => o.value !== '');
+      }
+
+      if (matched) {
+        catSelect.value = matched.value;
+        console.log('[AI] Category matched:', matched.value);
+      }
     }
   }
 
