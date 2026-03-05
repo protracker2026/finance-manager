@@ -83,14 +83,15 @@ export async function renderTransactionsPage(container) {
     <!-- Table -->
     <!-- Collapsible Transaction List -->
     <details class="txn-list-details" id="txnListDetails" open>
-      <summary class="btn" style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding:var(--space-md);">
-        <span style="font-weight:bold;">📋 แสดงรายการทั้งหมด</span>
+      <summary class="btn" style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding: 12px 16px; background: rgba(255,255,255,0.03);">
         <div style="display:flex; align-items:center; gap:10px;">
-          <button type="button" class="btn btn-primary" id="addTransactionBtn" style="padding: 4px 10px; font-size: 11px; height: auto; border-radius: 4px;">
-            + เพิ่มรายการ
-          </button>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <span style="font-weight:bold; opacity: 0.9;">📋 แสดงรายการทั้งหมด</span>
         </div>
+        <button class="btn btn-primary" id="printReceiptBtn" style="padding: 7px 18px; font-size: 13px; font-weight: 600; height: auto; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-right: 2px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          ปริ๊นใบเสร็จ
+        </button>
       </summary>
       <div id="transactionsTable"></div>
     </details>
@@ -298,6 +299,14 @@ export async function renderTransactionsPage(container) {
   window.addEventListener('refresh-transactions', refreshHandler);
 
   await refreshTransactions();
+
+  // Check if we should auto-open the Add Transaction modal (triggered from Dashboard FAB)
+  if (sessionStorage.getItem('triggerAddTxn') === 'true') {
+    sessionStorage.removeItem('triggerAddTxn');
+    setTimeout(() => {
+      openTxnModal();
+    }, 400); // Wait for potential animations/renders
+  }
 }
 
 function setupTransactionEvents() {
@@ -358,15 +367,22 @@ function setupTransactionEvents() {
     }
   });
 
-  // Open modal
-  const addBtn = document.getElementById('addTransactionBtn');
-  if (addBtn) {
-    addBtn.addEventListener('click', (e) => {
+  // Handle Add Transaction and Print buttons via delegation since they can be dynamic/repositioned
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+
+    if (target.id === 'addTransactionBtn' || target.closest('#addTransactionBtn')) {
       e.preventDefault();
       e.stopPropagation();
       openTxnModal();
-    });
-  }
+    }
+
+    if (target.id === 'printReceiptBtn' || target.closest('#printReceiptBtn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      showPrintReceiptModal();
+    }
+  });
 
   // AI Voice Typing Logic helpers
   const aiVoiceSubmitBtn = document.getElementById('aiVoiceSubmitBtn');
@@ -1317,6 +1333,456 @@ function closeCategoryDetailModal() {
   updateBodyScrollLock();
 }
 
+// ─── RECEIPT PRINT ANIMATION ─────────────────────────────────────────────────
+function showPrintReceiptModal() {
+  const txns = cachedTxns;
+  const filters = currentFilters;
+
+  let periodLabel = 'ทั้งหมด';
+  if (filters.startDate && filters.endDate) {
+    periodLabel = `${Utils.formatDate(filters.startDate)} – ${Utils.formatDate(filters.endDate)}`;
+  } else if (filters.startDate) {
+    periodLabel = `ตั้งแต่ ${Utils.formatDate(filters.startDate)}`;
+  }
+
+  const income = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const balance = income - expense;
+
+  // Sort chronologically (Oldest first)
+  txns.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const activePeriodBtn = document.querySelector('.period-btn.active');
+  const isToday = activePeriodBtn && activePeriodBtn.dataset.period === 'today';
+
+  const itemsHtml = txns.map(t => {
+    const qtyInfo = (t.quantity && t.quantity > 1 && t.unitPrice)
+      ? `<span style="font-size:0.9em; font-weight:normal; color:#555; margin-left:4px;">@${Utils.formatCurrency(t.unitPrice)}</span>`
+      : '';
+    const qtyPrefix = `${t.quantity || 1} `;
+
+    return `
+    <div style="margin-bottom:12px; font-size:12px;">
+      <div style="display:flex; align-items:baseline; gap:6px;">
+        <span style="font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
+          ${qtyPrefix}${t.note || t.category}${qtyInfo}
+        </span>
+        <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:4px; opacity:0.6;"></div>
+        <span style="font-weight:800; white-space:nowrap; color:#111; font-family:'Courier New', monospace;">
+          ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+        </span>
+      </div>
+      <div style="font-size:10px; color:#888; margin-top:2px; font-family:monospace;">
+        ${(() => {
+        const d = new Date(t.date);
+        const timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        if (isToday) return timeStr;
+        const dateStr = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+        return `${dateStr} ${timeStr}`;
+      })()}
+      </div>
+    </div>
+    `;
+  }).join('');
+
+  if (!document.getElementById('printReceiptStyles')) {
+    const style = document.createElement('style');
+    style.id = 'printReceiptStyles';
+    style.textContent = `
+      #printReceiptOverlay {
+        position:fixed;inset:0;z-index:9999;
+        background:rgba(0,0,0,0.8);
+        display:flex;align-items:flex-start;justify-content:center;
+        padding-top:40px;overflow-y:auto;
+        opacity:0;transition:opacity 0.3s ease;
+      }
+      #printReceiptOverlay.visible { opacity:1; }
+      .printer-body {
+        width:270px;
+        background:linear-gradient(160deg,#4a4a4a,#262626);
+        border-radius:14px 14px 6px 6px;
+        padding:16px 20px 14px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.12);
+        position:relative;
+        transition: opacity 0.4s ease, transform 0.4s ease;
+      }
+      .printer-body.fade-out {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+        pointer-events: none;
+      }
+      .printer-light {
+        width:9px;height:9px;border-radius:50%;
+        background:#22c55e;box-shadow:0 0 7px #22c55e;
+        position:absolute;top:15px;right:18px;
+        animation:pLight 1.6s ease-in-out infinite;
+      }
+      @keyframes pLight {
+        0%,100%{opacity:1;box-shadow:0 0 7px #22c55e;}
+        50%{opacity:0.3;box-shadow:0 0 2px #22c55e;}
+      }
+      .printer-slot {
+        height:7px;background:#111;border-radius:3px;
+        margin-top:10px;box-shadow:inset 0 2px 5px rgba(0,0,0,0.9);
+        position: relative; z-index: 2;
+      }
+      .receipt-wrapper {
+        width: 270px;
+        overflow: hidden;
+        margin-top: -8px; /* Pull it up under the slot */
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .printer-body {
+        opacity: 1; transform: scale(1); transition: all 0.5s ease;
+      }
+      .receipt-paper {
+        width:100%;background:#f4e6cc;color:#111;
+        font-family:'Courier Prime','Courier New',monospace;
+        border-radius:0 0 8px 8px;
+        box-shadow:0 12px 40px rgba(0,0,0,0.5);
+        transform:translateY(-100%);
+        text-shadow: 0.1px 0.1px 0.2px rgba(0,0,0,0.05);
+        letter-spacing: -0.2px;
+        font-variant-numeric: slashed-zero;
+        font-feature-settings: "zero";
+      }
+      .receipt-paper.printing {
+        animation:paperFeed 10s steps(60, end) forwards;
+      }
+      .receipt-paper.tearing {
+        animation:paperTear 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      }
+      .receipt-paper.showcase {
+        transform: translateY(40px) scale(1) rotate(0deg) !important;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        filter: contrast(1.01) brightness(1.01);
+        background-image: 
+          radial-gradient(circle at 70% 30%, rgba(0,0,0,0.01) 0%, transparent 40%),
+          linear-gradient(135deg, rgba(0,0,0,0.01) 0%, transparent 20%, rgba(0,0,0,0.01) 40%, transparent 60%, rgba(0,0,0,0.01) 80%);
+        transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease;
+      }
+      @keyframes paperTear {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(40px); }
+      }
+      @keyframes paperFeed {
+        0%   {transform:translateY(-100%);}
+        2%   {transform:translateY(-98%);}
+        4%   {transform:translateY(-96%);}
+        6%   {transform:translateY(-93.5%);}
+        8%   {transform:translateY(-91%);}
+        10%  {transform:translateY(-88%);}
+        12%  {transform:translateY(-85.5%);}
+        14%  {transform:translateY(-83%);}
+        16%  {transform:translateY(-80.5%);}
+        18%  {transform:translateY(-78%);}
+        20%  {transform:translateY(-75.5%);}
+        22%  {transform:translateY(-73%);}
+        24%  {transform:translateY(-70.5%);}
+        26%  {transform:translateY(-68%);}
+        28%  {transform:translateY(-65.5%);}
+        30%  {transform:translateY(-63%);}
+        32%  {transform:translateY(-60.5%);}
+        34%  {transform:translateY(-58%);}
+        36%  {transform:translateY(-55.5%);}
+        38%  {transform:translateY(-53%);}
+        40%  {transform:translateY(-50.5%);}
+        42%  {transform:translateY(-48%);}
+        44%  {transform:translateY(-45.5%);}
+        46%  {transform:translateY(-43%);}
+        48%  {transform:translateY(-40.5%);}
+        50%  {transform:translateY(-38%);}
+        52%  {transform:translateY(-35.5%);}
+        54%  {transform:translateY(-33%);}
+        56%  {transform:translateY(-30.5%);}
+        58%  {transform:translateY(-28%);}
+        60%  {transform:translateY(-25.5%);}
+        62%  {transform:translateY(-23%);}
+        64%  {transform:translateY(-20.5%);}
+        66%  {transform:translateY(-18%);}
+        68%  {transform:translateY(-15.5%);}
+        70%  {transform:translateY(-13%);}
+        72%  {transform:translateY(-10.5%);}
+        74%  {transform:translateY(-8%);}
+        76%  {transform:translateY(-6%);}
+        78%  {transform:translateY(-4%);}
+        80%  {transform:translateY(-2.5%);}
+        82%  {transform:translateY(-1.2%);}
+        84%  {transform:translateY(-0.3%);}
+        100% {transform:translateY(0);}
+      }
+      .receipt-inner { padding:20px 16px 20px; }
+      .receipt-tear {
+        height:14px;
+        background:repeating-linear-gradient(90deg,#f4e6cc 0,#f4e6cc 5px,transparent 5px,transparent 9px);
+        border-top:1px dashed #bbb;
+      }
+      .sound-bar {
+        display:flex;gap:2px;align-items:flex-end;height:18px;margin-top:8px;
+      }
+      .sound-bar span {
+        width:3px;background:rgba(255,255,255,0.2);border-radius:2px;
+        animation:sBar 0.35s ease-in-out infinite alternate;
+      }
+      .sound-bar span:nth-child(2){animation-delay:0.08s;}
+      .sound-bar span:nth-child(3){animation-delay:0.18s;}
+      .sound-bar span:nth-child(4){animation-delay:0.04s;}
+      .sound-bar span:nth-child(5){animation-delay:0.14s;}
+      @keyframes sBar {
+        from{height:3px;}
+        to{height:14px;}
+      }
+      @keyframes pulseGlow {
+        0% { opacity: 0.85; box-shadow: 0 0 5px rgba(74, 222, 128, 0.2); }
+        50% { opacity: 1; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
+        100% { opacity: 0.85; box-shadow: 0 0 5px rgba(74, 222, 128, 0.2); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  let overlay = document.getElementById('printReceiptOverlay');
+  if (overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'printReceiptOverlay';
+  overlay.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;padding-bottom:60px;">
+
+
+      <div class="printer-body">
+        <div class="printer-light" id="printerLight"></div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:2px;margin-bottom:10px;">FINANCE MANAGER</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="sound-bar" id="printerSoundBar">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div style="width:40px;height:14px;background:#1a1a1a;border-radius:3px;border:1px solid #555;display:flex;align-items:center;justify-content:center;">
+            <div style="width:9px;height:9px;border-radius:50%;background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>
+          </div>
+        </div>
+        <div class="printer-slot"></div>
+      </div>
+
+      <div class="receipt-wrapper">
+        <div class="receipt-paper" id="receiptPaper">
+          <div class="receipt-inner">
+            <div style="text-align:center;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:14px;">
+              <div style="font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:4px;">💳 FINANCE MGR</div>
+              <div style="font-size:10px;color:#555;line-height:1.7;">
+                ใบสรุปรายรับ-รายจ่าย<br>
+                ${periodLabel}<br>
+                พิมพ์: ${new Date().toLocaleString('th-TH')}
+              </div>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              ${txns.length > 0 ? itemsHtml : '<div style="text-align:center;color:#999;font-size:12px;padding:12px;">ไม่มีรายการ</div>'}
+            </div>
+
+            <div style="border-top:2px solid #111;padding-top:10px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;">
+                <span>รายรับรวม</span>
+                <span style="color:#000;font-weight:700;">+${Utils.formatCurrency(income)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;">
+                <span>รายจ่ายรวม</span>
+                <span style="color:#000;font-weight:700;">-${Utils.formatCurrency(expense)}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;">
+                <span style="font-weight:900;font-size:14px;">ยอดสุทธิ</span>
+                <span style="font-weight:900;font-size:16px;color:#000;">${balance >= 0 ? '+' : ''}${Utils.formatCurrency(balance)}</span>
+              </div>
+            </div>
+
+            <div style="text-align:center;margin-top:18px;font-size:10px;color:#999;border-top:1px dashed #ccc;padding-top:12px;line-height:1.8;">
+              *** ขอบคุณที่ใช้บริการ ***<br>
+              Finance Manager · ${new Date().getFullYear()}
+            </div>
+          </div>
+          <div class="receipt-tear"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:80px;position:relative;z-index:10;flex-wrap:wrap;justify-content:center;">
+        <button id="closePrintBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;">✕ ปิด</button>
+        <button id="savePrintBtn" style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid #3b82f6;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📄 บันทึก PDF</button>
+        <button id="exportImageBtn" style="background:#3b82f6;color:#fff;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📸 บันทึกรูปภาพ</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    overlay.classList.add('visible');
+
+    setTimeout(() => {
+      const paper = document.getElementById('receiptPaper');
+      if (!paper) return;
+
+      let progress = 0;
+      paper.style.transition = 'none';
+      paper.style.transform = 'translateY(-100%)';
+
+      // Dynamic speed based on receipt length (more items = more steps)
+      const totalItems = txns.length || 1;
+      const baseSteps = 40 + (totalItems * 2.2); // 10% faster (fewer steps/ticks) than original 2.5
+
+      function printTick() {
+        if (progress >= 100) {
+          paper.style.transition = 'transform 0.2s ease-out';
+          paper.style.transform = 'translateY(0)';
+          const sb = document.getElementById('printerSoundBar');
+          const light = document.getElementById('printerLight');
+
+          if (sb) Array.from(sb.children).forEach(s => { s.style.animation = 'none'; s.style.height = '3px'; });
+          if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; light.style.animation = 'none'; }
+
+          // Trigger "Tear and Showcase"
+          setTimeout(() => {
+            if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
+            paper.style.transition = 'none';
+            paper.classList.add('tearing');
+
+            // Fade out the printer body during tear
+            const printer = document.querySelector('.printer-body');
+            if (printer) printer.classList.add('fade-out');
+
+            // Allow full visibility of the paper once it's independent
+            const wrapper = paper.parentElement;
+            if (wrapper) wrapper.style.overflow = 'visible';
+
+            setTimeout(() => {
+              if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+              paper.classList.add('showcase');
+
+              // Smoothly scroll up slightly to frame the independent receipt better
+              overlay.scrollTo({ top: 150, behavior: 'smooth' });
+
+              // Subtle "shake" or entry pop
+              if (navigator.vibrate) navigator.vibrate([20, 40]);
+            }, 400);
+          }, 800);
+          return;
+        }
+
+        const mood = Math.random();
+        let step, delay, trans;
+
+        // Calculate a base step size that makes the total time feel natural
+        const avgStep = 100 / baseSteps;
+
+        if (mood < 0.02) {
+          // 1. Long Pause (Paper stutter/jam) - Maximum fluidity (lowest chance)
+          step = 0;
+          delay = 220 + Math.random() * 180;
+          trans = 0;
+        } else if (mood < 0.6) {
+          // 2. Normal Line Feed (Standard speed) - 10% faster delay
+          step = avgStep * (0.8 + Math.random() * 0.4);
+          delay = 62 + Math.random() * 65;
+          trans = (delay / 1000) * 0.9;
+        } else if (mood < 0.85) {
+          // 3. Fast Stutter (Rapid printing) - 10% faster delay
+          step = avgStep * (1.2 + Math.random() * 0.8);
+          delay = 32 + Math.random() * 32;
+          trans = 0.03;
+        } else {
+          // 4. Heavy Jerky (Detailed text/Logo)
+          step = avgStep * (0.3 + Math.random() * 0.4);
+          delay = 105 + Math.random() * 115;
+          trans = 0;
+        }
+
+        progress = Math.min(100, progress + step);
+
+        if (trans > 0) {
+          paper.style.transition = `transform ${trans}s linear`;
+        } else {
+          paper.style.transition = 'none';
+        }
+
+        paper.style.transform = `translateY(${-(100 - progress)}%)`;
+
+        setTimeout(printTick, delay);
+      }
+
+      setTimeout(printTick, 400);
+    }, 300);
+  });
+
+  const closeOverlay = () => {
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.remove(), 300);
+  };
+
+  document.getElementById('closePrintBtn').addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeOverlay(); });
+  document.getElementById('savePrintBtn').addEventListener('click', () => {
+    const exportBtn = document.getElementById('exportReceiptBtn');
+    if (exportBtn) exportBtn.click();
+  });
+
+  document.getElementById('exportImageBtn').addEventListener('click', async () => {
+    const paper = document.getElementById('receiptPaper');
+    if (!paper) return;
+
+    try {
+      const btn = document.getElementById('exportImageBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '⌛ กำลังสร้าง...';
+      btn.disabled = true;
+
+      // Temporarily ensure full visibility and add padding for capture
+      const originalPadding = paper.style.paddingBottom;
+      const originalOverflow = paper.style.overflow;
+      paper.style.paddingBottom = '30px';
+      paper.style.overflow = 'visible';
+
+      // Use html2canvas to capture the paper
+      const canvas = await html2canvas(paper, {
+        backgroundColor: '#f4e6cc',
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        scrollY: -window.scrollY,
+        scrollX: -window.scrollX
+      });
+
+      // Restore original styles
+      paper.style.paddingBottom = originalPadding;
+      paper.style.overflow = originalOverflow;
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `receipt-${periodLabel.replace(/\s+/g, '-')}-${new Date().getTime()}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      btn.innerHTML = '✅ สำเร็จ!';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }, 2000);
+
+      Utils.showToast('บันทึกรูปภาพเรียบร้อยแล้ว', 'success');
+    } catch (err) {
+      console.error('Export image failed:', err);
+      Utils.showToast('เกิดข้อผิดพลาดในการบันทึกรูปภาพ', 'error');
+      const btn = document.getElementById('exportImageBtn');
+      if (btn) {
+        btn.innerHTML = '📸 บันทึกรูปภาพ';
+        btn.disabled = false;
+      }
+    }
+  });
+}
+
 async function updateCategoryOptions(type) {
   const cats = await TransactionModule.getCategories(type);
   const select = document.getElementById('txnCategory');
@@ -1517,7 +1983,11 @@ async function refreshTransactions() {
       window._groupedTxnData = groupedArr;
 
       tableEl.innerHTML = `
-      <table class="data-table">
+      <div style="position: relative;">
+        <button id="addTransactionBtn" style="position: absolute; top: 11px; right: 18px; z-index: 10; padding: 7px 18px; font-size: 13px; font-weight: 600; background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); opacity: 1;" onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
+          + เพิ่มรายการ
+        </button>
+        <table class="data-table">
         <thead>
           <tr>
             <th>ประเภท</th>
@@ -1538,13 +2008,14 @@ async function refreshTransactions() {
             </tr>
           `).join('')}
           <tr class="receipt-footer">
-              <td colspan="3" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
-              <td colspan="1" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
+              <td colspan="3" style="text-align:center; font-weight:bold; padding-top:10px;">ยอดรวมสุทธิ</td>
+              <td colspan="1" style="text-align:center; font-weight:bold; font-size:1.2em; padding-top:10px;">
                   ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
               </td>
           </tr>
         </tbody>
       </table>
+      </div>
       <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
         สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กดที่หมวดหมู่เพื่อดูรายย่อยและแก้ไข)
       </div>
@@ -1560,7 +2031,11 @@ async function refreshTransactions() {
       });
     } else {
       tableEl.innerHTML = `
-      <table class="data-table">
+      <div style="position: relative;">
+        <button id="addTransactionBtn" style="position: absolute; top: 11px; right: 18px; z-index: 10; padding: 7px 18px; font-size: 13px; font-weight: 600; background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); opacity: 1;" onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
+          + เพิ่มรายการ
+        </button>
+        <table class="data-table">
         <thead>
           <tr>
             <th>วันที่</th>
@@ -1599,6 +2074,7 @@ async function refreshTransactions() {
           </tr>
         </tbody>
       </table>
+      </div>
       <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
         แสดง ${txns.length} รายการ
       </div>

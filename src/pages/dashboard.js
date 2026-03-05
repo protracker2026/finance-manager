@@ -18,7 +18,30 @@ export async function renderDashboard(container) {
     </div>
 
     <!-- สรุปตัวเลข (Redesigned) -->
-    <div class="dashboard-summary-premium">
+    <div class="dashboard-summary-premium" style="position: relative;">
+      <button id="dashAddTxnBtn" style="
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 14px; 
+        font-size: 11px; 
+        font-weight: 600; 
+        background: rgba(74, 222, 128, 0.1); 
+        color: #4ade80; 
+        border: 1px solid rgba(74, 222, 128, 0.4); 
+        border-radius: 6px; 
+        cursor: pointer; 
+        transition: all 0.2s; 
+        box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); 
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 10;
+        opacity: 1;
+      " onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        เพิ่มรายการ
+      </button>
       <div class="summary-main">
         <div class="label">ยอดคงเหลือสุทธิ</div>
         <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}">
@@ -87,10 +110,16 @@ export async function renderDashboard(container) {
       <div style="padding: var(--space-lg); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
         <span class="card-title" style="margin-bottom: 0;">ธุรกรรมล่าสุด</span>
         <button class="btn btn-secondary btn-sm" onclick="window.location.hash='#transactions'" style="font-size: 11px; padding: 4px 12px; border-radius: 6px;">ดูทั้งหมด</button>
-      </div>
-      <div id="recentTransactions" style="padding: 0;"></div>
+        <div id="recentTransactions" style="padding: 0;"></div>
     </div>
   `;
+
+  // Attach FAB/Header button listener
+  document.getElementById('dashAddTxnBtn')?.addEventListener('click', () => {
+    // Set flag to open modal on transactions page
+    sessionStorage.setItem('triggerAddTxn', 'true');
+    window.location.hash = '#transactions';
+  });
 
   // Render recent transactions with more modern look
   const recent = await TransactionModule.getAll({});

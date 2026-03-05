@@ -527,19 +527,102 @@ async function savePayment() {
   }
 
   try {
+    let debtBefore = null;
+    let debtAfter = null;
+
+    if (!paymentId) {
+      // We only care about showing the summary when a new payment completely pays off the debt
+      debtBefore = await DebtModule.getById(debtId);
+    }
+
     if (paymentId) {
       await DebtModule.updatePayment(paymentId, data);
       Utils.showToast('แก้ไขการชำระสำเร็จ', 'success');
     } else {
       await DebtModule.recordPayment(debtId, data);
-      Utils.showToast('บันทึกการชำระสำเร็จ', 'success');
+      // Fetch the updated debt state
+      debtAfter = await DebtModule.getById(debtId);
+
+      if (debtBefore && debtBefore.status !== 'paid' && debtAfter && debtAfter.status === 'paid') {
+        // Debt was just paid off by this payment!
+        // Create and show custom modal
+        setTimeout(() => {
+          let modal = document.getElementById('hurtfulSummaryModal');
+          if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'hurtfulSummaryModal';
+            modal.className = 'modal-overlay';
+            modal.style.zIndex = '9999';
+            document.body.appendChild(modal);
+          }
+
+          // Re-render innerHTML every time to ensure fresh numbers
+          modal.innerHTML = `
+            <div class="modal" style="max-width: 450px; padding: 20px; border-radius: 16px; background: transparent; box-shadow: none;">
+              
+              <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 56px; margin-bottom: 10px;">🎉</div>
+                <h3 style="color: var(--text-base); font-size: 20px; margin:0;">ปิดหนี้สำเร็จ! คุณเป็นไทแล้ว!</h3>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top:8px;">และนี่งบสรุปดอกเบี้ยที่คุณเสียไป... เจ็บใจไหมล่ะ! 💸</p>
+              </div>
+
+              <!-- Replicating the Debt Card UI -->
+              <div class="debt-item" style="padding: 16px; cursor: default; box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: none;">
+                <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                      <span style="font-size: 16px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${debtAfter.name || 'หนี้ที่เพิ่งปิด'}</span>
+                      <span class="badge" style="font-size: 10px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">${Utils.debtTypeName(debtAfter.type)}</span>
+                    </div>
+                  </div>
+                  <div style="text-align: right; flex-shrink: 0;">
+                    <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">คงเหลือ</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #22c55e; letter-spacing: -0.5px;">0.00 ฿</div>
+                  </div>
+                </div>
+
+                <div class="progress-container" style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0;">
+                  <div class="progress-fill" style="width: 100%; height: 100%; background: #22c55e; border-radius: 2px; opacity: 0.8;"></div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">เงินต้นตั้งต้น</div>
+                    <div style="font-size: 16px; font-weight: 500; color: var(--text-primary);">${Utils.formatCurrency(debtAfter.principal)}</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 11px; color: var(--text-danger); opacity: 0.9; margin-bottom: 4px;">ดอกเบี้ยที่ถูกสูบไปทั้งหมด</div>
+                    <div style="font-size: 16px; font-weight: 700; color: var(--text-danger);">+ ${Utils.formatCurrency(debtAfter.totalInterestPaid)}</div>
+                  </div>
+                </div>
+
+                <div class="debt-detail-item" style="grid-column: 1 / -1; margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 12px; font-weight:600; color: var(--text-secondary); text-transform:uppercase;">ยอดเงินรวมที่จ่ายจริง</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">${Utils.formatCurrency(debtAfter.totalPaid)}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <button class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 16px;" onclick="document.getElementById('hurtfulSummaryModal').classList.remove('active')">รับทราบ (ปาดน้ำตา)</button>
+            </div>
+          `;
+
+          // Force reflow and show
+          void modal.offsetWidth;
+          modal.classList.add('active');
+        }, 300); // Slight delay so the payment modal closes first
+      } else {
+        Utils.showToast('บันทึกการชำระสำเร็จ', 'success');
+      }
     }
+
     closePaymentModal();
     await refreshDebts();
 
     // If detail modal is open, refresh it
     const detailModal = document.getElementById('detailModal');
-    if (detailModal.classList.contains('active')) {
+    if (detailModal && detailModal.classList.contains('active')) {
       const debt = await DebtModule.getById(debtId);
       if (debt) showDebtDetail(debt);
     }
@@ -780,6 +863,16 @@ async function showDebtDetail(debt, scrollToHistory = false) {
                 <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ชำระขั้นต่ำ (ประเมิน)</td>
                 <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right; color:var(--text-warning);">${Utils.formatCurrency(debt.minPayment || 0)}</td>
               </tr>` : ''}
+              ${debt.totalInterestPaid > 0 ? `
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ดอกเบี้ยที่เสียไปเปล่าๆ</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right; color:var(--text-danger);">- ${Utils.formatCurrency(debt.totalInterestPaid || 0)}</td>
+              </tr>` : ''}
+              ${debt.totalPaid > 0 ? `
+              <tr>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ยอดเงินรวมที่จ่ายจริง</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${Utils.formatCurrency(debt.totalPaid || 0)}</td>
+              </tr>` : ''}
               <tr style="background: rgba(220, 53, 69, 0.05);">
                 <td style="padding:12px 10px; border-bottom:none; font-weight:600; color:var(--text-primary); border-right:1px solid var(--border-color);">ยอดคงเหลือ (ล่าสุด)</td>
                 <td style="padding:12px 10px; border-bottom:none; font-weight:bold; color:var(--text-danger); font-size:16px; text-align:right;">${Utils.formatCurrency(debt.currentBalance)}</td>
@@ -910,74 +1003,109 @@ async function refreshDebts() {
   const renderGroup = (key, group, isdetails = false) => {
     if (group.items.length === 0) return '';
 
-    const listHtml = group.items.map(d => {
-      const paid = d.principal - d.currentBalance;
-      const paidPct = d.principal > 0 ? Utils.percentage(paid, d.principal) : 100;
-      const paymentAmount = d.monthlyPayment || d.minPayment || 0;
+    let listHtml = '';
 
-      // 4.1 Calculate Quick Prediction for this item
-      let predictionSummaryHtml = '';
-      const paymentAmountForCalc = paymentAmount || (d.type === 'credit_card' ? InterestEngine.calculateMinPayment(d.currentBalance, 'credit_card') : 0);
-
-      if (paymentAmountForCalc > 0) {
-        let result;
-        if (d.type === 'credit_card') {
-          result = InterestEngine.generateCreditCardSchedule(d.currentBalance, d.annualRate, d.monthlyPayment || 0, d.startDate);
-        } else if (d.interestType === 'daily_accrual') {
-          result = InterestEngine.generateDailyAccrualSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc, d.startDate);
-        } else if (d.interestType === 'fixed_rate') {
-          result = InterestEngine.generateFixedRateSchedule(d.principal, d.annualRate, paymentAmountForCalc);
-        } else {
-          result = InterestEngine.generateAmortizationSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc);
-        }
-
-        predictionSummaryHtml = `
-          <div class="debt-detail-item" style="grid-column: 1 / -1; margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
-            <div class="label" style="color: var(--text-warning); margin-bottom: 4px;">🎯 คาดการณ์การผ่อน</div>
-            <div style="display: flex; flex-wrap: wrap; gap: var(--space-md); font-size: var(--font-size-sm); color: var(--text-secondary);">
-              <div style="display:flex; flex-direction:column;">
-                <span style="font-size:var(--font-size-xs); text-transform:uppercase; opacity:0.6;">ระยะเวลา</span>
-                <span class="value" style="color:var(--text-success)">${result.totalMonths} เดือน</span>
+    if (isdetails) {
+      listHtml = `
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+          ${group.items.map(d => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'">
+              <div style="display:flex; align-items:center; gap: 12px; overflow:hidden;">
+                <span style="font-size: 18px; flex-shrink: 0;">🎉</span>
+                <div style="color: var(--text-primary); font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${d.name || 'หนี้สินที่ไม่มีชื่อ'}
+                </div>
               </div>
-              <div style="display:flex; flex-direction:column;">
-                <span style="font-size:var(--font-size-xs); text-transform:uppercase; opacity:0.6;">ดอกเบี้ยรวม</span>
-                <span class="value">${Utils.formatCurrency(result.totalInterest)}</span>
-              </div>
-              <div style="display:flex; flex-direction:column; margin-left:auto; text-align:right;">
-                <span style="font-size:var(--font-size-xs); text-transform:uppercase; opacity:0.6;">หมดหนี้ประมาณ</span>
-                <span class="value" style="font-weight:bold;">${Utils.formatMonthYear(Utils.addMonths(new Date(), result.totalMonths))}</span>
+              <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-left: 12px;">
+                <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background:var(--bg-tertiary); border:1px solid rgba(255,255,255,0.1); color:var(--text-accent); cursor:pointer; padding:6px 12px; border-radius: 6px; font-size: 12px; display:flex; align-items:center; gap:6px; font-weight: 600;" title="ดูรายละเอียด">
+                  ดูรายละเอียด
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <button class="delete-debt" data-id="${d.id}" style="background:rgba(220,53,69,0.1); border:1px solid rgba(220,53,69,0.2); color:var(--text-danger-soft); cursor:pointer; padding:6px; border-radius: 6px;" title="ลบ">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
               </div>
             </div>
-          </div>
-        `;
-      } else {
-        predictionSummaryHtml = `
-          <div class="debt-detail-item" style="grid-column: 1 / -1; margin-top: 8px; border-top: 1px dashed var(--border-color); padding-top: 10px; color: var(--text-tertiary); font-size: var(--font-size-xs); text-align: center;">
-            💡 ระบุยอดผ่อนชำระต่อเดือนเพื่อดูคาดการณ์วันหมดหนี้
-          </div>
-        `;
-      }
+          `).join('')}
+        </div>
+      `;
+    } else {
+      listHtml = group.items.map(d => {
+        const paid = d.principal - d.currentBalance;
+        const paidPct = d.principal > 0 ? Utils.percentage(paid, d.principal) : 100;
+        const paymentAmount = d.monthlyPayment || d.minPayment || 0;
 
-      // Dynamic color based on repayment progress (Text only)
-      let statusColor = '#ef4444'; // 0-25% (Vibrant Red)
-      if (paidPct >= 90) statusColor = '#22c55e';      // 90%+ (Green)
-      else if (paidPct >= 75) statusColor = '#4ade80'; // 75-90% (Light Green)
-      else if (paidPct >= 50) statusColor = '#fcd34d'; // 50-75% (Yellow)
-      else if (paidPct >= 25) statusColor = '#fb923c'; // 25-50% (Orange)
+        // 4.1 Calculate Quick Prediction for this item
+        let predictionSummaryHtml = '';
+        const paymentAmountForCalc = paymentAmount || (d.type === 'credit_card' ? InterestEngine.calculateMinPayment(d.currentBalance, 'credit_card') : 0);
 
-      return `
-        <div class="debt-item" data-id="${d.id}" style="padding: 16px; position: relative; cursor: pointer; transition: all 0.2s ease;">
-          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;" onclick="window.toggleDebtItem(this)">
+        if (paymentAmountForCalc > 0) {
+          let result;
+          if (d.type === 'credit_card') {
+            result = InterestEngine.generateCreditCardSchedule(d.currentBalance, d.annualRate, d.monthlyPayment || 0, d.startDate);
+          } else if (d.interestType === 'daily_accrual') {
+            result = InterestEngine.generateDailyAccrualSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc, d.startDate);
+          } else if (d.interestType === 'fixed_rate') {
+            result = InterestEngine.generateFixedRateSchedule(d.principal, d.annualRate, paymentAmountForCalc);
+          } else {
+            result = InterestEngine.generateAmortizationSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc);
+          }
+
+          predictionSummaryHtml = `
+          <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:4px;">
+            <tbody>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:8px 4px; color:var(--text-tertiary); width:50%;">เงินต้นตั้งต้น</td>
+                <td style="padding:8px 4px; font-weight:500; text-align:right;">${Utils.formatCurrency(d.principal)}</td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:8px 4px; color:var(--text-tertiary);">วิธีคิดดอกเบี้ย</td>
+                <td style="padding:8px 4px; font-weight:500; text-align:right;">${Utils.interestTypeName(d.interestType)}</td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:8px 4px; color:var(--text-tertiary);">ระยะเวลา (คาดการณ์)</td>
+                <td style="padding:8px 4px; font-weight:600; color:var(--text-success); text-align:right;">${result.totalMonths} เดือน</td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:8px 4px; color:var(--text-tertiary);">ดอกเบี้ยรวม (คาดการณ์)</td>
+                <td style="padding:8px 4px; font-weight:600; color:var(--text-warning); text-align:right;">${Utils.formatCurrency(result.totalInterest)}</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 4px; color:var(--text-tertiary);">หมดหนี้ประมาณ</td>
+                <td style="padding:8px 4px; font-weight:700; color:var(--text-primary); text-align:right;">${Utils.formatMonthYear(Utils.addMonths(new Date(), result.totalMonths))}</td>
+              </tr>
+            </tbody>
+          </table>
+    `;
+        } else {
+          predictionSummaryHtml = `
+          <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; border-top:1px dashed rgba(255,255,255,0.1);">
+            <tbody>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:8px 4px; color:var(--text-tertiary); width:50%;">เงินต้นตั้งต้น</td>
+                <td style="padding:8px 4px; font-weight:500; text-align:right;">${Utils.formatCurrency(d.principal)}</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 4px; color:var(--text-tertiary);">วิธีคิดดอกเบี้ย</td>
+                <td style="padding:8px 4px; font-weight:500; text-align:right;">${Utils.interestTypeName(d.interestType)}</td>
+              </tr>
+            </tbody>
+          </table>
+    `;
+        }
+
+        // Dynamic color based on repayment progress (Text only)
+        let statusColor = '#ef4444'; // 0-25% (Vibrant Red)
+        if (paidPct >= 90) statusColor = '#22c55e';      // 90%+ (Green)
+        else if (paidPct >= 75) statusColor = '#4ade80'; // 75-90% (Light Green)
+        else if (paidPct >= 50) statusColor = '#fcd34d'; // 50-75% (Yellow)
+        else if (paidPct >= 25) statusColor = '#fb923c'; // 25-50% (Orange)
+
+        return `
+    <div class="debt-item" data-id="${d.id}" style="padding: 16px; position: relative; cursor: pointer; transition: all 0.2s ease;">
+          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;" onclick="window.toggleDebtItem(this)">
             <div style="flex: 1; min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <span style="font-size: 16px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
-                <span class="badge" style="font-size: 10px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 2px 6px; border-radius: 4px; flex-shrink: 0;">${Utils.debtTypeName(d.type)}</span>
-              </div>
-              <div style="font-size: 12px; color: var(--text-tertiary); display: flex; gap: 8px; align-items: center;">
-                <span>ดอกเบี้ย ${d.annualRate}%</span>
-                <span style="opacity: 0.3;">•</span>
-                <span>จ่าย ~${Utils.formatCurrency(paymentAmountForCalc).replace(' ฿', '')}</span>
-              </div>
+              <span style="font-size: 16px; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; min-width: 0;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
             </div>
             <div style="text-align: right; flex-shrink: 0;">
               <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">คงเหลือ</div>
@@ -992,20 +1120,16 @@ async function refreshDebts() {
           <details class="debt-item-details" style="margin-top: 0; border-top: none;">
             <summary style="display:none"></summary>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
-              <div>
-                <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">เงินต้นตั้งต้น</div>
-                <div style="font-size: 14px; font-weight: 500;">${Utils.formatCurrency(d.principal)}</div>
-              </div>
-              <div>
-                <div style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;">วิธีคิดดอกเบี้ย</div>
-                <div style="font-size: 14px; font-weight: 500;">${Utils.interestTypeName(d.interestType)}</div>
-              </div>
+            <!-- Details section: type, rate, payment info -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.07);">
+              <span class="badge" style="font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 3px 8px; border-radius: 4px;">${Utils.debtTypeName(d.type)}</span>
+              <span class="badge" style="font-size: 11px; background: rgba(255,193,7,0.08); color: var(--text-warning); padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(255,193,7,0.15);">ดอกเบี้ย ${d.annualRate}%</span>
+              ${paymentAmountForCalc > 0 ? `<span class="badge" style="font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 3px 8px; border-radius: 4px;">จ่าย ~${Utils.formatCurrency(paymentAmountForCalc).replace(' ฿', '')} ฿/เดือน</span>` : ''}
             </div>
 
             ${predictionSummaryHtml}
 
-            <div style="display: flex; gap: 8px; margin-top: 20px;">
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
               <button class="btn btn-primary pay-debt" data-id="${d.id}" style="flex: 2; height: 38px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;">
                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                  ชำระเงิน
@@ -1018,7 +1142,7 @@ async function refreshDebts() {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.05);">
               <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background: none; padding: 0; color: var(--text-accent); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                ตารางผ่อน & ประวัติ
+                ตารางผ่อน &amp; ประวัติ
               </button>
               
               <div style="display: flex; gap: 12px;">
@@ -1035,12 +1159,12 @@ async function refreshDebts() {
             </div>
           </details>
         </div>
-      `;
-    }).join('');
-
+    `;
+      }).join('');
+    }
 
     const headerHtml = `
-      <div class="debt-group-header">
+    <div class="debt-group-header">
          <div class="debt-group-title">
             ${group.title} 
             <span style="font-size:0.7em; opacity:0.6; font-weight:normal;">(${group.items.length})</span>
@@ -1051,11 +1175,11 @@ async function refreshDebts() {
 
     if (isdetails) {
       return `
-        <details class="debt-group" style="margin-top:40px; opacity:0.7;">
-          <summary style="cursor:pointer; font-weight:bold; color:var(--text-accent); margin-bottom:10px;">${group.title} (${group.items.length})</summary>
+    <details class="debt-group" style="margin-top:40px; opacity:0.7;">
+      <summary style="cursor:pointer; font-weight:bold; color:var(--text-accent); margin-bottom:10px;">${group.title} (${group.items.length})</summary>
           ${listHtml}
         </details>
-      `;
+    `;
     }
 
     return `<div class="debt-group">${headerHtml}${listHtml}</div>`;

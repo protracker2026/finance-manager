@@ -78,62 +78,86 @@
         display: none;
     }
 
-    /* Continuous Receipt Style List */
+    /* Digital POS Screen Style */
     .data-table {
-        background: #f5e6ca;
-        /* Darker Eye-friendly paper color */
-        padding: 24px 24px 24px 14px;
-        /* Shifted left */
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        font-family: 'Inconsolata', 'Space Mono', 'Courier New', monospace;
+        background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%);
+        padding: 24px 20px;
+        box-shadow:
+            0 20px 50px rgba(0, 0, 0, 0.5),
+            inset 0 0 100px rgba(59, 130, 246, 0.05);
+        /* Subtle blue glow */
+        font-family: 'JetBrains Mono', 'Inconsolata', monospace;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
 
-        /* Slimmer look */
-        max-width: 340px;
-        margin-left: auto;
-        margin-right: auto;
+        /* Soft Digital Screen Scanlines & Flare */
+        background-image:
+            linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+            linear-gradient(90deg, rgba(59, 130, 246, 0.03), rgba(0, 255, 0, 0.01), rgba(59, 130, 246, 0.03));
+        background-size: 100% 4px, 4px 100%;
 
-        /* Jagged Edge Top/Bottom */
-        --mask:
-            conic-gradient(from -45deg at bottom, #0000, #000 1deg 90deg, #0000 91deg) 50% / 15px 100%,
-            conic-gradient(from 135deg at top, #0000, #000 1deg 90deg, #0000 91deg) 50% / 15px 100%;
-        -webkit-mask: var(--mask);
-        mask: var(--mask);
-        -webkit-mask-composite: source-in;
-        mask-composite: intersect;
-
+        max-width: 400px;
+        /* Slightly wider for better balance */
+        margin: 0 auto var(--space-lg);
         position: relative;
-        margin-bottom: var(--space-lg);
+        overflow: hidden;
+
+        /* Remove paper mask */
+        -webkit-mask: none;
+        mask: none;
     }
 
     .data-table::before {
-        content: "รายการสินค้า";
+        content: "LIVE TERMINAL • READY";
         display: block;
-        font-size: 1.4em;
+        font-size: 10px;
         font-weight: bold;
-        color: #444;
+        color: #4ade80;
+        /* Neon Green */
         margin-bottom: 20px;
         text-align: left;
+        letter-spacing: 2px;
+        text-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+    }
+
+    /* Green Status Dot - Positioned relative to centered header */
+    .data-table::after {
+        content: "";
+        position: absolute;
+        top: 24px;
+        left: 50%;
+        margin-left: 85px;
+        /* Offset from center to be near the text */
+        width: 8px;
+        height: 8px;
+        background: #4ade80;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #4ade80;
+        display: block;
+        animation: pLight 2s infinite;
     }
 
     /* List Items */
     .data-table tr {
-        background: transparent;
-        color: #000;
-        margin-bottom: 6px;
-        padding: 0;
-        border: none;
+        background: rgba(255, 255, 255, 0.03);
+        color: #e2e8f0;
+        margin-bottom: 8px;
+        padding: 10px;
+        border-radius: 6px;
+        border-left: 2px solid transparent;
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
-        font-size: 0.9em;
+        align-items: center;
+        font-size: 13px;
         line-height: 1.3;
         font-weight: 500;
-        /* Subtle ink-bleed simulator */
-        text-shadow: 0.2px 0.2px 0px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
     }
 
-    .data-table tbody tr:hover {
-        background: transparent !important;
+    .data-table tbody tr:active {
+        background: rgba(59, 130, 246, 0.1);
+        transform: scale(0.98);
+        border-left-color: #3b82f6;
     }
 
     /* Layout: [1] [Item Name .........] [Price] */
@@ -142,10 +166,10 @@
     .data-table tr::before {
         content: attr(data-qty);
         width: 25px;
-        color: #666;
+        color: #94a3b8;
+        /* Brighter gray */
         flex-shrink: 0;
         text-align: center;
-        /* Center align like a receipt */
         margin-right: 5px;
     }
 
@@ -157,8 +181,9 @@
     .data-table td[data-label="หมวดหมู่"] {
         order: 1;
         flex-grow: 1;
-        font-weight: normal;
-        color: #333;
+        font-weight: 600;
+        color: #ffffff;
+        /* Contrast! */
         text-transform: none;
         white-space: nowrap;
         overflow: hidden;
@@ -167,12 +192,12 @@
         align-items: baseline;
     }
 
-    /* Leader Lines (Dots) */
+    /* Leader Lines */
     .data-table td[data-label="หมวดหมู่"]::after {
         content: "";
         flex-grow: 1;
-        margin-left: 5px;
-        border-bottom: 1px dotted #999;
+        margin-left: 8px;
+        border-bottom: 1px dotted rgba(255, 255, 255, 0.15);
         height: 1px;
     }
 
@@ -180,11 +205,12 @@
     .data-table td.amount {
         order: 2;
         width: auto;
-        min-width: 60px;
+        min-width: 80px;
         text-align: right;
-        font-weight: normal;
-        color: #444 !important;
-        /* Make amount slightly less black (lighter) */
+        font-weight: 700;
+        color: #e2e8f0 !important;
+        /* Softened White */
+        font-family: 'Space Mono', monospace;
     }
 
     /* Hide other columns to keep it clean */
@@ -228,14 +254,12 @@
     .data-table tr.receipt-footer {
         display: flex !important;
         flex-direction: column;
-        margin-top: 15px;
-        padding-top: 10px;
-        border-top: 1px dashed #aaa;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
         align-items: stretch;
-    }
-
-    .data-table tr.receipt-footer::before {
-        display: none;
     }
 
     .data-table tr.receipt-footer td {
@@ -243,16 +267,22 @@
         justify-content: space-between;
         width: 100% !important;
         font-weight: normal;
-        color: #333 !important;
+        color: #94a3b8 !important;
         padding: 4px 0 !important;
-        font-size: 1em;
+        font-size: 13px;
+        border: none !important;
     }
 
     /* Bold Total */
     .data-table tr.receipt-footer td:last-child {
-        font-weight: bold;
-        font-size: 1.1em;
-        margin-top: 5px;
+        font-weight: 900;
+        font-size: 18px;
+        margin-top: 8px;
+        color: #e2e8f0 !important;
+        /* Softened White */
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        letter-spacing: 1px;
+        font-family: 'Space Mono', monospace;
     }
 
     /* Decoration Footer */
