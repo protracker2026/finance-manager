@@ -83,14 +83,14 @@ export async function renderTransactionsPage(container) {
     <!-- Table -->
     <!-- Collapsible Transaction List -->
     <details class="txn-list-details" id="txnListDetails" open>
-      <summary class="btn" style="width:100%; display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding: 12px 16px; background: rgba(255,255,255,0.03);">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          <span style="font-weight:bold; opacity: 0.9;">📋 แสดงรายการทั้งหมด</span>
+      <summary class="btn" style="width:100%; display:flex; flex-wrap: wrap; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding: 14px 16px; background: rgba(255,255,255,0.03); border-radius: 16px; cursor: default; gap: 12px;">
+        <div style="display:flex; align-items:center; gap:8px; cursor: pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6; color: var(--accent-primary);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <span style="font-weight:700; font-size: 15px; color: var(--text-primary); white-space: nowrap;">📋 รายการธุรกรรม</span>
         </div>
-        <button class="btn btn-primary" id="printReceiptBtn" style="padding: 7px 18px; font-size: 13px; font-weight: 600; height: auto; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); display: flex; align-items: center; gap: 6px; margin-right: 2px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-          ปริ๊นใบเสร็จ
+        <button class="btn btn-primary" id="addTransactionBtn" style="padding: 8px 20px; font-size: 13.5px; font-weight: 700; border-radius: 10px; background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.15);" onmouseover="this.style.background='rgba(74, 222, 128, 0.25)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(74, 222, 128, 0.15)'; this.style.transform='translateY(0)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          เพิ่มรายการ
         </button>
       </summary>
       <div id="transactionsTable"></div>
@@ -116,7 +116,7 @@ export async function renderTransactionsPage(container) {
                  พิมพ์ด้วยเสียง (กดไมค์ที่คีย์บอร์ดชั่วคราว)
               </label>
               <div style="display: flex; gap: 8px;">
-                <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." style="flex: 1;">
+                <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." style="flex: 1;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <button type="button" id="aiVoiceSubmitBtn" class="btn btn-primary" style="white-space: nowrap; padding: 4px 12px; font-size: 12px; height: auto;">ส่งให้ AI</button>
               </div>
             </div>
@@ -380,7 +380,13 @@ function setupTransactionEvents() {
     if (target.id === 'printReceiptBtn' || target.closest('#printReceiptBtn')) {
       e.preventDefault();
       e.stopPropagation();
-      showPrintReceiptModal();
+      window.showPrintReceiptModal({ isOverview: false });
+    }
+
+    if (target.id === 'printReceiptOverviewBtn' || target.closest('#printReceiptOverviewBtn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.showPrintReceiptModal({ isOverview: true });
     }
   });
 
@@ -518,7 +524,14 @@ function setupTransactionEvents() {
   };
 
   if (aiVoiceSubmitBtn && aiVoiceInput) {
+    let isComposing = false;
+
+    aiVoiceInput.addEventListener('compositionstart', () => { isComposing = true; });
+    aiVoiceInput.addEventListener('compositionend', () => { isComposing = false; });
+
     aiVoiceSubmitBtn.addEventListener('click', () => {
+      if (isComposing) return; // Prevent submission while composing
+
       // Consume the continuous flag passed from saveTxn
       window._isContinuousAi = window._nextClickIsContinuous || false;
       window._nextClickIsContinuous = false; // Reset for next time
@@ -532,7 +545,8 @@ function setupTransactionEvents() {
       }
     });
 
-    aiVoiceInput.addEventListener('keypress', (e) => {
+    aiVoiceInput.addEventListener('keydown', (e) => {
+      if (isComposing) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         aiVoiceSubmitBtn.click();
@@ -1266,15 +1280,22 @@ function openCategoryDetailModal(type, category, fullTxnsList, jumpKey = null) {
   const isOverview = !jumpKey;
   const total = activeTxns.reduce((s, t) => s + t.amount, 0);
 
+  // Global var for printing
+  window._currentModalTxns = activeTxns;
+  window._currentModalTitle = `${category} (${periodText})`;
+
   const summaryHtml = `
     <div style="margin-bottom:20px; padding:16px 20px; background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.05); border-radius:16px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
       <div>
         <div style="font-size:12px; color:var(--text-tertiary); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${isOverview ? 'สรุปภาพรวมทั้งหมด' : 'สรุปยอดส่วนนี้'}</div>
         <div style="font-size:13px; color:var(--text-secondary); font-weight: 500;">ทั้งหมด ${activeTxns.length} รายการ</div>
       </div>
-      <div style="text-align: right;">
+      <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
         <div style="font-weight:800; color:${accentColor}; font-size:22px; font-family: var(--font-mono); line-height: 1;">${sign}${Utils.formatCurrency(total)}</div>
-        <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">สกุลเงิน บาท (THB)</div>
+        <button onclick="window.showPrintReceiptModal({ customTxns: window._currentModalTxns, customTitle: window._currentModalTitle })" style="padding: 6px 14px; font-size: 11.5px; border-radius: 8px; background: var(--accent-primary, #3b82f6); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; font-weight: 600; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);">
+           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #fff;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+           ปริ๊นใบเสร็จหมวดนี้
+        </button>
       </div>
     </div>`;
 
@@ -1342,9 +1363,20 @@ function openCategoryDetailModal(type, category, fullTxnsList, jumpKey = null) {
 
     const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 
+    // Registry for group printing
+    if (!window._groupPrintRegistry) window._groupPrintRegistry = {};
+
     return sortedKeys.map(key => {
       const g = groups[key];
       const gTotal = g.items.reduce((sum, item) => sum + item.amount, 0);
+
+      // Register group for printing
+      window._groupPrintRegistry[key] = { label: `${category} - ${g.label} (${periodText})`, items: g.items };
+
+      const printBtn = `
+        <button onclick="event.stopPropagation(); window.showPrintReceiptModal({ customTxns: window._groupPrintRegistry['${key}'].items, customTitle: window._groupPrintRegistry['${key}'].label })" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 4px; border-radius: 4px; color: var(--text-tertiary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'; this.style.color='var(--accent-primary)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.color='var(--text-tertiary)';">
+           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        </button>`;
 
       // Styling for headers
       let headerHtml = '';
@@ -1363,7 +1395,10 @@ function openCategoryDetailModal(type, category, fullTxnsList, jumpKey = null) {
                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                </span>`}
             </div>
-            <span style="font-size: 13px; font-weight: 600; color: ${accentColor}; opacity: 0.9;">${sign}${Utils.formatCurrency(gTotal)}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 13px; font-weight: 600; color: ${accentColor}; opacity: 0.9;">${sign}${Utils.formatCurrency(gTotal)}</span>
+              ${isOverview ? '' : printBtn}
+            </div>
           </summary>`;
       } else if (currentLv === 'day') {
         // Mid level header (Day)
@@ -1371,8 +1406,9 @@ function openCategoryDetailModal(type, category, fullTxnsList, jumpKey = null) {
           <summary id="group-${key}" style="padding: 14px 0 8px; font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; cursor: pointer; outline: none; list-style: none;">
             <span>${g.label}</span>
             <div style="flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent);"></div>
-            <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
               <span style="font-weight: 500; letter-spacing: 0; color: var(--text-secondary); opacity: 0.6;">${sign}${Utils.formatCurrency(gTotal)}</span>
+              ${printBtn}
               <span class="details-chevron">
                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </span>
@@ -1383,8 +1419,9 @@ function openCategoryDetailModal(type, category, fullTxnsList, jumpKey = null) {
         headerHtml = `
           <summary id="group-${key}" style="padding: 8px 0; font-weight: 600; font-size: 12px; color: var(--text-secondary); border-left: 3px solid ${accentColor}; padding-left: 10px; margin: 10px 0; cursor: pointer; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center;">
             <span>${g.label}</span>
-            <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
               <span style="font-weight: 500; color: var(--text-secondary); opacity: 0.8;">${sign}${Utils.formatCurrency(gTotal)}</span>
+              ${printBtn}
               <span class="details-chevron">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </span>
@@ -1552,56 +1589,91 @@ window.handleCustomJump = function (key) {
 };
 
 // ─── RECEIPT PRINT ANIMATION ─────────────────────────────────────────────────
-function showPrintReceiptModal() {
-  const txns = cachedTxns;
+window.showPrintReceiptModal = function (options = {}) {
+  const { customTxns = null, customTitle = null, isOverview = false } = options;
+  const txns = customTxns ? [...customTxns] : [...cachedTxns];
   const filters = currentFilters;
 
-  let periodLabel = 'ทั้งหมด';
-  if (filters.startDate && filters.endDate) {
-    periodLabel = `${Utils.formatDate(filters.startDate)} – ${Utils.formatDate(filters.endDate)}`;
-  } else if (filters.startDate) {
-    periodLabel = `ตั้งแต่ ${Utils.formatDate(filters.startDate)}`;
+  let periodLabel = customTitle || 'ทั้งหมด';
+  if (!customTitle) {
+    if (filters.startDate && filters.endDate) {
+      periodLabel = `${Utils.formatDate(filters.startDate)} – ${Utils.formatDate(filters.endDate)}`;
+    } else if (filters.startDate) {
+      periodLabel = `ตั้งแต่ ${Utils.formatDate(filters.startDate)}`;
+    }
   }
 
   const income = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const expense = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const balance = income - expense;
 
-  // Sort chronologically (Oldest first)
-  txns.sort((a, b) => new Date(a.date) - new Date(b.date));
-
   const activePeriodBtn = document.querySelector('.period-btn.active');
   const isToday = activePeriodBtn && activePeriodBtn.dataset.period === 'today';
 
-  const itemsHtml = txns.map(t => {
-    const qtyInfo = (t.quantity && t.quantity > 1 && t.unitPrice)
-      ? `<span style="font-size:0.9em; font-weight:normal; color:#555; margin-left:4px;">@${Utils.formatCurrency(t.unitPrice)}</span>`
-      : '';
-    const qtyPrefix = `${t.quantity || 1} `;
+  let itemsHtml = '';
 
-    return `
-    <div style="margin-bottom:12px; font-size:12px;">
-      <div style="display:flex; align-items:baseline; gap:6px;">
-        <span style="font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
-          ${qtyPrefix}${t.note || t.category}${qtyInfo}
-        </span>
-        <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:4px; opacity:0.6;"></div>
-        <span style="font-weight:800; white-space:nowrap; color:#111; font-family:'Courier New', monospace;">
-          ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
-        </span>
+  if (isOverview) {
+    const catsInfo = {};
+    txns.forEach(t => {
+      if (!catsInfo[t.category]) catsInfo[t.category] = { amount: 0, type: t.type };
+      catsInfo[t.category].amount += t.amount;
+    });
+    // sort categories desc by amount
+    const catArr = Object.keys(catsInfo).map(k => ({ category: k, ...catsInfo[k] })).sort((a, b) => b.amount - a.amount);
+
+    itemsHtml = catArr.map(c => `
+      <div style="margin-bottom:12px; font-size:12px;">
+        <div style="display:flex; align-items:baseline; gap:6px;">
+          <span style="font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
+            [กลุ่ม] ${c.category}
+          </span>
+          <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:4px; opacity:0.6;"></div>
+          <span style="font-weight:800; white-space:nowrap; color:#111; font-family:'Courier New', monospace;">
+            ${c.type === 'income' ? '+' : '-'}${Utils.formatCurrency(c.amount)}
+          </span>
+        </div>
       </div>
-      <div style="font-size:10px; color:#888; margin-top:2px; font-family:monospace;">
-        ${(() => {
-        const d = new Date(t.date);
-        const timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-        if (isToday) return timeStr;
-        const dateStr = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
-        return `${dateStr} ${timeStr}`;
-      })()}
+     `).join('');
+  } else {
+    // Sort chronologically (Oldest first)
+    txns.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    itemsHtml = txns.map(t => {
+      const qtyInfo = (t.quantity && t.quantity > 1 && t.unitPrice)
+        ? `<span style="font-size:0.9em; font-weight:normal; color:#555; margin-left:4px;">@${Utils.formatCurrency(t.unitPrice)}</span>`
+        : '';
+      const qtyPrefix = `${t.quantity || 1} `;
+
+      let displayName = t.note || t.category;
+      // Clean up "ชำระหนี้: " prefix if redundant
+      if (displayName.startsWith('ชำระหนี้: ')) {
+        displayName = displayName.replace('ชำระหนี้: ', '');
+      }
+
+      return `
+      <div style="margin-bottom:12px; font-size:12px;">
+        <div style="display:flex; align-items:baseline; gap:6px;">
+          <span style="font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
+            ${qtyPrefix}${displayName}${qtyInfo}
+          </span>
+          <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:4px; opacity:0.6;"></div>
+          <span style="font-weight:800; white-space:nowrap; color:#111; font-family:'Courier New', monospace;">
+            ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+          </span>
+        </div>
+        <div style="font-size:10px; color:#888; margin-top:2px; font-family:monospace;">
+          ${(() => {
+          const d = new Date(t.date);
+          const timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+          if (isToday) return timeStr;
+          const dateStr = String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+          return `${dateStr} ${timeStr}`;
+        })()}
+        </div>
       </div>
-    </div>
-    `;
-  }).join('');
+      `;
+    }).join('');
+  }
 
   if (!document.getElementById('printReceiptStyles')) {
     const style = document.createElement('style');
@@ -2213,9 +2285,18 @@ async function refreshTransactions() {
 
       tableEl.innerHTML = `
       <div style="position: relative;">
-        <button id="addTransactionBtn" style="position: absolute; top: 11px; right: 18px; z-index: 10; padding: 7px 18px; font-size: 13px; font-weight: 600; background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); opacity: 1;" onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
-          + เพิ่มรายการ
-        </button>
+        <!-- Segmented Print Buttons Group -->
+        <div style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            ใบเสร็จ
+          </button>
+          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+          <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            ภาพรวม
+          </button>
+        </div>
         <table class="data-table">
         <thead>
           <tr>
@@ -2261,9 +2342,18 @@ async function refreshTransactions() {
     } else {
       tableEl.innerHTML = `
       <div style="position: relative;">
-        <button id="addTransactionBtn" style="position: absolute; top: 11px; right: 18px; z-index: 10; padding: 7px 18px; font-size: 13px; font-weight: 600; background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); opacity: 1;" onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
-          + เพิ่มรายการ
-        </button>
+        <!-- Segmented Print Buttons Group -->
+        <div style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            ใบเสร็จ
+          </button>
+          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+          <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            ภาพรวม
+          </button>
+        </div>
         <table class="data-table">
         <thead>
           <tr>
