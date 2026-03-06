@@ -1921,6 +1921,7 @@ window.showPrintReceiptModal = function (options = {}) {
       let stateVelocity = 0; 
       let timeUntilNextState = 0;
       let lastTime = null;
+      let finished = false;
 
       paper.style.transition = 'none';
       paper.style.transform = 'translateY(-100%)';
@@ -1931,6 +1932,8 @@ window.showPrintReceiptModal = function (options = {}) {
       const MIN_STEP = 0.5;
 
       function printTick(timestamp) {
+        if (finished) return; // Guard: don't re-enter after completion
+
         if (!lastTime) lastTime = timestamp;
         const delta = timestamp - lastTime;
         lastTime = timestamp;
@@ -1938,6 +1941,7 @@ window.showPrintReceiptModal = function (options = {}) {
         if (progress === 0 && timestamp > 0) PrinterSound.playPrint();
 
         if (progress >= 100) {
+          finished = true; // Mark as done so this block only runs once
           PrinterSound.stopPrint();
           paper.style.transition = 'transform 0.2s ease-out';
           paper.style.transform = 'translateY(0)';
@@ -1973,7 +1977,7 @@ window.showPrintReceiptModal = function (options = {}) {
               if (navigator.vibrate) navigator.vibrate([20, 40]);
             }, 400);
           }, 800);
-          return;
+          return; // Stop the rAF loop here
         }
 
         timeUntilNextState -= delta;
