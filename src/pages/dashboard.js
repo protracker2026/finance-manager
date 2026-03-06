@@ -110,7 +110,8 @@ export async function renderDashboard(container) {
       <div style="padding: var(--space-lg); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between;">
         <span class="card-title" style="margin-bottom: 0;">ธุรกรรมล่าสุด</span>
         <button class="btn btn-secondary btn-sm" onclick="window.location.hash='#transactions'" style="font-size: 11px; padding: 4px 12px; border-radius: 6px;">ดูทั้งหมด</button>
-        <div id="recentTransactions" style="padding: 0;"></div>
+      </div>
+      <div id="recentTransactions" style="padding: 0;"></div>
     </div>
   `;
 

@@ -1443,12 +1443,13 @@ function showPrintReceiptModal() {
         width:100%;background:#f4e6cc;color:#111;
         font-family:'Courier Prime','Courier New',monospace;
         border-radius:0 0 8px 8px;
-        box-shadow:0 12px 40px rgba(0,0,0,0.5);
         transform:translateY(-100%);
         text-shadow: 0.1px 0.1px 0.2px rgba(0,0,0,0.05);
         letter-spacing: -0.2px;
         font-variant-numeric: slashed-zero;
         font-feature-settings: "zero";
+        will-change: transform;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Much lighter shadow during the print */
       }
       .receipt-paper.printing {
         animation:paperFeed 10s steps(60, end) forwards;
@@ -1458,7 +1459,7 @@ function showPrintReceiptModal() {
       }
       .receipt-paper.showcase {
         transform: translateY(40px) scale(1) rotate(0deg) !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6); /* Full heavy shadow ONLY when finished */
         filter: contrast(1.01) brightness(1.01);
         background-image: 
           radial-gradient(circle at 70% 30%, rgba(0,0,0,0.01) 0%, transparent 40%),
@@ -1630,9 +1631,11 @@ function showPrintReceiptModal() {
 
       // Dynamic speed based on receipt length (more items = more steps)
       const totalItems = txns.length || 1;
-      const baseSteps = 40 + (totalItems * 2.2); // 10% faster (fewer steps/ticks) than original 2.5
+      // Cap at 150 steps maximum so we don't freeze the browser on huge receipts
+      const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
 
       function printTick() {
+        // To be absolutely sure we don't get stuck indefinitely
         if (progress >= 100) {
           paper.style.transition = 'transform 0.2s ease-out';
           paper.style.transform = 'translateY(0)';
@@ -1676,6 +1679,9 @@ function showPrintReceiptModal() {
         // Calculate a base step size that makes the total time feel natural
         const avgStep = 100 / baseSteps;
 
+        // Ensure we advance at least a minimum amount per frame
+        const MIN_STEP = 0.5;
+
         if (mood < 0.02) {
           // 1. Long Pause (Paper stutter/jam) - Maximum fluidity (lowest chance)
           step = 0;
@@ -1683,17 +1689,17 @@ function showPrintReceiptModal() {
           trans = 0;
         } else if (mood < 0.6) {
           // 2. Normal Line Feed (Standard speed) - 10% faster delay
-          step = avgStep * (0.8 + Math.random() * 0.4);
+          step = Math.max(MIN_STEP, avgStep * (0.8 + Math.random() * 0.4));
           delay = 62 + Math.random() * 65;
           trans = (delay / 1000) * 0.9;
         } else if (mood < 0.85) {
           // 3. Fast Stutter (Rapid printing) - 10% faster delay
-          step = avgStep * (1.2 + Math.random() * 0.8);
+          step = Math.max(MIN_STEP, avgStep * (1.2 + Math.random() * 0.8));
           delay = 32 + Math.random() * 32;
           trans = 0.03;
         } else {
           // 4. Heavy Jerky (Detailed text/Logo)
-          step = avgStep * (0.3 + Math.random() * 0.4);
+          step = Math.max(MIN_STEP, avgStep * (0.3 + Math.random() * 0.4));
           delay = 105 + Math.random() * 115;
           trans = 0;
         }
