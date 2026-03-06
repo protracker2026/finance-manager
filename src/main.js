@@ -89,9 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.addEventListener('data-synced', () => {
     // Check if any modal is currently open (uses .active class)
     const isEditing = document.querySelector('.modal-overlay.active') !== null;
+    const isAiReceiptActive = document.querySelector('.ai-receipt-overlay.active') !== null;
 
-    if (isEditing) {
-        console.log('Skipped auto-reload due to open modal.');
+    if (isEditing || isAiReceiptActive) {
+        console.log('Skipped auto-reload due to open modal or AI receipt.');
     } else {
         // Refresh data only — do NOT re-render via hashchange
         window.dispatchEvent(new Event('refresh-transactions'));

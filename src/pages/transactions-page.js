@@ -2,6 +2,7 @@
 import { TransactionModule } from '../modules/transactions.js';
 import { Utils } from '../modules/utils.js';
 import { AIModule } from '../modules/ai.js';
+import { PrinterSound } from '../modules/printer-sound.js';
 
 let currentFilters = {};
 let currentDetailTxn = null;
@@ -1925,8 +1926,12 @@ window.showPrintReceiptModal = function (options = {}) {
       const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
 
       function printTick() {
+        // Start printing sound on first tick
+        if (progress === 0) PrinterSound.playPrint();
+
         // To be absolutely sure we don't get stuck indefinitely
         if (progress >= 100) {
+          PrinterSound.stopPrint();
           paper.style.transition = 'transform 0.2s ease-out';
           paper.style.transform = 'translateY(0)';
           const sb = document.getElementById('printerSoundBar');
@@ -1937,6 +1942,7 @@ window.showPrintReceiptModal = function (options = {}) {
 
           // Trigger "Tear and Showcase"
           setTimeout(() => {
+            PrinterSound.playTear();
             if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
             paper.style.transition = 'none';
             paper.classList.add('tearing');
