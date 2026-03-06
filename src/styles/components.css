@@ -1306,9 +1306,6 @@ details[open] .toggle-icon {
     position: relative;
     transform: translateY(20px);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
 
     /* Jagged edges */
     --mask:
