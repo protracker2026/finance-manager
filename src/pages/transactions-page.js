@@ -1917,19 +1917,26 @@ window.showPrintReceiptModal = function (options = {}) {
       if (!paper) return;
 
       let progress = 0;
+      let targetProgress = 0;
+      let stateVelocity = 0; 
+      let timeUntilNextState = 0;
+      let lastTime = null;
+
       paper.style.transition = 'none';
       paper.style.transform = 'translateY(-100%)';
 
-      // Dynamic speed based on receipt length (more items = more steps)
       const totalItems = txns.length || 1;
-      // Cap at 150 steps maximum so we don't freeze the browser on huge receipts
       const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
+      const avgStep = 100 / baseSteps;
+      const MIN_STEP = 0.5;
 
-      function printTick() {
-        // Start printing sound on first tick
-        if (progress === 0) PrinterSound.playPrint();
+      function printTick(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        const delta = timestamp - lastTime;
+        lastTime = timestamp;
 
-        // To be absolutely sure we don't get stuck indefinitely
+        if (progress === 0 && timestamp > 0) PrinterSound.playPrint();
+
         if (progress >= 100) {
           PrinterSound.stopPrint();
           paper.style.transition = 'transform 0.2s ease-out';
@@ -1969,56 +1976,57 @@ window.showPrintReceiptModal = function (options = {}) {
           return;
         }
 
-        const mood = Math.random();
-        let step, delay, trans;
+        timeUntilNextState -= delta;
+        if (timeUntilNextState <= 0) {
+          const mood = Math.random();
+          let step, delay, isInstant = false;
 
-        // Calculate a base step size that makes the total time feel natural
-        const avgStep = 100 / baseSteps;
+          if (progress > 85) {
+            // Fast finish near the end (Paper just rolls out smoothly)
+            step = Math.max(MIN_STEP * 3, avgStep * 2.5);
+            delay = 20 + Math.random() * 15;
+          } else if (mood < 0.65) {
+            // 65% Smooth printing
+            step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
+            delay = 50 + Math.random() * 45;
+          } else if (mood < 0.75) {
+            // 10% Dead Pause (Stuck for a moment)
+            step = 0;
+            delay = 180 + Math.random() * 120;
+          } else if (mood < 0.90) {
+            // 15% Heavy Jerky (Processing dense text - snaps mechanically)
+            step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
+            delay = 100 + Math.random() * 50;
+            isInstant = true; // Instantly jump paper down instead of sliding
+          } else {
+            // 10% Fast Stutter (Catching up)
+            step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
+            delay = 30 + Math.random() * 20;
+          }
 
-        // Ensure we advance at least a minimum amount per frame
-        const MIN_STEP = 0.5;
+          timeUntilNextState = delay;
+          targetProgress = Math.min(100, targetProgress + step);
 
-        if (progress > 85) {
-          // Fast finish near the end (Paper just rolls out smoothly)
-          step = Math.max(MIN_STEP * 3, avgStep * 2.5);
-          delay = 20 + Math.random() * 15;
-          trans = (delay / 1000) * 1.2;
-        } else if (mood < 0.65) {
-          // 65% Smooth printing
-          step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
-          delay = 50 + Math.random() * 45;
-          trans = (delay / 1000) * 0.95;
-        } else if (mood < 0.75) {
-          // 10% Dead Pause (Stuck)
-          step = 0;
-          delay = 180 + Math.random() * 120;
-          trans = 0;
-        } else if (mood < 0.90) {
-          // 15% Heavy Jerky (Processing dense text)
-          step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
-          delay = 100 + Math.random() * 50;
-          trans = 0;
-        } else {
-          // 10% Fast Stutter (Catching up)
-          step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
-          delay = 30 + Math.random() * 20;
-          trans = 0.04;
+          if (isInstant) {
+            progress = targetProgress;
+            stateVelocity = 0;
+          } else if (delay > 0) {
+            stateVelocity = step / delay;
+          } else {
+            stateVelocity = 0;
+          }
         }
 
-        progress = Math.min(100, progress + step);
-
-        if (trans > 0) {
-          paper.style.transition = `transform ${trans}s linear`;
-        } else {
-          paper.style.transition = 'none';
+        if (progress < targetProgress && stateVelocity > 0) {
+          progress += stateVelocity * delta;
+          if (progress > targetProgress) progress = targetProgress;
         }
 
         paper.style.transform = `translateY(${-(100 - progress)}%)`;
-
-        setTimeout(printTick, delay);
+        requestAnimationFrame(printTick);
       }
 
-      setTimeout(printTick, 400);
+      requestAnimationFrame(printTick);
     }, 300);
   });
 
