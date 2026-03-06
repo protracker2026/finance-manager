@@ -1190,13 +1190,29 @@ function closeTxnDetailModal() {
 }
 
 function _renderTxnItem(t, type) {
+  const isIncome = t.type === 'income';
+  const colorVar = isIncome ? 'var(--text-success)' : 'var(--text-danger)';
+  const sign = isIncome ? '+' : '-';
+
   return `
-    <div class="cat-detail-item" data-id="${t.id}" style="display:flex; align-items:center; padding:10px 8px; border-radius:var(--border-radius); cursor:pointer; transition: background 0.15s; gap:10px;" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='transparent'">
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:11px; color:var(--text-tertiary);">${Utils.formatDateTimeShort(t.date)}</div>
-        <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.note || '-'}${(t.quantity && t.quantity > 1) ? ` <span style="font-size:0.85em; opacity:0.6;">x${t.quantity}</span>` : ''}</div>
+    <div class="cat-detail-item" data-id="${t.id}" style="display:flex; align-items:center; padding:12px 16px; border-radius:12px; cursor:pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); gap:14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); margin-bottom: 4px;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.transform='translateX(4px)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.borderColor='rgba(255,255,255,0.03)'; this.style.transform='translateX(0)'">
+      <div style="width: 36px; height: 36px; border-radius: 10px; background: ${isIncome ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; display: flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <span style="font-size: 16px;">${isIncome ? '💰' : '💸'}</span>
       </div>
-      <span class="amount ${t.type}" style="font-size:13px; flex-shrink:0; font-weight:600;">${type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}</span>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:14px; font-weight:600; color: var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display: flex; align-items: center; gap: 6px;">
+          ${t.note || '-'}
+          ${(t.quantity && t.quantity > 1) ? `<span style="font-size:11px; font-weight:400; background: rgba(255,255,255,0.05); padding: 1px 6px; border-radius: 4px; color: var(--text-tertiary);">x${t.quantity}</span>` : ''}
+        </div>
+        <div style="font-size:11px; color:var(--text-tertiary); margin-top:2px; display: flex; align-items: center; gap: 4px;">
+           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+           ${new Date(t.date).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div class="amount ${t.type}" style="font-size:15px; font-weight:700; color: ${colorVar}; font-family: var(--font-mono);">${sign}${Utils.formatCurrency(t.amount)}</div>
+        <div style="font-size: 10px; color: var(--text-tertiary); opacity: 0.5; margin-top: 1px;">THB</div>
+      </div>
     </div>`;
 }
 
@@ -1213,36 +1229,66 @@ function refreshCategoryDetailView() {
   }
 }
 
-function openCategoryDetailModal(type, category, txnsList) {
+function openCategoryDetailModal(type, category, fullTxnsList, jumpKey = null) {
   currentCategoryView = { type, category };
   const modal = document.getElementById('categoryDetailModal');
   const title = document.getElementById('categoryDetailTitle');
   const body = document.getElementById('categoryDetailBody');
   const typeLabel = type === 'income' ? 'รายรับ' : 'รายจ่าย';
   const accentColor = type === 'income' ? 'var(--accent-success)' : 'var(--accent-danger)';
-  const total = txnsList.reduce((s, t) => s + t.amount, 0);
   const sign = type === 'income' ? '+' : '-';
-
-  title.textContent = `${category} (${typeLabel})`;
-
-  const summaryHtml = `
-    <div style="margin-bottom:12px; padding:10px; background:var(--bg-tertiary); border-radius:var(--border-radius); display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:13px; color:var(--text-secondary);">รวม ${txnsList.length} รายการ</span>
-      <span style="font-weight:700; color:${accentColor}; font-size:15px;">${sign}${Utils.formatCurrency(total)}</span>
-    </div>`;
 
   const activeBtn = document.querySelector('.period-btn.active');
   const period = activeBtn ? activeBtn.dataset.period : 'month';
+  const periodText = activeBtn ? activeBtn.textContent.trim() : 'เดือนนี้';
 
-  // Levels to group by based on period
-  const levelMap = {
-    'today': [],
-    'week': ['day'],
-    'month': ['week', 'day'],
-    'year': ['month', 'day'],
-    'all': ['year', 'month', 'week', 'day']
-  };
-  const levels = levelMap[period] || ['month', 'day'];
+  title.innerHTML = `${category} <span style="font-size: 0.85em; opacity: 0.7; font-weight: normal; margin-left: 6px;">(${typeLabel} • ${periodText})</span>`;
+
+  // Filter transactions based on active jumpKey
+  let activeTxns = fullTxnsList;
+  if (jumpKey) {
+    const isWeek = jumpKey.includes('-W');
+    activeTxns = fullTxnsList.filter(t => {
+      const dStr = t.date;
+      const d = new Date(dStr);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+
+      if (jumpKey.length === 4) return `${y}` === jumpKey;
+      if (isWeek) return `${y}-${m}-W${Math.ceil(d.getDate() / 7)}` === jumpKey;
+      if (jumpKey.length === 7) return `${y}-${m}` === jumpKey;
+      if (jumpKey.length === 10) return `${y}-${m}-${dd}` === jumpKey;
+      return true;
+    });
+  }
+
+  const isOverview = !jumpKey;
+  const total = activeTxns.reduce((s, t) => s + t.amount, 0);
+
+  const summaryHtml = `
+    <div style="margin-bottom:20px; padding:16px 20px; background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.05); border-radius:16px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+      <div>
+        <div style="font-size:12px; color:var(--text-tertiary); margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${isOverview ? 'สรุปภาพรวมทั้งหมด' : 'สรุปยอดส่วนนี้'}</div>
+        <div style="font-size:13px; color:var(--text-secondary); font-weight: 500;">ทั้งหมด ${activeTxns.length} รายการ</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight:800; color:${accentColor}; font-size:22px; font-family: var(--font-mono); line-height: 1;">${sign}${Utils.formatCurrency(total)}</div>
+        <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">สกุลเงิน บาท (THB)</div>
+      </div>
+    </div>`;
+
+  // Determine rendering groupings based on overview or jump
+  let levels = [];
+  if (isOverview) {
+    levels = period === 'all' || period === 'year' ? ['year', 'month'] : ['month'];
+  } else {
+    if (jumpKey.length === 4) levels = ['month', 'day'];
+    else if (jumpKey.includes('-W')) levels = ['day'];
+    else if (jumpKey.length === 7) levels = ['week', 'day'];
+    else if (jumpKey.length === 10) levels = []; // pure txns
+    else levels = ['month', 'day'];
+  }
 
   const getGroupKey = (dateStr, lv) => {
     const d = new Date(dateStr);
@@ -1270,10 +1316,13 @@ function openCategoryDetailModal(type, category, txnsList) {
 
   const renderGrouped = (txns, lvs) => {
     const depth = levels.length - lvs.length;
+
+    // Base Case: Render actual transaction items
     if (lvs.length === 0) {
+      if (isOverview) return ''; // In overview mode, do not show items.
       const sorted = [...txns].sort((a, b) => new Date(b.date) - new Date(a.date));
       return `
-          <div style="display:flex; flex-direction:column; gap:2px; ${depth > 0 ? `margin-left:${depth * 8}px; border-left: 2px solid rgba(255,255,255,0.05); padding-left:4px;` : ''}">
+          <div style="display:flex; flex-direction:column; gap:4px; margin-bottom: 20px;">
             ${sorted.map(t => _renderTxnItem(t, type)).join('')}
           </div>
         `;
@@ -1296,32 +1345,137 @@ function openCategoryDetailModal(type, category, txnsList) {
     return sortedKeys.map(key => {
       const g = groups[key];
       const gTotal = g.items.reduce((sum, item) => sum + item.amount, 0);
-      const isTopLevel = depth === 0;
 
-      const summaryStyle = isTopLevel
-        ? `background: var(--bg-card); border: 1px solid rgba(255,255,255,0.1); font-size: 14px; font-weight: 700;`
-        : `background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.03); font-size: 12px; font-weight: 600; margin-left: ${depth * 10}px;`;
+      // Styling for headers
+      let headerHtml = '';
+      if (currentLv === 'month' || currentLv === 'year') {
+        // High level header (Month/Year)
+        const clickStyle = isOverview ? 'cursor: pointer; transition: opacity 0.2s; opacity: 1;' : 'cursor: pointer; outline: none; list-style: none;';
+        const hoverEffect = isOverview ? `onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"` : '';
+        const clickAttr = isOverview ? `onclick="event.preventDefault(); window.handleCustomJump('${key}')"` : '';
+
+        headerHtml = `
+          <summary id="group-${key}" ${clickAttr} ${hoverEffect} style="position: sticky; top: -1px; z-index: 10; background: var(--bg-body); padding: 12px 0 8px; margin-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: baseline; ${clickStyle}">
+            <div style="display: flex; align-items: center; gap: 8px;">
+               <span style="font-size: 16px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.3px;">${g.label}</span>
+               ${isOverview ? `<span style="font-size: 11px; color: var(--text-tertiary); background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">ดูรายละเอียด</span>` : `
+               <span class="details-chevron">
+                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+               </span>`}
+            </div>
+            <span style="font-size: 13px; font-weight: 600; color: ${accentColor}; opacity: 0.9;">${sign}${Utils.formatCurrency(gTotal)}</span>
+          </summary>`;
+      } else if (currentLv === 'day') {
+        // Mid level header (Day)
+        headerHtml = `
+          <summary id="group-${key}" style="padding: 14px 0 8px; font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; cursor: pointer; outline: none; list-style: none;">
+            <span>${g.label}</span>
+            <div style="flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent);"></div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: 500; letter-spacing: 0; color: var(--text-secondary); opacity: 0.6;">${sign}${Utils.formatCurrency(gTotal)}</span>
+              <span class="details-chevron">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </span>
+            </div>
+          </summary>`;
+      } else {
+        // Week or other groupings
+        headerHtml = `
+          <summary id="group-${key}" style="padding: 8px 0; font-weight: 600; font-size: 12px; color: var(--text-secondary); border-left: 3px solid ${accentColor}; padding-left: 10px; margin: 10px 0; cursor: pointer; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+            <span>${g.label}</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: 500; color: var(--text-secondary); opacity: 0.8;">${sign}${Utils.formatCurrency(gTotal)}</span>
+              <span class="details-chevron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </span>
+            </div>
+          </summary>`;
+      }
+
+      let isOpen = false;
+      if (jumpKey && jumpKey.includes(key)) isOpen = true;
+      if (Object.keys(groups).length === 1) isOpen = true;
 
       return `
-          <details style="margin-bottom:${isTopLevel ? '12px' : '4px'}; border-radius:var(--border-radius); overflow:hidden;">
-            <summary style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:none; ${summaryStyle}">
-              <span style="display:flex; align-items:center; gap:8px;">
-                ${g.label}
-              </span>
-              <span style="color:${accentColor};">
-                ${sign}${Utils.formatCurrency(gTotal)} 
-                <span style="opacity:0.75; font-weight:400; font-size:11px; color:var(--text-tertiary); margin-left:4px;">(${g.items.length})</span>
-              </span>
-            </summary>
-            <div style="padding:4px 0 8px 0;">
+          <details class="group-details" ${isOpen ? 'open' : ''} style="display: flex; flex-direction: column;">
+            ${headerHtml}
+            ${isOverview ? '' : `
+            <div style="padding-top: 6px; padding-left: ${currentLv === 'month' || currentLv === 'year' ? '0' : '4px'};">
               ${renderGrouped(g.items, remainingLvs)}
             </div>
+            `}
           </details>
         `;
     }).join('');
   };
 
-  body.innerHTML = summaryHtml + renderGrouped(txnsList, levels);
+  // Build hierarchical select jump menus (ปี, เดือน, สัปดาห์, วัน) based on ALL potential levels to allow deep jumping
+  let jumpsHtml = '';
+  const jumpLevelsMap = {
+    'today': [],
+    'week': ['day'],
+    'month': ['week', 'day'],
+    'year': ['month', 'week', 'day'],
+    'all': ['year', 'month', 'week', 'day']
+  };
+  const jumpLevels = jumpLevelsMap[period] || ['month', 'week', 'day'];
+
+  if (jumpLevels.length > 0 && fullTxnsList.length > 0) {
+    let selectsArray = jumpLevels.map(lv => {
+      const options = {};
+      fullTxnsList.forEach(t => {
+        const k = getGroupKey(t.date, lv);
+        if (!options[k]) options[k] = getGroupLabel(t.date, lv);
+      });
+      const sortedK = Object.keys(options).sort((a, b) => b.localeCompare(a));
+      const lvLabel = lv === 'year' ? 'เลือกปี' : lv === 'month' ? 'เลือกเดือน' : lv === 'week' ? 'เลือกสัปดาห์' : 'เลือกวัน';
+      if (sortedK.length <= 1) return ''; // Hide this level's select if there's only 1 option
+
+      return `
+          <div style="flex: 1 1 45%; min-width: 120px; display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 10px; color: var(--text-tertiary); padding-left: 2px;">${lvLabel}</span>
+              <select id="qj-select-${lv}" onchange="window.filterCustomJumps('${jumpLevels.join(',')}')" style="width: 100%; padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); outline: none; font-size: 13px; appearance: auto; cursor: pointer; color-scheme: dark;">
+                <option value="" style="background: #1e1e1e; color: #eee;">ข้ามไปที่...</option>
+                ${sortedK.map(k => `<option value="${k}" ${jumpKey && jumpKey.includes(k) ? 'selected' : ''} style="background: #1e1e1e; color: #eee;">${options[k]}</option>`).join('')}
+              </select>
+          </div>
+        `;
+    }).filter(s => s !== '');
+
+    if (selectsArray.length > 0) {
+      jumpsHtml = `
+          <div style="margin-bottom: 20px; background: rgba(255,255,255,0.02); padding: 14px; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.1);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary, #3b82f6);"><polyline points="8 17 12 21 16 17"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path></svg>
+                <div style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">ทางลัดข้ามกลุ่ม (Quick Jump)</div>
+              </div>
+              ${!isOverview ? `<button onclick="window.handleCustomJump(null)" style="background:none; border:none; color:var(--text-tertiary); font-size: 11px; cursor:pointer; text-decoration: underline;">ล้างเงื่อนไข</button>` : ''}
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+              ${selectsArray.join('')}
+              <button onclick="window.submitCustomJump('${jumpLevels.join(',')}')" style="padding: 8px 16px; border-radius: 8px; background: var(--accent-primary, #3b82f6); color: #fff; border: none; font-weight: 600; font-size: 13px; cursor: pointer; height: 35px; flex: 1 1 100%; margin-top: 4px; transition: transform 0.1s; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.2);" onactive="this.style.transform='scale(0.98)'">ไปยังที่เลือก</button>
+            </div>
+          </div>
+        `;
+    }
+  }
+
+  body.innerHTML = `
+    <style>
+      .group-details > summary::-webkit-details-marker { display: none; }
+      .group-details summary { user-select: none; }
+      .group-details .details-chevron { transition: transform 0.2s; display: flex; align-items: center; color: var(--text-tertiary); }
+      .group-details[open] > summary .details-chevron { transform: rotate(180deg); color: var(--text-secondary); }
+    </style>
+    <div style="padding: 4px;">
+      ${summaryHtml}
+      ${jumpsHtml}
+      <div style="display: flex; flex-direction: column; gap: 0;">
+        ${renderGrouped(activeTxns, levels)}
+      </div>
+    </div>
+  `;
 
   modal.classList.add('active');
   document.body.classList.add('modal-open');
@@ -1332,6 +1486,70 @@ function closeCategoryDetailModal() {
   document.getElementById('categoryDetailModal').classList.remove('active');
   updateBodyScrollLock();
 }
+
+window.filterCustomJumps = function (levelsStr) {
+  const levelsArr = levelsStr.split(',');
+  let currentFilter = '';
+  // Traverse from highest priority (0) to lowest
+  for (let i = 0; i < levelsArr.length; i++) {
+    const sel = document.getElementById(`qj-select-${levelsArr[i]}`);
+    if (!sel) continue;
+
+    // If there is an active filter from parent, enforce it on THIS select's options
+    if (currentFilter) {
+      let allowAny = true; // reset to check if current value is still valid under filter
+      Array.from(sel.options).forEach(opt => {
+        if (opt.value === '') {
+          opt.style.display = '';
+          return;
+        }
+        if (opt.value.startsWith(currentFilter)) {
+          opt.style.display = '';
+        } else {
+          opt.style.display = 'none';
+          if (sel.value === opt.value) allowAny = false; // invalid selection
+        }
+      });
+      if (!allowAny) sel.value = ''; // Reset invalid selection
+    } else {
+      // Unhide all if no filter
+      Array.from(sel.options).forEach(opt => opt.style.display = '');
+    }
+
+    // Update filter for the NEXT level down.
+    if (sel.value) {
+      let v = sel.value;
+      // Normalizing week "YYYY-MM-WX" to "YYYY-MM" to easily filter "YYYY-MM-DD" below it
+      if (v.includes('-W')) {
+        v = v.split('-W')[0];
+      }
+      currentFilter = v;
+    }
+  }
+};
+
+window.submitCustomJump = function (levelsStr) {
+  const levelsArr = levelsStr.split(',');
+  let targetKey = null;
+  // Look from most specific (end) to least specific (start)
+  for (let i = levelsArr.length - 1; i >= 0; i--) {
+    const sel = document.getElementById(`qj-select-${levelsArr[i]}`);
+    if (sel && sel.value) {
+      targetKey = sel.value;
+      break;
+    }
+  }
+  window.handleCustomJump(targetKey); // Will reset if null
+};
+
+window.handleCustomJump = function (key) {
+  if (!currentCategoryView) return;
+  // Use cachedTxns to regain the original full list
+  const list = cachedTxns.filter(t => t.type === currentCategoryView.type && t.category === currentCategoryView.category);
+
+  // Re-build modal completely, preserving category context but updating filters and views
+  openCategoryDetailModal(currentCategoryView.type, currentCategoryView.category, list, key || null);
+};
 
 // ─── RECEIPT PRINT ANIMATION ─────────────────────────────────────────────────
 function showPrintReceiptModal() {
@@ -1682,26 +1900,31 @@ function showPrintReceiptModal() {
         // Ensure we advance at least a minimum amount per frame
         const MIN_STEP = 0.5;
 
-        if (mood < 0.02) {
-          // 1. Long Pause (Paper stutter/jam) - Maximum fluidity (lowest chance)
+        if (progress > 85) {
+          // Fast finish near the end (Paper just rolls out smoothly)
+          step = Math.max(MIN_STEP * 3, avgStep * 2.5);
+          delay = 20 + Math.random() * 15;
+          trans = (delay / 1000) * 1.2;
+        } else if (mood < 0.65) {
+          // 65% Smooth printing
+          step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
+          delay = 50 + Math.random() * 45;
+          trans = (delay / 1000) * 0.95;
+        } else if (mood < 0.75) {
+          // 10% Dead Pause (Stuck)
           step = 0;
-          delay = 220 + Math.random() * 180;
+          delay = 180 + Math.random() * 120;
           trans = 0;
-        } else if (mood < 0.6) {
-          // 2. Normal Line Feed (Standard speed) - 10% faster delay
-          step = Math.max(MIN_STEP, avgStep * (0.8 + Math.random() * 0.4));
-          delay = 62 + Math.random() * 65;
-          trans = (delay / 1000) * 0.9;
-        } else if (mood < 0.85) {
-          // 3. Fast Stutter (Rapid printing) - 10% faster delay
-          step = Math.max(MIN_STEP, avgStep * (1.2 + Math.random() * 0.8));
-          delay = 32 + Math.random() * 32;
-          trans = 0.03;
+        } else if (mood < 0.90) {
+          // 15% Heavy Jerky (Processing dense text)
+          step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
+          delay = 100 + Math.random() * 50;
+          trans = 0;
         } else {
-          // 4. Heavy Jerky (Detailed text/Logo)
-          step = Math.max(MIN_STEP, avgStep * (0.3 + Math.random() * 0.4));
-          delay = 105 + Math.random() * 115;
-          trans = 0;
+          // 10% Fast Stutter (Catching up)
+          step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
+          delay = 30 + Math.random() * 20;
+          trans = 0.04;
         }
 
         progress = Math.min(100, progress + step);
