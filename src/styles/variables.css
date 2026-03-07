@@ -77,7 +77,7 @@
     --space-2xl: 48px;
 
     /* Typography */
-    --font-family: 'Inter', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-family: 'Plus Jakarta Sans', 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
     --font-size-xs: 0.8125rem;
     /* ~13px - Increased from 12px */

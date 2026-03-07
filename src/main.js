@@ -98,3 +98,57 @@ window.addEventListener('data-synced', () => {
         window.dispatchEvent(new Event('refresh-transactions'));
     }
 });
+
+// Swipe to close modals (slide from left to right)
+let touchStartX = 0;
+let touchCurrentX = 0;
+let activeModal = null;
+
+document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+    activeModal = document.querySelector('.modal-overlay.active .modal');
+    if (activeModal) {
+        activeModal.style.transition = 'none';
+    }
+}, { passive: true });
+
+document.addEventListener('touchmove', e => {
+    if (!activeModal) return;
+    touchCurrentX = e.changedTouches[0].screenX;
+    const deltaX = touchCurrentX - touchStartX;
+    
+    // Only slide if moving right and started from left area
+    if (deltaX > 0 && touchStartX < 100) {
+        activeModal.style.transform = `translateX(${deltaX}px)`;
+        // Fade the overlay slightly
+        const overlay = activeModal.parentElement;
+        if (overlay) overlay.style.opacity = Math.max(0.3, 1 - (deltaX / 400));
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+    if (!activeModal) return;
+    
+    const deltaX = e.changedTouches[0].screenX - touchStartX;
+    activeModal.style.transition = ''; // Restore transition
+    
+    if (deltaX > 150 && touchStartX < 100) {
+        // Successful swipe
+        const overlay = activeModal.parentElement;
+        overlay.classList.remove('active');
+        // Clean up inline styles
+        setTimeout(() => {
+            activeModal.style.transform = '';
+            overlay.style.opacity = '';
+            if (document.querySelectorAll('.modal-overlay.active').length === 0) {
+                document.body.classList.remove('modal-open');
+            }
+        }, 300);
+    } else {
+        // Snap back
+        activeModal.style.transform = '';
+        const overlay = activeModal.parentElement;
+        if (overlay) overlay.style.opacity = '';
+    }
+    activeModal = null;
+}, { passive: true });

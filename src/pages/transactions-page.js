@@ -89,6 +89,17 @@ export async function renderTransactionsPage(container) {
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6; color: var(--accent-primary);"><polyline points="6 9 12 15 18 9"></polyline></svg>
           <span style="font-weight:700; font-size: 15px; color: var(--text-primary); white-space: nowrap;">📋 รายการธุรกรรม</span>
         </div>
+        <div class="print-group-tablet" style="display:none; align-items:center; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+          <button class="btn" id="printReceiptBtn" style="padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap; font-family: var(--font-family);" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            ใบเสร็จ
+          </button>
+          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 2px; height: 14px;"></div>
+          <button class="btn" id="printReceiptOverviewBtn" style="padding: 6px 10px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.12); border: none; color: #60a5fa; display: flex; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap; font-family: var(--font-family);" onmouseover="this.style.background='rgba(59, 130, 246, 0.22)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.12)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            ภาพรวม
+          </button>
+        </div>
         <button class="btn btn-primary" id="addTransactionBtn" style="padding: 8px 20px; font-size: 13.5px; font-weight: 700; border-radius: 10px; background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.15);" onmouseover="this.style.background='rgba(74, 222, 128, 0.25)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(74, 222, 128, 0.15)'; this.style.transform='translateY(0)'">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           เพิ่มรายการ
@@ -100,72 +111,107 @@ export async function renderTransactionsPage(container) {
     <!-- Modal -->
     <div class="modal-overlay" id="txnModal" style="z-index: 1100;">
       <div class="modal">
-        <div class="modal-header">
-          <h3 id="txnModalTitle">เพิ่มรายการ</h3>
-          <button class="modal-close" id="txnModalClose">&times;</button>
+        <div class="modal-header" style="justify-content: flex-start; padding: 30px 25px 15px;">
+          <h3 id="txnModalTitle" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 0;">เพิ่มรายการ</h3>
+          <button class="modal-close" id="txnModalClose" style="position: absolute; top: 22px; right: 20px; font-size: 18px; opacity: 0.5;">&times;</button>
         </div>
-        <div class="modal-body">
+
+        <div class="modal-body" style="padding: 0 25px 30px;">
           <form id="txnForm">
             <input type="hidden" id="txnId">
-            <div class="tabs" id="txnTypeTabs">
+            <div class="tabs" id="txnTypeTabs" style="margin-bottom: 20px;">
               <button type="button" class="tab-btn active" data-type="expense">รายจ่าย</button>
               <button type="button" class="tab-btn" data-type="income">รายรับ</button>
             </div>
-            <div class="voice-typing-container" style="margin-bottom: var(--space-md);">
-              <label class="form-label" style="display: flex; align-items: center; gap: 6px;">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-primary);"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                 พิมพ์ด้วยเสียง (กดไมค์ที่คีย์บอร์ดชั่วคราว)
-              </label>
-              <div style="display: flex; gap: 8px;">
-                <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." style="flex: 1;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <button type="button" id="aiVoiceSubmitBtn" class="btn btn-primary" style="white-space: nowrap; padding: 4px 12px; font-size: 12px; height: auto;">ส่งให้ AI</button>
+
+            <div class="add-method-tabs" id="addMethodTabs">
+              <button type="button" class="method-tab-btn active" data-method="smart">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                AI Smart Add
+              </button>
+              <button type="button" class="method-tab-btn" data-method="manual">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Manual Entry
+              </button>
+            </div>
+
+            <div id="smartAddSection" class="entry-section active">
+              <div class="ai-section-header">
+                <span class="ai-section-title">✨ ประมวลผลด้วย AI</span>
+                <div class="ai-section-line"></div>
+              </div>
+              <p class="ai-instruction">พิมพ์หรือพูดรายการ แล้วกด + เพื่อรวมชุด</p>
+
+              <div class="smart-add-inner">
+                <div class="voice-typing-container">
+                  <div class="magic-input-wrapper">
+                    <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." autocomplete="off" style="background: transparent !important; border: none !important; color: white !important;">
+                    <button type="button" id="aiQuickSendBtn" class="btn-ai-action btn-ai-check" title="Quick Save">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ai-sparkle-icon"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                    </button>
+                    <button type="button" id="aiAddToQueueBtn" class="btn-ai-action btn-ai-plus" title="Add to Queue">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                  </div>
+                  <div id="aiDraftQueue" class="ai-draft-queue" style="display: none; margin-top: 15px;"></div>
+                  <button type="button" id="aiVoiceSubmitBtn" class="btn-ai-submit" style="display: none; width: 100%; justify-content: center; margin-top: 20px; height: 50px; border-radius: 12px; background: var(--accent-primary); color: #fff; font-weight: 700; border: none; font-size: 15px;">
+                     Process <span id="aiQueueCount">0</span> Items with AI
+                  </button>
+                </div>
               </div>
             </div>
-            <input type="hidden" id="txnType" value="expense">
-            <div class="form-group">
-                <label class="form-label">หมายเหตุ (ชื่อรายการ)</label>
-                <input type="text" class="form-input" id="txnNote" placeholder="ระบุชื่อรายการ...">
-            </div>
-            <div class="form-group">
-                <label class="form-label">จำนวน</label>
-                <input type="number" class="form-input" id="txnQuantity" step="1" min="1" value="1" inputmode="numeric">
-            </div>
-            <div class="form-group">
-                <label class="form-label">ราคาต่อหน่วย</label>
-                <input type="number" class="form-input" id="txnUnitPrice" step="0.01" min="0" placeholder="0.00" inputmode="decimal">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">รวมเป็นเงิน (บาท)</label>
-                <input type="number" class="form-input" id="txnAmount" step="0.01" min="0" required inputmode="decimal">
+
+            <div id="manualEntrySection" class="entry-section">
+              <div class="manual-entry-card">
+                <input type="hidden" id="txnType" value="expense">
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="txnNote" placeholder="Enter transaction note...">
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                      <label class="form-label">Quantity</label>
+                      <input type="text" class="form-input" id="txnQuantity" value="1" inputmode="decimal">
+                  </div>
+                  <div class="form-group">
+                      <label class="form-label">Unit Price</label>
+                      <input type="text" class="form-input" id="txnUnitPrice" placeholder="0.00" inputmode="decimal">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Total Amount</label>
+                    <input type="text" class="form-input" id="txnAmount" required style="font-weight: 800; color: var(--text-primary);" inputmode="decimal">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="text" class="form-input" id="txnDate" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="form-label" style="margin-bottom: 0;">Category</label>
+                    <button type="button" id="manageCategoryBtn" style="background: transparent; border: none; color: var(--accent-primary); font-size: 11px; font-weight: 700; cursor: pointer;">
+                       + Manage
+                    </button>
+                  </div>
+                  <select class="form-select" id="txnCategory" required>
+                    <option value="">Choose category...</option>
+                  </select>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">วันที่ (ว/ด/ป) & เวลา</label>
-                <input type="text" class="form-input" id="txnDate" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <label class="form-label" style="margin-bottom: 0;">หมวดหมู่</label>
-                <button type="button" class="btn btn-sm btn-outline" id="manageCategoryBtn" style="padding: 2px 8px; font-size: 11px; border-radius: 4px; border: none; background: rgba(255,255,255,0.05);">
-                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                   จัดการ
-                </button>
-              </div>
-              <select class="form-select" id="txnCategory" required>
-                <option value="">เลือกหมวดหมู่</option>
-              </select>
             </div>
           </form>
         </div>
-        <div class="modal-footer" style="padding-top: 0; justify-content: space-between; align-items: center;">
+        <div class="modal-footer" style="padding: 0 25px 25px;">
           <button class="btn btn-danger" id="txnDeleteBtn" style="display:none;">ลบ</button>
-          <div style="display: flex; gap: 8px; margin-left: auto;">
-            <button class="btn" id="txnCancelBtn">ปิด</button>
-            <button class="btn" id="txnSaveNextBtn">บันทึก & ต่อ</button>
-            <button class="btn btn-primary" id="txnSaveBtn">บันทึก</button>
+          <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
+            <button class="btn" id="txnCancelBtn" style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">ปิด</button>
+            <button class="btn" id="txnSaveNextBtn" style="background: rgba(255,255,255,0.08);">บันทึก & ต่อ</button>
+            <button class="btn btn-primary" id="txnSaveBtn" style="background: var(--accent-primary); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);">บันทึก</button>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -227,33 +273,36 @@ export async function renderTransactionsPage(container) {
     
     <!-- AI Receipt Confirmation Modal -->
     <div class="ai-receipt-overlay" id="aiReceiptOverlay">
-      <div class="ai-receipt-paper">
-        <div class="ai-receipt-header">
-          <h3>บันทึกสำเร็จ?</h3>
-          <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;" id="aiReceiptDateTime">AI PREVIEW RECEIPT</div>
+      <div class="ai-receipt-container">
+        <div class="ai-receipt-paper">
+          <div class="ai-receipt-header">
+            <h3>บันทึกสำเร็จ?</h3>
+            <div style="font-size: 10px; opacity: 0.5; margin-top: 5px;" id="aiReceiptDateTime">AI PREVIEW RECEIPT</div>
+          </div>
+          <div class="ai-receipt-body">
+            <div class="ai-receipt-row">
+              <span class="ai-receipt-label">รายการ</span>
+              <div class="ai-receipt-dots"></div>
+              <span class="ai-receipt-value" id="aiReceiptNote">-</span>
+            </div>
+            <div class="ai-receipt-row">
+              <span class="ai-receipt-label">หมวดหมู่</span>
+              <div class="ai-receipt-dots"></div>
+              <span class="ai-receipt-value" id="aiReceiptCategory">-</span>
+            </div>
+            <div class="ai-receipt-row" style="margin-top: 20px;">
+              <span class="ai-receipt-label">ยอดรวม</span>
+              <div class="ai-receipt-dots"></div>
+              <span class="ai-receipt-value amount" id="aiReceiptAmount">0.00</span>
+            </div>
+            <div id="aiReceiptQtyRow" class="ai-receipt-row" style="display:none;">
+              <span class="ai-receipt-label">จำนวน</span>
+              <div class="ai-receipt-dots"></div>
+              <span class="ai-receipt-value" id="aiReceiptQty">1</span>
+            </div>
+          </div>
         </div>
-        <div class="ai-receipt-body">
-          <div class="ai-receipt-row">
-            <span class="ai-receipt-label">รายการ</span>
-            <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value" id="aiReceiptNote">-</span>
-          </div>
-          <div class="ai-receipt-row">
-            <span class="ai-receipt-label">หมวดหมู่</span>
-            <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value" id="aiReceiptCategory">-</span>
-          </div>
-          <div class="ai-receipt-row" style="margin-top: 20px;">
-            <span class="ai-receipt-label">ยอดรวม</span>
-            <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value amount" id="aiReceiptAmount">0.00</span>
-          </div>
-          <div id="aiReceiptQtyRow" class="ai-receipt-row" style="display:none;">
-            <span class="ai-receipt-label">จำนวน</span>
-            <div class="ai-receipt-dots"></div>
-            <span class="ai-receipt-value" id="aiReceiptQty">1</span>
-          </div>
-        </div>
+        
         <div class="ai-receipt-footer">
           <div class="btn-group">
             <button class="btn btn-receipt-edit" id="receiptEditBtn">⚙️ แก้ไขเอง</button>
@@ -378,6 +427,21 @@ function setupTransactionEvents() {
       openTxnModal();
     }
 
+    // Toggle Entry Methods (Smart vs Manual)
+    const methodBtn = target.closest('.method-tab-btn');
+    if (methodBtn) {
+      const method = methodBtn.dataset.method;
+      document.querySelectorAll('.method-tab-btn').forEach(b => b.classList.remove('active'));
+      methodBtn.classList.add('active');
+
+      document.querySelectorAll('.entry-section').forEach(s => s.classList.remove('active'));
+      if (method === 'smart') {
+        document.getElementById('smartAddSection').classList.add('active');
+      } else {
+        document.getElementById('manualEntrySection').classList.add('active');
+      }
+    }
+
     if (target.id === 'printReceiptBtn' || target.closest('#printReceiptBtn')) {
       e.preventDefault();
       e.stopPropagation();
@@ -394,19 +458,83 @@ function setupTransactionEvents() {
   // AI Voice Typing Logic helpers
   const aiVoiceSubmitBtn = document.getElementById('aiVoiceSubmitBtn');
   const aiVoiceInput = document.getElementById('aiVoiceInput');
+  const aiAddToQueueBtn = document.getElementById('aiAddToQueueBtn');
+  const aiDraftQueue = document.getElementById('aiDraftQueue');
+  const aiQueueCount = document.getElementById('aiQueueCount');
+
+  // Draft Queue State
+  window._aiDraftItems = window._aiDraftItems || [];
+
+  function renderDraftQueue() {
+    if (!aiDraftQueue) return;
+    const items = window._aiDraftItems;
+
+    if (items.length === 0) {
+      aiDraftQueue.style.display = 'none';
+      if (aiVoiceSubmitBtn) aiVoiceSubmitBtn.style.display = 'none';
+    } else {
+      aiDraftQueue.style.display = 'flex';
+      if (aiVoiceSubmitBtn) aiVoiceSubmitBtn.style.display = 'flex';
+    }
+
+    aiDraftQueue.innerHTML = items.map((text, idx) => `
+      <div class="ai-draft-chip" data-idx="${idx}">
+        <span class="ai-draft-chip-text">${text}</span>
+        <button type="button" class="ai-draft-chip-remove" data-idx="${idx}" title="ลบ">&times;</button>
+      </div>
+    `).join('');
+
+    if (aiQueueCount) aiQueueCount.textContent = items.length;
+
+    // Attach remove handlers
+    aiDraftQueue.querySelectorAll('.ai-draft-chip-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        window._aiDraftItems.splice(idx, 1);
+        renderDraftQueue();
+      });
+    });
+  }
+
+  function addToQueue(text) {
+    if (!text) return;
+    window._aiDraftItems.push(text);
+    renderDraftQueue();
+    if (aiVoiceInput) {
+      aiVoiceInput.value = '';
+      aiVoiceInput.focus();
+    }
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
 
   function setSimulatedVoiceState(state) {
     if (!aiVoiceSubmitBtn) return;
+    const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>`;
+    const aiQuickSendBtn = document.getElementById('aiQuickSendBtn');
+    const inputWrapper = document.querySelector('.magic-input-wrapper');
+
     if (state === 'analyzing') {
-      aiVoiceSubmitBtn.innerHTML = `กำลังประมวลผล...`;
       aiVoiceSubmitBtn.disabled = true;
       aiVoiceSubmitBtn.classList.add('ai-analyzing');
       if (aiVoiceInput) aiVoiceInput.disabled = true;
+      if (aiAddToQueueBtn) aiAddToQueueBtn.disabled = true;
+      if (inputWrapper) inputWrapper.classList.add('processing');
+      if (aiQuickSendBtn) {
+        aiQuickSendBtn.disabled = true;
+        aiQuickSendBtn.classList.add('btn-loading');
+      }
     } else {
-      aiVoiceSubmitBtn.innerHTML = `ส่งให้ AI`;
+      aiVoiceSubmitBtn.innerHTML = `${iconHtml} ส่งให้ AI (<span id="aiQueueCount">${window._aiDraftItems.length}</span> รายการ)`;
       aiVoiceSubmitBtn.disabled = false;
       aiVoiceSubmitBtn.classList.remove('ai-analyzing');
       if (aiVoiceInput) aiVoiceInput.disabled = false;
+      if (aiAddToQueueBtn) aiAddToQueueBtn.disabled = false;
+      if (inputWrapper) inputWrapper.classList.remove('processing');
+      if (aiQuickSendBtn) {
+        aiQuickSendBtn.disabled = false;
+        aiQuickSendBtn.classList.remove('btn-loading');
+      }
     }
   }
 
@@ -471,6 +599,7 @@ function setupTransactionEvents() {
     }
   }
 
+  // Process a single item (used for both single and batch)
   window.processAudio = async (text) => {
     if (window._isVoiceProcessing) return;
     window._isVoiceProcessing = true;
@@ -524,24 +653,230 @@ function setupTransactionEvents() {
     }
   };
 
-  if (aiVoiceSubmitBtn && aiVoiceInput) {
-    let isComposing = false;
+  // Save a batch of results to the database
+  async function saveBatch(results) {
+    window._preventNormalReceiptPopup = true;
+    for (const r of results) {
+      // Re-fill form just to make sure saveTxn has the right context, 
+      // though calling TransactionModule.add directly is cleaner
+      const data = {
+        type: r.type,
+        amount: r.amount,
+        quantity: r.quantity,
+        date: new Date().toISOString().slice(0, 16), // Use current time for batch save
+        category: r.category,
+        note: r.note
+      };
+      await TransactionModule.add(data);
+    }
+    refreshTransactions();
+    window._preventNormalReceiptPopup = false;
+  }
 
+  // Show combined summary receipt after batch processing
+  function showBatchSummaryReceipt(results) {
+    const now = new Date();
+    const printTime = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'numeric', day: 'numeric' }) + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    // Calculate totals
+    const totalIncome = results.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+    const totalExpense = results.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+    const netTotal = totalIncome - totalExpense;
+    
+    let summaryEl = document.getElementById('aiBatchSummaryOverlay');
+    if (!summaryEl) {
+      summaryEl = document.createElement('div');
+      summaryEl.id = 'aiBatchSummaryOverlay';
+      summaryEl.className = 'ai-receipt-overlay';
+      summaryEl.innerHTML = `<div id="aiBatchSummaryModal" class="ai-receipt-paper"></div>`;
+      document.body.appendChild(summaryEl);
+    }
+
+    const modal = summaryEl.querySelector('#aiBatchSummaryModal');
+    modal.innerHTML = `
+      <div class="ai-receipt-header" style="border-bottom:none; margin-bottom: 4px; padding-bottom: 4px;">
+        <div style="font-size: 16px; margin-bottom: 0;">💳</div>
+        <h3 style="font-family: inherit; font-weight: 900; letter-spacing: 0.5px; font-size: 1rem; margin: 0; line-height: 1.1;">FINANCE MGR</h3>
+        <div style="font-size: 9px; margin-top: 1px; font-weight: 500;">สรุปรายรับ-รายจ่าย</div>
+        <div style="font-size: 8px; opacity: 0.7; margin-top: 0px; font-weight: 400;">${printTime}</div>
+      </div>
+      
+      <div style="border-top: 1px solid #333; margin: 4px 0;"></div>
+
+      <div class="ai-receipt-body" style="max-height: 35vh; overflow-y: auto; padding-right: 0px; margin-bottom: 4px;">
+        ${results.map((r, i) => `
+          <div style="margin-bottom: 4px;">
+            <div class="ai-receipt-row" style="margin-bottom: 0; line-height: 1.1;">
+              <span class="ai-receipt-label" style="font-weight:700; color:#111; display: flex; align-items: baseline; gap: 3px; font-size: 0.8rem;">
+                 <span style="font-weight: 900;">${r.quantity}</span>
+                 <span style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.note}</span>
+              </span>
+              <span class="ai-receipt-value" style="font-weight:700; color:#111; font-size: 0.8rem;">${r.type === 'income' ? '' : '-'}${Utils.formatNumber(r.amount)}</span>
+            </div>
+            <div style="font-size: 0.6rem; opacity: 0.5; padding-left: 10px; margin-top: -1px; display: flex; justify-content: space-between;">
+              <span>${r.category}</span>
+              <span>${r.timeStr}</span>
+            </div>
+            <div style="border-bottom: 1px dotted rgba(0,0,0,0.08); margin: 2px 0 2px 10px;"></div>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div style="border-top: 1px solid #333; padding-top: 4px; margin-top: 2px;">
+        <div class="ai-receipt-row" style="font-size: 0.75rem; margin-bottom: 1px;">
+          <span class="ai-receipt-label">รายรับ/รายจ่าย</span>
+          <span class="ai-receipt-value" style="color: #111;">+${Utils.formatNumber(totalIncome)} / -${Utils.formatNumber(totalExpense)}</span>
+        </div>
+        
+        <div class="ai-receipt-row" style="font-weight: 900; font-size: 0.95rem; margin-top: 2px; border-top: 1px dotted #333; padding-top: 4px;">
+          <span class="ai-receipt-label" style="color:#111;">ยอดสุทธิ</span>
+          <span class="ai-receipt-value" style="color: #111;">${netTotal >= 0 ? '' : '-'}${Utils.formatNumber(Math.abs(netTotal))} ฿</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 6px;">
+        <button id="aiBatchCancelBtn" class="btn btn-outline" style="padding: 6px; font-size: 10px; border-radius: 6px; border-color: rgba(0,0,0,0.15); color: #777;">
+          ยกเลิก
+        </button>
+        <button id="aiBatchEditBtn" class="btn btn-outline" style="padding: 6px; font-size: 10px; border-radius: 6px; border-color: rgba(0,0,0,0.15); color: #777;">
+          แก้ไข
+        </button>
+        <button id="aiBatchConfirmBtn" class="btn btn-primary" style="padding: 6px; font-size: 10px; border-radius: 6px; background: #111; color: #fff; border: none; font-weight: 700;">
+          บันทึก
+        </button>
+      </div>
+
+      <div style="margin-top: 8px; text-align: center; border-top: 1px dotted #ccc; padding-top: 6px;">
+        <div style="font-size: 7px; color: #888; font-weight: 600; letter-spacing: 0.5px;">- ขอบคุณที่ใช้บริการ -</div>
+      </div>
+    `;
+
+    summaryEl.classList.add('active');
+    if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+
+    const handleConfirm = async () => {
+      if (window._aiBatchSummaryTimer) clearTimeout(window._aiBatchSummaryTimer);
+      
+      const confirmBtn = document.getElementById('aiBatchConfirmBtn');
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.classList.add('btn-loading');
+      }
+
+      await saveBatch(results);
+      summaryEl.classList.remove('active');
+      closeTxnModal(); // Close the entry modal too
+      
+      // Auto-scroll to the transactions list (POS)
+      const listEl = document.getElementById('txnListDetails');
+      if (listEl) listEl.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleEdit = async () => {
+      if (window._aiBatchSummaryTimer) clearTimeout(window._aiBatchSummaryTimer);
+      summaryEl.classList.remove('active');
+      await saveBatch(results);
+      closeTxnModal();
+      
+      const listEl = document.getElementById('txnListDetails');
+      if (listEl) listEl.scrollIntoView({ behavior: 'smooth' });
+
+      if (typeof window.showPrintReceiptModal === 'function') {
+        window.showPrintReceiptModal({ isOverview: true, skipAnimation: true });
+      }
+    };
+
+    const handleCancel = () => {
+      if (window._aiBatchSummaryTimer) clearTimeout(window._aiBatchSummaryTimer);
+      summaryEl.classList.remove('active');
+      closeTxnModal();
+      Utils.showToast('ยกเลิกรายการทั้งหมดแล้ว', 'info');
+    };
+
+    document.getElementById('aiBatchConfirmBtn').onclick = handleConfirm;
+    document.getElementById('aiBatchEditBtn').onclick = handleEdit;
+    document.getElementById('aiBatchCancelBtn').onclick = handleCancel;
+
+    // Auto-close after 3 seconds (auto-saves)
+    if (window._aiBatchSummaryTimer) clearTimeout(window._aiBatchSummaryTimer);
+    window._aiBatchSummaryTimer = setTimeout(handleConfirm, 3000);
+  }
+
+  // Batch process all items in queue sequentially
+  async function processAllQueue() {
+    const items = [...window._aiDraftItems];
+    if (items.length === 0) return;
+
+    window._isContinuousAi = true; // Use continuous mode for batch
+    const batchResults = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const text = items[i];
+
+      // Highlight the current chip being processed
+      const chips = aiDraftQueue.querySelectorAll('.ai-draft-chip');
+      chips.forEach((chip, idx) => {
+        chip.classList.toggle('processing', idx === i);
+        if (idx < i) chip.classList.add('done');
+      });
+
+      // Update button text with progress
+      if (aiVoiceSubmitBtn) {
+        const iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>`;
+        aiVoiceSubmitBtn.innerHTML = `${iconHtml} กำลังประมวลผล ${i + 1}/${items.length}...`;
+        aiVoiceSubmitBtn.disabled = true;
+        aiVoiceSubmitBtn.classList.add('ai-analyzing');
+      }
+
+      try {
+        const parsed = await AIModule.parseTransaction(text);
+        
+        // Collect for summary receipt WITHOUT saving yet
+        const now = new Date();
+        batchResults.push({
+          note: parsed.note || '-',
+          amount: parsed.amount || 0,
+          category: parsed.category || 'อื่นๆ',
+          type: parsed.type || 'expense',
+          quantity: parsed.quantity || 1,
+          timeStr: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+          dateStr: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'numeric', day: 'numeric' })
+        });
+      } catch (error) {
+        console.error(`[AI Batch] Error on item "${text}":`, error);
+        Utils.showToast(`❌ ไม่สามารถประมวลผล: "${text}"`, 'danger');
+      }
+    }
+
+    // Clear queue after batch complete
+    window._aiDraftItems = [];
+    renderDraftQueue();
+    setSimulatedVoiceState('reset');
+    window._isContinuousAi = false;
+
+    // Show combined summary receipt
+    if (batchResults.length > 0) {
+      showBatchSummaryReceipt(batchResults);
+    }
+  }
+
+  // AI Input Composition State (Scoped)
+  let isComposing = false;
+  
+  if (aiVoiceInput) {
     aiVoiceInput.addEventListener('compositionstart', () => { isComposing = true; });
     aiVoiceInput.addEventListener('compositionend', () => { isComposing = false; });
+  }
 
-    aiVoiceSubmitBtn.addEventListener('click', () => {
-      if (isComposing) return; // Prevent submission while composing
+  // Add to Queue Button
+  if (aiAddToQueueBtn && aiVoiceInput) {
 
-      // Consume the continuous flag passed from saveTxn
-      window._isContinuousAi = window._nextClickIsContinuous || false;
-      window._nextClickIsContinuous = false; // Reset for next time
-
+    aiAddToQueueBtn.addEventListener('click', () => {
+      if (isComposing) return;
       const text = aiVoiceInput.value.trim();
       if (text) {
-        processAudio(text);
+        addToQueue(text);
       } else {
-        // If empty, auto focus it for them to type
         aiVoiceInput.focus();
       }
     });
@@ -550,32 +885,70 @@ function setupTransactionEvents() {
       if (isComposing) return;
       if (e.key === 'Enter') {
         e.preventDefault();
-        aiVoiceSubmitBtn.click();
+        const text = aiVoiceInput.value.trim();
+        if (text) {
+          addToQueue(text);
+        }
       }
     });
   }
 
+  // Quick single-item send button
+  const aiQuickSendBtn = document.getElementById('aiQuickSendBtn');
+  if (aiQuickSendBtn && aiVoiceInput) {
+    aiQuickSendBtn.addEventListener('click', () => {
+      const text = aiVoiceInput.value.trim();
+      if (text) {
+        processAudio(text);
+      } else {
+        aiVoiceInput.focus();
+      }
+    });
+  }
+
+  // Send All to AI Button
+  if (aiVoiceSubmitBtn) {
+    aiVoiceSubmitBtn.addEventListener('click', () => {
+      if (window._aiDraftItems.length > 0) {
+        processAllQueue();
+      }
+    });
+  }
+
+  // Render existing queue (in case of re-render)
+  renderDraftQueue();
+
   // Receipt Button Listeners (Set once per render)
   const receiptConfirmBtn = document.getElementById('receiptConfirmBtn');
   if (receiptConfirmBtn) {
-    receiptConfirmBtn.addEventListener('click', () => {
+    receiptConfirmBtn.addEventListener('click', async () => {
       if (window._aiReceiptTimer) {
         clearTimeout(window._aiReceiptTimer);
         window._aiReceiptTimer = null;
       }
 
-      const overlay = document.getElementById('aiReceiptOverlay');
-      if (overlay) overlay.classList.remove('active');
+      // Show loading feedback immediately
+      receiptConfirmBtn.classList.add('btn-loading');
+      receiptConfirmBtn.disabled = true;
 
       window._preventNormalReceiptPopup = true;
 
-      // If we are in continuous mode, trigger Save & Next, else Save & Close
-      if (window._isContinuousAi) {
-        const saveNextBtn = document.getElementById('txnSaveNextBtn');
-        if (saveNextBtn) saveNextBtn.click();
-      } else {
-        const saveBtn = document.getElementById('txnSaveBtn');
-        if (saveBtn) saveBtn.click();
+      try {
+        // If we are in continuous mode, trigger Save & Next, else Save & Close
+        if (window._isContinuousAi) {
+          await saveTxn(false); 
+        } else {
+          await saveTxn(true);
+        }
+        
+        const overlay = document.getElementById('aiReceiptOverlay');
+        if (overlay) overlay.classList.remove('active');
+      } catch (error) {
+        console.error('Save error from receipt:', error);
+        Utils.showToast('ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'danger');
+      } finally {
+        receiptConfirmBtn.classList.remove('btn-loading');
+        receiptConfirmBtn.disabled = false;
       }
     });
   }
@@ -879,20 +1252,6 @@ function setupTransactionEvents() {
 
       applyFilters();
 
-      // Auto-calculate Total Amount
-      const updateAmount = () => {
-        const qty = parseFloat(document.getElementById('txnQuantity').value) || 0;
-        const price = parseFloat(document.getElementById('txnUnitPrice').value) || 0;
-        if (qty > 0 && price > 0) {
-          document.getElementById('txnAmount').value = (qty * price).toFixed(2);
-        }
-      };
-
-      document.getElementById('txnQuantity').addEventListener('input', updateAmount);
-      document.getElementById('txnUnitPrice').addEventListener('input', updateAmount);
-
-      applyFilters();
-
       // Auto-scroll to receipt list
       setTimeout(() => {
         const target = document.getElementById('txnListDetails');
@@ -904,16 +1263,39 @@ function setupTransactionEvents() {
     });
   });
 
-  // Auto-calculate amount
-  const calculateTotal = () => {
-    const price = parseFloat(document.getElementById('txnUnitPrice').value) || 0;
-    const qty = parseFloat(document.getElementById('txnQuantity').value) || 0;
-    if (price > 0 && qty > 0) {
-      document.getElementById('txnAmount').value = (price * qty).toFixed(2);
+
+  // Auto-calculate Total Amount
+  const autoCalculate = () => {
+    const qtyInput = document.getElementById('txnQuantity');
+    const priceInput = document.getElementById('txnUnitPrice');
+    const amountInput = document.getElementById('txnAmount');
+    
+    if (!qtyInput || !priceInput || !amountInput) return;
+
+    const qty = parseFloat(qtyInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    
+    if (qty > 0 && price > 0) {
+      amountInput.value = (qty * price).toFixed(2);
     }
   };
-  document.getElementById('txnUnitPrice').addEventListener('input', calculateTotal);
-  document.getElementById('txnQuantity').addEventListener('input', calculateTotal);
+
+  document.getElementById('txnQuantity')?.addEventListener('input', autoCalculate);
+  document.getElementById('txnUnitPrice')?.addEventListener('input', autoCalculate);
+
+  // Safety: Prevent numeric input blocks
+  ['txnQuantity', 'txnUnitPrice', 'txnAmount'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+    });
+  });
+
+  // Safety: Prevent numeric input blocks
+  ['txnQuantity', 'txnUnitPrice', 'txnAmount'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+    });
+  });
 
   // Manage Categories UI Logic
   const manageModal = document.getElementById('manageCategoryModal');
@@ -1075,8 +1457,6 @@ async function openTxnModal(txn = null) {
     });
     document.getElementById('txnType').value = txn.type;
     await updateCategoryOptions(txn.type);
-    document.getElementById('txnType').value = txn.type;
-    await updateCategoryOptions(txn.type);
     document.getElementById('txnCategory').value = txn.category;
     document.getElementById('txnDeleteBtn').style.display = 'block';
     document.getElementById('txnSaveNextBtn').style.display = 'none';
@@ -1086,12 +1466,10 @@ async function openTxnModal(txn = null) {
     document.getElementById('txnAmount').value = '';
     document.getElementById('txnUnitPrice').value = '';
     document.getElementById('txnQuantity').value = '1';
-    document.getElementById('txnQuantity').value = '1';
     // document.getElementById('txnDate').value = Utils.today();
     const fp = document.getElementById('txnDate')._flatpickr;
     if (fp) fp.setDate(new Date());
 
-    document.getElementById('txnNote').value = '';
     document.getElementById('txnNote').value = '';
     document.querySelectorAll('#txnTypeTabs .tab-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.type === 'expense');
@@ -1117,6 +1495,35 @@ async function openTxnModal(txn = null) {
 
     document.getElementById('txnDeleteBtn').style.display = 'none';
     document.getElementById('txnSaveNextBtn').style.display = 'inline-flex';
+  }
+
+  // Ensure correct tab state and section visibility
+  const isEdit = !!txn;
+  const methodTabs = document.getElementById('addMethodTabs');
+  const manualTab = document.querySelector('[data-method="manual"]');
+  const smartTab = document.querySelector('[data-method="smart"]');
+  const manualSection = document.getElementById('manualEntrySection');
+  const smartSection = document.getElementById('smartAddSection');
+
+  if (isEdit) {
+    // Hide Smard Add tab during edit, switch to Manual
+    if (smartTab) smartTab.style.display = 'none';
+    if (manualTab) manualTab.classList.add('active');
+    if (smartTab) smartTab.classList.remove('active');
+    if (manualSection) manualSection.classList.add('active');
+    if (smartSection) smartSection.classList.remove('active');
+    // Hide method switch for better UX during edit
+    if (methodTabs) methodTabs.style.display = 'none';
+  } else {
+    // New entry: show both, default to Smart
+    if (smartTab) smartTab.style.display = 'flex';
+    if (methodTabs) methodTabs.style.display = 'flex';
+    
+    // Default to Smart Add
+    document.querySelectorAll('.method-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.entry-section').forEach(s => s.classList.remove('active'));
+    if (smartTab) smartTab.classList.add('active');
+    if (smartSection) smartSection.classList.add('active');
   }
 
   modal.classList.add('active');
@@ -1591,7 +1998,7 @@ window.handleCustomJump = function (key) {
 
 // ─── RECEIPT PRINT ANIMATION ─────────────────────────────────────────────────
 window.showPrintReceiptModal = function (options = {}) {
-  const { customTxns = null, customTitle = null, isOverview = false } = options;
+  const { customTxns = null, customTitle = null, isOverview = false, skipAnimation = false } = options;
   const txns = customTxns ? [...customTxns] : [...cachedTxns];
   const filters = currentFilters;
 
@@ -1911,14 +2318,42 @@ window.showPrintReceiptModal = function (options = {}) {
 
   requestAnimationFrame(() => {
     overlay.classList.add('visible');
+    
+    // Auto-scroll overlay to show content
+    if (skipAnimation) {
+      overlay.scrollTop = 100;
+    }
 
     setTimeout(() => {
       const paper = document.getElementById('receiptPaper');
       if (!paper) return;
 
+      if (skipAnimation) {
+        paper.style.transition = 'none';
+        paper.style.transform = 'translateY(40px)';
+        paper.classList.add('showcase');
+        
+        const printer = document.querySelector('.printer-body');
+        if (printer) {
+           printer.style.display = 'none';
+        }
+        
+        const wrapper = paper.parentElement;
+        if (wrapper) {
+          wrapper.style.overflow = 'visible';
+          wrapper.style.marginTop = '20px'; // Add some space since printer is gone
+        }
+        
+        const light = document.getElementById('printerLight');
+        if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+        
+        overlay.scrollTo({ top: 100, behavior: 'instant' });
+        return;
+      }
+
       let progress = 0;
       let targetProgress = 0;
-      let stateVelocity = 0; 
+      let stateVelocity = 0;
       let timeUntilNextState = 0;
       let lastTime = null;
       let finished = false;
@@ -2142,6 +2577,21 @@ async function saveTxn(closeModal = true) {
     return;
   }
 
+  // Manage UI Loading State
+  const saveBtn = document.getElementById('txnSaveBtn');
+  const saveNextBtn = document.getElementById('txnSaveNextBtn');
+  const setBtnsLoading = (isLoading) => {
+    [saveBtn, saveNextBtn].forEach(btn => {
+       if (btn) {
+         btn.disabled = isLoading;
+         if (isLoading) btn.classList.add('btn-loading');
+         else btn.classList.remove('btn-loading');
+       }
+    });
+  };
+
+  setBtnsLoading(true);
+
   try {
     if (id) {
       const numericId = parseInt(id, 10);
@@ -2221,6 +2671,8 @@ async function saveTxn(closeModal = true) {
     }
   } catch (e) {
     Utils.showToast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+  } finally {
+    setBtnsLoading(false);
   }
 }
 
@@ -2304,7 +2756,7 @@ async function refreshTransactions() {
       tableEl.innerHTML = `
       <div style="position: relative;">
         <!-- Segmented Print Buttons Group -->
-        <div style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div class="print-group-mobile" style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
           <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             ใบเสร็จ
@@ -2361,7 +2813,7 @@ async function refreshTransactions() {
       tableEl.innerHTML = `
       <div style="position: relative;">
         <!-- Segmented Print Buttons Group -->
-        <div style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div class="print-group-mobile" style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
           <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             ใบเสร็จ
