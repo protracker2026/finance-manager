@@ -6,6 +6,7 @@ import { Utils } from '../modules/utils.js';
 let amountsVisible = true;
 let activeSortOrder = 'avalanche'; // 'avalanche' | 'snowball' | 'smart' | null
 let activeGrouping = null; // 'payoffable' | 'installment' | null
+let scrollDebounceTimer = null;
 
 export async function renderDebtsPage(container) {
   const summary = await DebtModule.getDebtSummary();
@@ -367,12 +368,17 @@ function setupDebtEvents() {
 
       await refreshDebts();
       
-      // Auto-scroll to the top of the debt list
-      const container = document.getElementById('debtsContainer');
-      if (container) {
-        const yOffset = -120;
-        const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+      // Scroll only when both sort order AND grouping are selected (pair is complete)
+      clearTimeout(scrollDebounceTimer);
+      if (activeSortOrder && activeGrouping) {
+        scrollDebounceTimer = setTimeout(() => {
+          const container = document.getElementById('debtsContainer');
+          if (container) {
+            const yOffset = -120;
+            const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+        }, 400);
       }
     });
   });
