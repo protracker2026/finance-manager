@@ -346,9 +346,23 @@ function setupDebtEvents() {
   document.querySelectorAll('.sort-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       const clickedBtn = e.currentTarget;
-      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-      clickedBtn.classList.add('active');
-      
+      const sortValue = clickedBtn.dataset.sort;
+
+      // Group A: Sort strategies
+      if (['avalanche', 'snowball'].includes(sortValue)) {
+        const other = sortValue === 'avalanche' ? 'snowball' : 'avalanche';
+        const otherBtn = document.querySelector(`.sort-btn[data-sort="${other}"]`);
+        if (otherBtn) otherBtn.classList.remove('active');
+        clickedBtn.classList.toggle('active');
+      } 
+      // Group B: Grouping strategies
+      else if (['payoffable', 'installment'].includes(sortValue)) {
+        const other = sortValue === 'payoffable' ? 'installment' : 'payoffable';
+        const otherBtn = document.querySelector(`.sort-btn[data-sort="${other}"]`);
+        if (otherBtn) otherBtn.classList.remove('active');
+        clickedBtn.classList.toggle('active');
+      }
+
       await refreshDebts();
       
       // Auto-scroll to the top of the debt list
@@ -986,7 +1000,11 @@ async function refreshDebts() {
   const allDebts = await DebtModule.getAll();
   const container = document.getElementById('debtsContainer');
   const filter = document.getElementById('debtFilter').value;
-  const sort = document.querySelector('.sort-btn.active').dataset.sort;
+  const activeSorts = Array.from(document.querySelectorAll('.sort-btn.active')).map(b => b.dataset.sort);
+  const isAvalanche = activeSorts.includes('avalanche');
+  const isSnowball = activeSorts.includes('snowball');
+  const isPayoffable = activeSorts.includes('payoffable');
+  const isInstallment = activeSorts.includes('installment');
 
   // 1. Filter
   let debts = allDebts;
@@ -994,25 +1012,18 @@ async function refreshDebts() {
     debts = allDebts.filter(d => d.type === filter);
   }
 
-  // 2. Sort
+  // 2. Sort Array
   debts.sort((a, b) => {
     if (a.status === 'paid' && b.status !== 'paid') return 1;
     if (a.status !== 'paid' && b.status === 'paid') return -1;
 
-    if (sort === 'avalanche') return b.annualRate - a.annualRate; // High interest first
-    if (sort === 'snowball') return a.currentBalance - b.currentBalance; // Low balance first
-    if (sort === 'payoffable') {
-        const aIsPayoffable = (a.interestType !== 'fixed_rate' && parseFloat(a.annualRate) > 0) ? 1 : 0;
-        const bIsPayoffable = (b.interestType !== 'fixed_rate' && parseFloat(b.annualRate) > 0) ? 1 : 0;
-        if (aIsPayoffable !== bIsPayoffable) return bIsPayoffable - aIsPayoffable; // Payoffable first
-        return b.annualRate - a.annualRate; // Then by high interest
+    if (isSnowball) {
+      if (a.currentBalance !== b.currentBalance) return a.currentBalance - b.currentBalance;
+    } else if (isAvalanche) {
+      if (b.annualRate !== a.annualRate) return b.annualRate - a.annualRate;
     }
-    if (sort === 'installment') {
-        const aIsInst = (a.interestType === 'fixed_rate' || parseFloat(a.annualRate) === 0) ? 1 : 0;
-        const bIsInst = (b.interestType === 'fixed_rate' || parseFloat(b.annualRate) === 0) ? 1 : 0;
-        if (aIsInst !== bIsInst) return bIsInst - aIsInst; // Installment first
-        return a.currentBalance - b.currentBalance; // Then by balance
-    }
+    
+    // Fallback sort
     return a.name.localeCompare(b.name);
   });
 
@@ -1098,41 +1109,23 @@ async function refreshDebts() {
     paid: { title: '✅ ชำระหมดแล้ว', items: [], sum: 0 }
   };
 
-  const isPrioritySort = (sort === 'avalanche' || sort === 'snowball');
-  const isInstallmentSort = (sort === 'installment');
-  const isPayoffableSort = (sort === 'payoffable');
+  const isPrioritySort = isAvalanche || isSnowball;
 
   debts.forEach(d => {
     const isInst = (d.interestType === 'fixed_rate' || parseFloat(d.annualRate) === 0);
-    const isPayoffable = !isInst;
+    const isPayoff = !isInst;
 
     if (d.status === 'paid') {
       groups.paid.items.push(d);
       groups.paid.sum += parseFloat(d.principal);
-    } else if (isInstallmentSort && filter === 'all') {
-      if (isInst) {
-        groups.installment.items.push(d);
-        groups.installment.sum += parseFloat(d.currentBalance);
-      } else if (d.type === 'credit_card') {
-        groups.credit_card.items.push(d);
-        groups.credit_card.sum += parseFloat(d.currentBalance);
-      } else {
-        groups.personal_loan.items.push(d);
-        groups.personal_loan.sum += parseFloat(d.currentBalance);
-      }
-    } else if (isPayoffableSort && filter === 'all') {
-      if (isPayoffable) {
-        groups.payoff.items.push(d);
-        groups.payoff.sum += parseFloat(d.currentBalance);
-      } else if (d.type === 'credit_card') {
-        groups.credit_card.items.push(d);
-        groups.credit_card.sum += parseFloat(d.currentBalance);
-      } else {
-        groups.personal_loan.items.push(d);
-        groups.personal_loan.sum += parseFloat(d.currentBalance);
-      }
-    } else if (isPrioritySort && filter === 'all') {
-      // Global priority group
+    } else if (isPayoffable && isPayoff && filter === 'all') {
+      groups.payoff.items.push(d);
+      groups.payoff.sum += parseFloat(d.currentBalance);
+    } else if (isInstallment && isInst && filter === 'all') {
+      groups.installment.items.push(d);
+      groups.installment.sum += parseFloat(d.currentBalance);
+    } else if (isPrioritySort && filter === 'all' && (!isPayoffable && !isInstallment)) {
+      // Global priority group (only if no specific grouping is active)
       groups.priority.items.push(d);
       groups.priority.sum += parseFloat(d.currentBalance);
     } else if (d.type === 'credit_card') {
