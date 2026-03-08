@@ -1128,8 +1128,8 @@ async function refreshDebts() {
     } else if (isInstallment && isInst && filter === 'all') {
       groups.installment.items.push(d);
       groups.installment.sum += parseFloat(d.currentBalance);
-    } else if (isPrioritySort && filter === 'all') {
-      // Global priority group
+    } else if (isPrioritySort && filter === 'all' && !isPayoffable && !isInstallment) {
+      // Global priority group (only if no specific grouping is active)
       groups.priority.items.push(d);
       groups.priority.sum += parseFloat(d.currentBalance);
     } else if (d.type === 'credit_card') {
