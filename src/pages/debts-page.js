@@ -4,6 +4,8 @@ import { InterestEngine } from '../modules/interest.js';
 import { Utils } from '../modules/utils.js';
 
 let amountsVisible = true;
+let activeSortOrder = 'avalanche'; // 'avalanche' | 'snowball' | null
+let activeGrouping = null; // 'payoffable' | 'installment' | null
 
 export async function renderDebtsPage(container) {
   const summary = await DebtModule.getDebtSummary();
@@ -76,10 +78,10 @@ export async function renderDebtsPage(container) {
     <div class="debt-sort-bar">
       <div class="debt-sort-controls">
         <span class="label">เรียงตาม:</span>
-        <button class="sort-btn active" data-sort="avalanche">ดอกเบี้ยสูง (Avalanche)</button>
-        <button class="sort-btn" data-sort="snowball">ยอดน้อย (Snowball)</button>
-        <button class="sort-btn" data-sort="payoffable">โปะได้</button>
-        <button class="sort-btn" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
+        <button class="sort-btn ${activeSortOrder === 'avalanche' ? 'active' : ''}" data-sort="avalanche">ดอกเบี้ยสูง (Avalanche)</button>
+        <button class="sort-btn ${activeSortOrder === 'snowball' ? 'active' : ''}" data-sort="snowball">ยอดน้อย (Snowball)</button>
+        <button class="sort-btn ${activeGrouping === 'payoffable' ? 'active' : ''}" data-sort="payoffable">โปะได้</button>
+        <button class="sort-btn ${activeGrouping === 'installment' ? 'active' : ''}" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
       </div>
       <div style="margin-left:auto;" class="debt-sort-controls">
          <span class="label">ฟิลเตอร์:</span>
@@ -246,7 +248,6 @@ export async function renderDebtsPage(container) {
   `;
 
   setupDebtEvents();
-  setupDebtEvents();
   
   await refreshDebts();
 }
@@ -345,30 +346,30 @@ function setupDebtEvents() {
   // === Sort & Filter Events ===
   document.querySelectorAll('.sort-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
-      const clickedBtn = e.currentTarget;
-      const sortValue = clickedBtn.dataset.sort;
+      const sortValue = e.currentTarget.dataset.sort;
 
-      // Group A: Sort strategies
+      // Group A: Sort order (avalanche / snowball) - toggle or switch
       if (['avalanche', 'snowball'].includes(sortValue)) {
-        const other = sortValue === 'avalanche' ? 'snowball' : 'avalanche';
-        const otherBtn = document.querySelector(`.sort-btn[data-sort="${other}"]`);
-        if (otherBtn) otherBtn.classList.remove('active');
-        clickedBtn.classList.toggle('active');
+        activeSortOrder = (activeSortOrder === sortValue) ? null : sortValue;
       } 
-      // Group B: Grouping strategies
+      // Group B: Grouping (payoffable / installment) - toggle or switch
       else if (['payoffable', 'installment'].includes(sortValue)) {
-        const other = sortValue === 'payoffable' ? 'installment' : 'payoffable';
-        const otherBtn = document.querySelector(`.sort-btn[data-sort="${other}"]`);
-        if (otherBtn) otherBtn.classList.remove('active');
-        clickedBtn.classList.toggle('active');
+        activeGrouping = (activeGrouping === sortValue) ? null : sortValue;
       }
+
+      // Sync visual state of all buttons
+      document.querySelectorAll('.sort-btn').forEach(b => {
+        const sv = b.dataset.sort;
+        const isActive = (sv === activeSortOrder) || (sv === activeGrouping);
+        b.classList.toggle('active', isActive);
+      });
 
       await refreshDebts();
       
       // Auto-scroll to the top of the debt list
       const container = document.getElementById('debtsContainer');
       if (container) {
-        const yOffset = -120; // Account for fixed header / sort bar
+        const yOffset = -120;
         const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
         window.scrollTo({ top: y, behavior: 'smooth' });
       }
@@ -1000,11 +1001,10 @@ async function refreshDebts() {
   const allDebts = await DebtModule.getAll();
   const container = document.getElementById('debtsContainer');
   const filter = document.getElementById('debtFilter').value;
-  const activeSorts = Array.from(document.querySelectorAll('.sort-btn.active')).map(b => b.dataset.sort);
-  const isAvalanche = activeSorts.includes('avalanche');
-  const isSnowball = activeSorts.includes('snowball');
-  const isPayoffable = activeSorts.includes('payoffable');
-  const isInstallment = activeSorts.includes('installment');
+  const isAvalanche = activeSortOrder === 'avalanche';
+  const isSnowball = activeSortOrder === 'snowball';
+  const isPayoffable = activeGrouping === 'payoffable';
+  const isInstallment = activeGrouping === 'installment';
 
   // 1. Filter
   let debts = allDebts;
