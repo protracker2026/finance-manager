@@ -47,13 +47,23 @@ export const TransactionModule = {
             amount: parseFloat(data.amount),
             updatedAt: new Date().toISOString()
         });
-        // SyncModule.notifyDataChange();
+        
+        // Notify other modules to sync linked data
+        window.dispatchEvent(new CustomEvent('transaction-updated', { 
+            detail: { id, data } 
+        }));
+        
         return result;
     },
 
     async delete(id) {
         const result = await db.transactions.delete(id);
-        // SyncModule.notifyDataChange();
+        
+        // Notify other modules (like DebtModule) to clean up linked data
+        window.dispatchEvent(new CustomEvent('transaction-deleted', { 
+            detail: { id } 
+        }));
+        
         return result;
     },
 

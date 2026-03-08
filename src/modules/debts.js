@@ -48,6 +48,20 @@ export const DebtModule = {
             createdAt: new Date().toISOString()
         };
         const id = await db.debts.add(data);
+
+        // Optional: Add to income transactions if requested
+        if (debt.addToIncome) {
+            const txnId = await TransactionModule.add({
+                type: 'income',
+                amount: principal,
+                date: debt.startDate,
+                category: 'เงินกู้/เงินสดจากบัตร',
+                note: `รับเงินสดจาก: ${debt.name}`
+            });
+            // Link the transaction ID to the debt record for later cleanup
+            await db.debts.update(id, { linkedIncomeTxnId: txnId });
+        }
+
         SyncModule.notifyDataChange();
         return id;
     },
@@ -65,15 +79,26 @@ export const DebtModule = {
     },
 
     async delete(id) {
+        const debt = await db.debts.get(id);
+        
         // Find and delete related payments
         const payments = await db.debtPayments.toArray();
         const related = payments.filter(p => p.debtId === id);
         for (const p of related) {
             await db.debtPayments.delete(p.id);
+            // Also delete linked transactions for payments (if any)
+            if (p.transactionId) {
+                await TransactionModule.delete(p.transactionId);
+            }
+        }
+
+        // Delete linked income transaction if from a cash withdrawal
+        if (debt && debt.linkedIncomeTxnId) {
+            await TransactionModule.delete(debt.linkedIncomeTxnId);
         }
 
         const result = await db.debts.delete(id);
-        // SyncModule.notifyDataChange(); // Handled by DB adapter now
+        SyncModule.notifyDataChange();
         return result;
     },
     async recordPayment(debtId, payment) {
@@ -234,3 +259,49 @@ export const DebtModule = {
         };
     }
 };
+
+// Global listener for transaction deletions (Undo mechanism)
+window.addEventListener('transaction-deleted', async (e) => {
+    const txnId = e.detail.id;
+    const allPayments = await db.debtPayments.toArray();
+    const linkedPayment = allPayments.find(p => String(p.transactionId) === String(txnId));
+    
+    if (linkedPayment) {
+        console.log(`[DebtModule] Linked transaction ${txnId} deleted. Reverting payment ${linkedPayment.id}...`);
+        
+        // Delete the debt payment record
+        await db.debtPayments.delete(linkedPayment.id);
+        
+        // Recalculate the debt to restore the balance
+        await DebtModule.recalculateDebt(linkedPayment.debtId);
+        
+        // Notify UI to refresh
+        SyncModule.notifyDataChange();
+        window.dispatchEvent(new Event('refresh-transactions'));
+    }
+});
+
+// Global listener for transaction updates (Sync mechanism)
+window.addEventListener('transaction-updated', async (e) => {
+    const { id, data } = e.detail;
+    const allPayments = await db.debtPayments.toArray();
+    const linkedPayment = allPayments.find(p => String(p.transactionId) === String(id));
+    
+    if (linkedPayment) {
+        console.log(`[DebtModule] Linked transaction ${id} updated. Syncing debt payment...`);
+        
+        // Sync the amount and date (recalculation will handle the rest)
+        await db.debtPayments.update(linkedPayment.id, {
+            amount: parseFloat(data.amount),
+            date: data.date,
+            note: data.note || linkedPayment.note
+        });
+        
+        // Recalculate everything for this debt
+        await DebtModule.recalculateDebt(linkedPayment.debtId);
+        
+        // Notify UI
+        SyncModule.notifyDataChange();
+        window.dispatchEvent(new Event('refresh-transactions'));
+    }
+});

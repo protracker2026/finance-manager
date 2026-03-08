@@ -200,7 +200,13 @@ class FirebaseDB {
     populate(collection, sourceData) {
         collection.data = [];
         if (sourceData) {
-            Object.values(sourceData).forEach(item => collection.data.push(item));
+            // Use entries to ensure we have access to the key (ID)
+            Object.entries(sourceData).forEach(([key, item]) => {
+                collection.data.push({
+                    ...item,
+                    id: key // Always set ID from the key
+                });
+            });
         }
     }
 }

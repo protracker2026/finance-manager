@@ -1,6 +1,7 @@
 // Dashboard Page
 import { TransactionModule } from '../modules/transactions.js';
 import { DebtModule } from '../modules/debts.js';
+import { InterestEngine } from '../modules/interest.js';
 import { Utils } from '../modules/utils.js';
 
 export async function renderDashboard(container) {
@@ -9,19 +10,82 @@ export async function renderDashboard(container) {
   const debtSummary = await DebtModule.getDebtSummary();
 
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: var(--space-xl); display: flex; justify-content: center; align-items: center; width: 100%; text-align: center;">
-      <div style="width: 100%;">
-        <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0; font-weight: 500;">
-          สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
-        </p>
-      </div>
+    <div class="page-header" style="margin-bottom: var(--space-md); display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
+      <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0 0 12px 0; font-weight: 500;">
+        สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
+      </p>
+      
+      ${(() => {
+        const debtIncome = summary.byCategory['เงินกู้/เงินสดจากบัตร']?.income || 0;
+        const hasDebtIncome = debtIncome > 0;
+        const state = hasDebtIncome ? 'debt' : (summary.balance >= 0 ? 'positive' : 'negative');
+        const msg = Utils.getDailyEncouragement(state);
+        const accentColor = state === 'positive' ? '#4ade80' : '#fbbf24';
+        const icon = state === 'positive' ? '✨' : (state === 'debt' ? '⚠️' : '💪');
+
+        return `
+        <details class="daily-insight-details" style="width: auto; max-width: 90%;">
+          <summary style="
+            list-style: none; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 6px 16px; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            color: ${accentColor};
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            backdrop-filter: blur(8px);
+          ">
+            <span style="font-size: 14px;">${icon}</span>
+            <span>ข้อความเตือนใจวันนี้</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="chevron" style="transition: transform 0.3s; opacity: 0.6;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </summary>
+          <div style="
+            margin-top: 10px; 
+            padding: 14px; 
+            background: rgba(255, 255, 255, 0.03); 
+            border-radius: 12px; 
+            font-size: 12.5px; 
+            line-height: 1.5; 
+            color: var(--text-secondary);
+            border-left: 3px solid ${accentColor};
+            text-align: left;
+            animation: fadeInDown 0.3s ease-out;
+          ">
+            <b style="color: ${accentColor}; display: block; margin-bottom: 4px; font-size: 13px;">${msg.title}</b>
+            ${msg.body}
+          </div>
+        </details>
+
+        <style>
+          .daily-insight-details summary::-webkit-details-marker { display: none; }
+          .daily-insight-details[open] summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: ${accentColor}44;
+          }
+          .daily-insight-details[open] .chevron {
+            transform: rotate(180deg);
+          }
+          @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        </style>
+        `;
+      })()}
     </div>
 
     <!-- สรุปตัวเลข (Redesigned) -->
     <div class="dashboard-summary-premium">
       <div class="summary-main">
         <div class="label">ยอดคงเหลือสุทธิ</div>
-        <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}">
+        <div class="value-huge" style="color: ${summary.balance >= 0 ? 'var(--text-success)' : '#fef08a'};">
           ${Utils.formatCurrency(summary.balance)}
         </div>
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px;">
@@ -131,24 +195,30 @@ export async function renderDashboard(container) {
   } else {
     recentEl.innerHTML = `
       <div class="txn-list" style="display: flex; flex-direction: column;">
-        ${recentSlice.map(t => `
+        ${recentSlice.map(t => {
+          const isDebtIncome = t.category === 'เงินกู้/เงินสดจากบัตร';
+          const mainColor = isDebtIncome ? '#fbbf24' : (t.type === 'income' ? 'var(--text-success)' : '');
+          const badgeIcon = isDebtIncome ? '⚠️' : (t.type === 'income' ? '💰' : '💸');
+          
+          return `
           <div style="display: flex; align-items: center; padding: 10px var(--space-lg); border-bottom: 1px solid rgba(255,255,255,0.02);">
             <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 1rem; flex-shrink: 0;">
-              ${t.type === 'income' ? '💰' : '💸'}
+              ${badgeIcon}
             </div>
             <div style="flex: 1; min-width: 0;">
-              <div style="font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${t.type === 'income' ? 'color: var(--text-success);' : ''}">
-                ${t.category} <span style="font-weight: 400; font-size: 11px; color: ${t.type === 'income' ? 'var(--text-success)' : 'var(--text-tertiary)'}; margin-left: 4px; opacity: 0.7;">${t.note ? `• ${t.note}` : ''}</span>
+              <div style="font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ${mainColor ? `color: ${mainColor};` : ''}">
+                ${t.category} <span style="font-weight: 400; font-size: 11px; color: ${mainColor || 'var(--text-tertiary)'}; margin-left: 4px; opacity: 0.7;">${t.note ? `• ${t.note}` : ''}</span>
               </div>
             </div>
             <div style="text-align: right; flex-shrink: 0; margin-left: 12px;">
-              <div class="amount ${t.type}" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px;">
+              <div class="amount ${t.type}" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px; ${isDebtIncome ? 'color: #fbbf24 !important;' : ''}">
                 ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
               </div>
               <div style="font-size: 9px; color: var(--text-tertiary); opacity: 0.4;">${Utils.formatDateShort(t.date)}</div>
             </div>
           </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     `;
   }
@@ -283,4 +353,81 @@ async function renderCharts(currentYear, currentMonth) {
   else if (ctx2) {
     ctx2.parentElement.innerHTML = '<div class="empty-state"><p>ยังไม่มีข้อมูลรายจ่าย</p></div>';
   }
+}
+
+async function generateSmartInsights(currentSummary, debtSummary) {
+  const { year, month } = Utils.getMonthRange(-1);
+  const prevSummary = await TransactionModule.getMonthlySummary(year, month);
+  const insights = [];
+
+  // 1. Expense Comparison
+  let mostIncreasedCat = null;
+  let maxIncreasePct = 0;
+
+  Object.entries(currentSummary.byCategory).forEach(([cat, vals]) => {
+    if (vals.expense > 0) {
+      const prevVals = prevSummary.byCategory[cat] || { expense: 0 };
+      if (prevVals.expense > 0) {
+        const increase = ((vals.expense - prevVals.expense) / prevVals.expense) * 100;
+        if (increase > maxIncreasePct) {
+          maxIncreasePct = increase;
+          mostIncreasedCat = cat;
+        }
+      }
+    }
+  });
+
+  if (mostIncreasedCat && maxIncreasePct >= 5) {
+    insights.push(`เดือนนี้คุณใช้จ่ายค่า<b>${mostIncreasedCat}</b>เพิ่มขึ้น ${maxIncreasePct.toFixed(0)}% เมื่อเทียบกับเดือนที่แล้ว`);
+  } else if (currentSummary.expense < prevSummary.expense && currentSummary.expense > 0) {
+    const decreasePct = ((prevSummary.expense - currentSummary.expense) / prevSummary.expense) * 100;
+    insights.push(`เยี่ยมมาก! เดือนนี้คุณประหยัดค่าใช้จ่ายรวมได้ ${decreasePct.toFixed(0)}% เมื่อเทียบกับเดือนก่อน`);
+  }
+
+  // 2. Fixed Expense Ratio
+  if (currentSummary.income > 0) {
+    const ratio = (currentSummary.expense / currentSummary.income) * 100;
+    insights.push(`ค่าใช้จ่ายส่วนใหญ่ของคุณคิดเป็น <b>${ratio.toFixed(0)}%</b> ของรายได้`);
+  }
+
+  // 3. Debt Acceleration Tip
+  const activeDebts = (debtSummary.debts || []).filter(d => d.status === 'active');
+  if (activeDebts.length > 0) {
+    const d = activeDebts[0]; 
+    const amount = 300; 
+    const comparison = InterestEngine.comparePayments(
+      d.currentBalance, 
+      d.annualRate, 
+      d.monthlyPayment || d.minPayment || 0, 
+      amount,
+      d.type,
+      d.lastInterestDate
+    );
+
+    if (comparison.savings.months > 0) {
+      insights.push(`ถ้าคุณจ่ายหนี้ "${d.name}" เพิ่มเดือนละ <b>${amount} บาท</b> คุณจะปลดหนี้เร็วขึ้น <b>${comparison.savings.months} เดือน</b>`);
+    }
+  }
+
+  if (insights.length === 0) return '';
+
+  return `
+    <details open style="
+      background: rgba(255, 255, 255, 0.03); 
+      border: 1px solid rgba(255, 255, 255, 0.05); 
+      border-radius: 12px; 
+      margin-bottom: 20px;
+      overflow: hidden;
+    ">
+      <summary style="padding: 12px 16px; cursor: pointer; font-weight: 600; color: #fef08a; display: flex; align-items: center; justify-content: space-between; list-style: none;">
+        <span style="display: flex; align-items: center; gap: 8px;"><span>🧠</span> Smart Insight</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </summary>
+      <div style="padding: 0 16px 16px 16px;">
+        <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.6;">
+          ${insights.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+        </ul>
+      </div>
+    </details>
+  `;
 }

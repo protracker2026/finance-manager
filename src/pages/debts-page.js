@@ -20,7 +20,10 @@ export async function renderDebtsPage(container) {
     <div class="page-header">
       <div>
         <h2>จัดการหนี้สิน</h2>
-        <p class="subtitle">ติดตามหนี้บัตรเครดิต สินเชื่อส่วนบุคคล พร้อมคำนวณดอกเบี้ย</p>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <p class="subtitle">ติดตามหนี้บัตรเครดิต สินเชื่อส่วนบุคคล พร้อมคำนวณดอกเบี้ย</p>
+          <p style="font-size: 13px; color: #4ade80; font-weight: 500; margin: 0;">${Utils.getDailyDebtEncouragement()}</p>
+        </div>
       </div>
       <div style="display:flex; gap:var(--space-sm);">
         <button class="btn" id="exportDebtPdfBtn">
@@ -43,7 +46,7 @@ export async function renderDebtsPage(container) {
                 <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${amountsVisible ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'}</svg>
             </button>
         </div>
-        <div class="value-huge" id="totalDebtValue" style="color: var(--text-danger-soft);">${formatValue(summary.totalDebt)}</div>
+        <div class="value-huge" id="totalDebtValue" style="color: #fef08a; text-shadow: 0 0 20px rgba(254, 240, 138, 0.1);">${formatValue(summary.totalDebt)}</div>
         <div class="sub-label">จาก ${summary.activeCount} รายการ</div>
       </div>
       
@@ -56,7 +59,7 @@ export async function renderDebtsPage(container) {
         </div>
         <div class="metric-item">
           <span class="metric-label">จ่ายดอกเบี้ยไปแล้ว</span>
-          <span class="metric-value" id="totalInterestPaidValue" style="color: var(--text-danger-soft);">${Utils.formatCurrency(summary.totalInterestPaid)}</span>
+          <span class="metric-value" id="totalInterestPaidValue" style="color: #fb923c;">${Utils.formatCurrency(summary.totalInterestPaid)}</span>
         </div>
          <div class="metric-item">
           <span class="metric-label">ชำระเงินต้นไปแล้ว</span>
@@ -64,7 +67,7 @@ export async function renderDebtsPage(container) {
         </div>
         <div class="metric-item">
           <span class="metric-label">คาดว่าจะหมดหนี้</span>
-          <span class="metric-value accent" id="estimatedPayoffDate">...</span>
+          <span class="metric-value accent" id="estimatedPayoffDateNew">...</span>
         </div>
       </div>
     </div>
@@ -161,6 +164,15 @@ export async function renderDebtsPage(container) {
               <label class="form-label">หมายเหตุ</label>
               <textarea class="form-textarea" id="debtNote" rows="2" placeholder="รายละเอียดเพิ่มเติม..."></textarea>
             </div>
+            <div class="form-group" style="margin-top: 10px; padding: 12px; background: rgba(74, 222, 128, 0.05); border-radius: 8px; border: 1px dashed rgba(74, 222, 128, 0.2);">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: #4ade80; font-weight: 500; font-size: 14px;">
+                <input type="checkbox" id="debtAddToIncome" style="width: 18px; height: 18px; cursor: pointer; accent-color: #4ade80;">
+                บันทึกเป็นรายรับเดือนนี้ด้วย
+              </label>
+              <p style="margin: 6px 0 0 28px; font-size: 12px; color: var(--text-tertiary); line-height: 1.4;">
+                เงินจะถูกเพิ่มในหน้าแดชบอร์ดเป็น "รายรับ" อัตโนมัติ เพื่อให้ยอดเงินคงเหลือในระบบตรงกับเงินในมือคุณ
+              </p>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -180,16 +192,32 @@ export async function renderDebtsPage(container) {
         <div class="modal-body">
           <p id="paymentDebtName" style="color:var(--text-accent);margin-bottom:var(--space-md);font-weight:600;"></p>
           <input type="hidden" id="paymentDebtId">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">จำนวนเงินที่ชำระ (บาท)</label>
-              <input type="text" class="form-input" id="paymentAmount" inputmode="decimal" required>
-              <small id="paymentAmountHint" style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block; opacity: 0.7;"></small>
-            </div>
-            <div class="form-group">
-              <label class="form-label">วันที่ชำระ</label>
-              <input type="date" class="form-input" id="paymentDate" value="${Utils.today().split('T')[0]}" required>
-            </div>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="form-label">จำนวนเงินที่ชำระ (บาท)</label>
+            <input type="number" class="form-input" id="paymentAmount" inputmode="decimal" style="font-size: 24px; font-weight: bold; color: #4ade80; height: 48px;" required>
+            <small id="paymentAmountHint" style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block; opacity: 0.7;"></small>
+          </div>
+          
+          <!-- Contextual Mini What-If Simulation -->
+          <div id="paymentWhatIfContainer" style="display: none; margin-bottom: 16px; background: rgba(74, 222, 128, 0.05); border: 1px dashed rgba(74, 222, 128, 0.2); border-radius: 8px; padding: 12px; transition: all 0.3s ease;">
+             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+               <div style="font-size: 11px; font-weight: 600; color: #4ade80;">
+                 ✨ ลองจ่ายเพิ่มไหม? (เลื่อนเพื่อเปรียบเทียบ)
+               </div>
+             </div>
+             <div style="position: relative; padding: 4px 0;">
+                <input type="range" id="paymentWhatIfSlider" step="10" style="width: 100%; accent-color: #4ade80; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: var(--text-tertiary);">
+                  <span id="paymentWhatIfMinValue">...</span>
+                  <span id="paymentWhatIfMaxValue">...</span>
+                </div>
+             </div>
+             <div id="paymentWhatIfResult" style="margin-top: 8px;"></div>
+          </div>
+
+          <div class="form-group" style="margin-top: 8px;">
+            <label class="form-label">วันที่ชำระ</label>
+            <input type="date" class="form-input" id="paymentDate" value="${Utils.today().split('T')[0]}" required>
           </div>
           <div class="form-group">
             <label class="form-label">หมายเหตุ</label>
@@ -217,6 +245,8 @@ export async function renderDebtsPage(container) {
   `;
 
   setupDebtEvents();
+  setupDebtEvents();
+  
   await refreshDebts();
 }
 
@@ -367,7 +397,16 @@ function openDebtModal(debt = null) {
     document.getElementById('debtId').value = '';
     document.getElementById('debtForm').reset();
     document.getElementById('debtStartDate').value = Utils.today();
+    const addToIncomeCheck = document.getElementById('debtAddToIncome');
+    if (addToIncomeCheck) addToIncomeCheck.checked = false;
   }
+
+  // Show/Hide "Add to Income" based on if it's new or edit
+  const incomeRow = document.getElementById('debtAddToIncome')?.closest('.form-group');
+  if (incomeRow) {
+    incomeRow.style.display = debt ? 'none' : 'block';
+  }
+
   modal.classList.add('active');
 }
 
@@ -388,7 +427,8 @@ async function saveDebt() {
     monthlyPayment: document.getElementById('debtMonthlyPayment').value,
     minPayment: document.getElementById('debtMinPayment').value,
     startDate: document.getElementById('debtStartDate').value,
-    note: document.getElementById('debtNote').value
+    note: document.getElementById('debtNote').value,
+    addToIncome: document.getElementById('debtAddToIncome') ? document.getElementById('debtAddToIncome').checked : false
   };
 
   if (!data.name || !data.principal || !data.annualRate) {
@@ -441,8 +481,17 @@ function openPaymentModal(debt, payment = null) {
 
     // Set blank default but show watermarked hint
     document.getElementById('paymentAmount').value = '';
+
+    // Real-world accurate minimum: Account for interest accrued since last payment
+    const daysSinceLast = InterestEngine.daysBetween(debt.lastInterestDate, Utils.today());
+    const newInterest = InterestEngine.dailyAccrual(debt.currentBalance, debt.annualRate, daysSinceLast);
+    const accruedSinceLast = (debt.accruedInterest || 0) + newInterest;
+    const realLifeBalance = debt.currentBalance + accruedSinceLast;
+
     const expected = parseFloat(debt.monthlyPayment) || 0;
-    const minPay = parseFloat(debt.minPayment) || 0;
+    const minPay = debt.type === 'credit_card' 
+      ? InterestEngine.calculateMinPayment(realLifeBalance, 'credit_card')
+      : (parseFloat(debt.minPayment) || InterestEngine.calculateMinPayment(debt.currentBalance, debt.type));
 
     const hintEl = document.getElementById('paymentAmountHint');
     if (hintEl) {
@@ -452,7 +501,6 @@ function openPaymentModal(debt, payment = null) {
 
       if (hintText.length > 0) {
         hintEl.textContent = `* ${hintText.join(' | ')}`;
-        // Optional: Click to auto-fill the highest realistic amount
         hintEl.style.cursor = 'pointer';
         hintEl.onclick = () => document.getElementById('paymentAmount').value = expected > 0 ? expected : minPay;
       } else {
@@ -471,6 +519,9 @@ function openPaymentModal(debt, payment = null) {
     document.getElementById('paymentNote').value = '';
     if (deleteBtn) deleteBtn.style.display = 'none';
   }
+
+  // Setup What-If in Modal (Only show if adding new payment)
+  setupModalWhatIfSimulation(debt, payment);
 
   modal.classList.add('active');
 }
@@ -499,8 +550,15 @@ window.editPayment = function (paymentId, debtId) {
   DebtModule.getPayments(debtId).then(payments => {
     const payment = payments.find(p => String(p.id) === String(paymentId));
     if (payment) {
-      const debtObj = { id: debtId, name: document.getElementById('detailTitle').textContent };
-      openPaymentModal(debtObj, payment);
+      // Fetch full debt object for What-If context
+      DebtModule.getById(debtId).then(debtObj => {
+        if(debtObj) {
+           openPaymentModal(debtObj, payment);
+        } else {
+           // Fallback if not physically found
+           openPaymentModal({ id: debtId, name: document.getElementById('detailTitle').textContent }, payment);
+        }
+      });
     } else {
       console.error("Payment not found in DB!");
       Utils.showToast("ไม่พบข้อมูลการชำระเงินนี้ในระบบ", "error");
@@ -591,8 +649,8 @@ async function savePayment() {
                     <div style="font-size: 16px; font-weight: 500; color: var(--text-primary);">${Utils.formatCurrency(debtAfter.principal)}</div>
                   </div>
                   <div style="text-align: right;">
-                    <div style="font-size: 11px; color: var(--text-danger); opacity: 0.9; margin-bottom: 4px;">ดอกเบี้ยที่ถูกสูบไปทั้งหมด</div>
-                    <div style="font-size: 16px; font-weight: 700; color: var(--text-danger);">+ ${Utils.formatCurrency(debtAfter.totalInterestPaid)}</div>
+                    <div style="font-size: 11px; color: #fb923c; opacity: 0.9; margin-bottom: 4px;">ดอกเบี้ยที่ถูกสูบไปทั้งหมด</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #fb923c;">+ ${Utils.formatCurrency(debtAfter.totalInterestPaid)}</div>
                   </div>
                 </div>
 
@@ -656,13 +714,10 @@ async function showDebtDetail(debt, scrollToHistory = false) {
   const botConfig = InterestEngine.getBOTConfig(debt.type);
   const rateValidation = InterestEngine.validateRate(debt.annualRate, debt.type);
   const botInfoHtml = `
-    <details style="background:var(--bg-tertiary); border-radius:var(--border-radius); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
-      <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
-         <span style="display:flex; align-items:center; gap:6px;"><span>📜</span> ข้อมูลตามหลัก ธปท.</span>
-         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-      </summary>
-      <div style="padding: 0 var(--space-md) var(--space-md) var(--space-md);">
-        <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
+        <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden; margin-top: 16px;">
+          <div style="padding: 8px 12px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); font-size: 13px; font-weight: 600; color: var(--text-secondary);">
+             📜 ข้อมูลตามหลัก ธปท.
+          </div>
           <table style="width:100%; border-collapse:collapse; font-size:14px;">
             <tbody>
               <tr>
@@ -685,8 +740,6 @@ async function showDebtDetail(debt, scrollToHistory = false) {
             </tbody>
           </table>
         </div>
-      </div>
-    </details>
   `;
 
   // Generate schedule
@@ -716,35 +769,30 @@ async function showDebtDetail(debt, scrollToHistory = false) {
 
     const scheduleRows = result.schedule.slice(0, 60);
     scheduleHtml = `
-      <div style="margin-top: var(--space-lg);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-              <span>📊</span>
-              <h4 style="margin:0; color: var(--text-accent);">คาดการณ์การผ่อนชำระ</h4>
-          </div>
+      <details style="background:var(--bg-tertiary); border-radius:var(--border-radius); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
+        <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
+           <span style="display:flex; align-items:center; gap:6px;"><span>📊</span> ตารางผ่อนชำระ (คาดการณ์)</span>
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </summary>
+        <div style="padding:0 var(--space-md) var(--space-md) var(--space-md);">
           
-          <div style="margin-bottom: var(--space-md); padding: var(--space-md); background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.05);">
-            <div class="summary-row">
+          <div style="margin-bottom: var(--space-md); padding: var(--space-md); background: rgba(0,0,0,0.1); border-radius: var(--border-radius); border: 1px dashed rgba(255,255,255,0.1);">
+            <div class="summary-row" style="display:flex; justify-content:space-between;">
               <span class="label">ระยะเวลาที่เหลือ</span>
-              <span class="value" style="color:var(--text-success)">${result.totalMonths} เดือน</span>
+              <span class="value" style="color:var(--text-success); font-weight:600;">${result.totalMonths} เดือน</span>
             </div>
-            <div class="summary-row">
+            <div class="summary-row" style="display:flex; justify-content:space-between; margin-top:8px;">
               <span class="label">ดอกเบี้ยรวมที่จะเกิดขึ้น</span>
-              <span class="value" style="color:var(--text-warning)">${Utils.formatCurrency(result.totalInterest)}</span>
+              <span class="value" style="color:var(--text-warning); font-weight:600;">${Utils.formatCurrency(result.totalInterest)}</span>
             </div>
-            <div class="summary-row">
+            <div class="summary-row" style="display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">
               <span class="label">ยอดรวมเงินต้น + ดอกเบี้ย</span>
-              <span class="value">${Utils.formatCurrency(result.totalPaid)}</span>
+              <span class="value" style="font-weight:600;">${Utils.formatCurrency(result.totalPaid)}</span>
             </div>
           </div>
 
-          <details style="background:var(--bg-tertiary); border-radius:var(--border-radius); overflow:hidden; border: 1px solid rgba(255,255,255,0.05);">
-            <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
-               <span>📅 ตารางผ่อนชำระแบบละเอียด</span>
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(90deg); transition: transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </summary>
-            <div style="padding:0 var(--space-md) var(--space-md);">
-              <div style="overflow-x:auto;">
-                <table class="amort-table" style="width:100%;">
+          <div style="overflow-x:auto; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;">
+            <table class="amort-table" style="width:100%;">
                   <thead>
                     <tr>
                       <th style="text-align:center">งวด</th>
@@ -770,15 +818,20 @@ async function showDebtDetail(debt, scrollToHistory = false) {
               ${result.schedule.length > 60 ? `<p style="color:var(--text-tertiary);font-size:var(--font-size-xs);margin-top:var(--space-sm);text-align:center;">แสดง 60 งวดแรกจากทั้งหมด ${result.schedule.length} งวด</p>` : ''}
               <div style="text-align:center; padding:10px; opacity:0.5; font-size:10px;">* ข้อมูลนี้เป็นการคาดการณ์เบื้องต้นเพื่อใช้ในการวางแผนเท่านั้น</div>
             </div>
-          </details>
-      </div>
+      </details>
     `;
   } else {
     scheduleHtml = `
-      <div style="margin-top:20px; padding:20px; text-align:center; background:var(--bg-tertiary); border-radius:var(--border-radius); color:var(--text-tertiary);">
-        <p style="margin:0; font-size:var(--font-size-sm);">ℹ️ ไม่สามารถคำนวณตารางคาดการณ์ได้</p>
-        <p style="margin:5px 0 0; font-size:var(--font-size-xs); opacity:0.7;">ระบบจำเป็นต้องทราบ "ค่างวด หรือ จ่ายขั้นต่ำ" เพื่อจำลองตารางล่วงหน้า<br>หากค่างวดไม่ตายตัว สามารถข้ามกล่องนี้และบันทึกประวัติจ่ายจริงได้เลย</p>
-      </div>
+      <details style="background:var(--bg-tertiary); border-radius:var(--border-radius); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
+        <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
+           <span style="display:flex; align-items:center; gap:6px;"><span>📊</span> ตารางผ่อนชำระ (คาดการณ์)</span>
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </summary>
+        <div style="padding:0 var(--space-md) var(--space-md) var(--space-md); text-align:center; color:var(--text-tertiary);">
+          <p style="margin:0; font-size:var(--font-size-sm);">ℹ️ ไม่สามารถคำนวณตารางคาดการณ์ได้</p>
+          <p style="margin:5px 0 0; font-size:var(--font-size-xs); opacity:0.7;">ระบบจำเป็นต้องทราบ "ค่างวด หรือ จ่ายขั้นต่ำ" เพื่อจำลองตารางล่วงหน้า<br>หากค่างวดไม่ตายตัว สามารถข้ามกล่องนี้และบันทึกประวัติจ่ายจริงได้เลย</p>
+        </div>
+      </details>
     `;
   }
 
@@ -786,56 +839,72 @@ async function showDebtDetail(debt, scrollToHistory = false) {
   let paymentHtml = '';
   if (payments.length > 0) {
     paymentHtml = `
-      <div id="paymentHistorySection" style="margin-top:20px; color:var(--text-accent);">
-          <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
-              <span>💰</span>
-              <h4 style="margin:0;">ประวัติการชำระ</h4>
-          </div>
-          
-          <div class="receipt-content" style="width:100%; max-width:none; padding:15px; margin:0; background:#f5e6ca; color:#333; box-shadow:none; border-radius:8px;">
-              <div style="text-align:center; font-family:'Courier Prime', 'Inconsolata', monospace; font-weight:bold; font-size:16px; margin-bottom:12px; border-bottom:1px dashed #999; padding-bottom:10px;">
+      <details id="paymentHistorySection" style="background:var(--bg-tertiary); border-radius:var(--border-radius); border:1px solid rgba(255,255,255,0.05);">
+        <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
+           <span style="display:flex; align-items:center; gap:6px;"><span>💰</span> ประวัติการชำระเงิน</span>
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </summary>
+        <div style="padding:0 var(--space-md) var(--space-md) var(--space-md);">
+          <div style="width:100%; border-radius:8px;">
+              <div style="text-align:center; font-weight:600; font-size:15px; margin-bottom:12px; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:10px; color:var(--text-primary);">
                   รายการชำระเงิน
               </div>
               
-              <div class="table-responsive">
-                <table style="width:100%; font-family:'Inconsolata', monospace; font-size:13px; border-collapse:collapse; min-width:320px;">
+              <div class="table-responsive" style="overflow-x:auto;">
+                <table style="width:100%; font-size:13px; border-collapse:collapse; min-width:320px;">
                   <thead>
-                      <tr style="border-bottom:1px dashed #999;">
-                          <th style="text-align:left; padding:5px;">วันที่</th>
-                          <th style="text-align:right; padding:5px;">ยอดชำระ</th>
-                          <th style="text-align:right; padding:5px;">ดอกเบี้ย</th>
-                          <th style="text-align:right; padding:5px;">เงินต้น</th>
-                          <th style="text-align:right; padding:5px;">คงเหลือ</th>
+                      <tr style="border-bottom:1px dashed rgba(255,255,255,0.1); color:var(--text-tertiary);">
+                          <th style="text-align:left; padding:8px 4px; font-weight:500;">วันที่</th>
+                          <th style="text-align:right; padding:8px 4px; font-weight:500;">ยอดชำระ</th>
+                          <th style="text-align:right; padding:8px 4px; font-weight:500;">ดอกเบี้ย</th>
+                          <th style="text-align:right; padding:8px 4px; font-weight:500;">เงินต้น</th>
+                          <th style="text-align:right; padding:8px 4px; font-weight:500;">คงเหลือ</th>
                       </tr>
                   </thead>
                   <tbody>
                       ${payments.map(p => `
-                          <tr class="clickable-payment-row" onclick="window.editPayment('${p.id}', '${debt.id}')" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.05)'" onmouseout="this.style.background='transparent'">
-                              <td style="padding:5px;">${Utils.formatDateShort(p.date)}</td>
-                              <td style="text-align:right; padding:5px;">${Utils.formatCurrency(p.amount).replace(' ฿', '')}</td>
-                              <td style="text-align:right; padding:5px; color:#c62828;">${Utils.formatCurrency(p.interestPortion).replace(' ฿', '')}</td>
-                              <td style="text-align:right; padding:5px; color:#2e7d32;">${Utils.formatCurrency(p.principalPortion).replace(' ฿', '')}</td>
-                              <td style="text-align:right; padding:5px;">${Utils.formatCurrency(p.balanceAfter).replace(' ฿', '')}</td>
+                          <tr class="clickable-payment-row" onclick="window.editPayment('${p.id}', '${debt.id}')" style="cursor:pointer; transition:background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.02);" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                              <td style="padding:10px 4px; color:var(--text-secondary);">${Utils.formatDateShort(p.date)}</td>
+                              <td style="text-align:right; padding:10px 4px; font-weight:500; color:var(--text-primary);">${Utils.formatCurrency(p.amount).replace(' ฿', '')}</td>
+                              <td style="text-align:right; padding:10px 4px; color:var(--text-warning);">${Utils.formatCurrency(p.interestPortion).replace(' ฿', '')}</td>
+                              <td style="text-align:right; padding:10px 4px; color:var(--text-success);">${Utils.formatCurrency(p.principalPortion).replace(' ฿', '')}</td>
+                              <td style="text-align:right; padding:10px 4px; color:var(--text-secondary);">${Utils.formatCurrency(p.balanceAfter).replace(' ฿', '')}</td>
                           </tr>
                       `).join('')}
                   </tbody>
                 </table>
               </div>
-              <div style="border-top:1px dashed #999; margin-top:12px; padding-top:10px; text-align:center; font-family:'Inconsolata', monospace; font-size:12px; opacity:0.8;">
+              <div style="border-top:1px dashed rgba(255,255,255,0.1); margin-top:8px; padding-top:10px; text-align:center; font-size:12px; opacity:0.5; color:var(--text-tertiary);">
                   *** END OF HISTORY ***
               </div>
           </div>
-      </div>
+        </div>
+      </details>
     `;
   }
 
   document.getElementById('detailTitle').textContent = debt.name;
   document.getElementById('detailBody').innerHTML = `
-    <!-- Account & Financial Table Frame -->
-    <div style="background:var(--bg-tertiary); border-radius:var(--border-radius); padding:var(--space-md); margin-bottom:var(--space-lg); border:1px solid rgba(255,255,255,0.05);">
-        <h4 style="margin: 0 0 12px 0; color:var(--text-accent); font-size:16px; display:flex; align-items:center; gap:6px;"><span>📋</span> ข้อมูลบัญชีและยอดหนี้</h4>
-        
-        <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
+    <!-- Top Progress Bar (always visible) -->
+    <div style="margin-bottom: 24px; padding: 0 4px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+        <span style="color: var(--text-secondary);">ความคืบหน้าการชำระ (${paidPct}%)</span>
+        <span style="font-weight: 600; color: #4ade80;">${Utils.formatCurrency(paid)} <span style="color:var(--text-tertiary); font-weight:normal;">/ ${Utils.formatCurrency(debt.principal)}</span></span>
+      </div>
+      <div class="progress-bar" style="height: 8px; border-radius: 4px;">
+        <div class="progress-fill success" style="width:${paidPct}%; border-radius: 4px;"></div>
+      </div>
+    </div>
+
+    <!-- 1. รายละเอียดสัญญา (Contract & Financial Info) -->
+    <details style="background:var(--bg-tertiary); border-radius:var(--border-radius); margin-bottom:var(--space-md); border:1px solid rgba(255,255,255,0.05);">
+        <summary style="padding:var(--space-md); cursor:pointer; font-weight:600; color:var(--text-accent); display:flex; align-items:center; justify-content:space-between; list-style:none;">
+           <span style="display:flex; align-items:center; gap:6px;"><span>📋</span> รายละเอียดสัญญา</span>
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </summary>
+        <div style="padding:0 var(--space-md) var(--space-md) var(--space-md);">
+          
+          <div style="border:1px solid var(--border-color); border-radius:4px; overflow:hidden;">
           <table style="width:100%; border-collapse:collapse; font-size:14px;">
             <tbody>
               <tr>
@@ -866,33 +935,30 @@ async function showDebtDetail(debt, scrollToHistory = false) {
               ${debt.totalInterestPaid > 0 ? `
               <tr>
                 <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ดอกเบี้ยที่เสียไปเปล่าๆ</td>
-                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right; color:var(--text-danger);">- ${Utils.formatCurrency(debt.totalInterestPaid || 0)}</td>
+                <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right; color:#fb923c;">- ${Utils.formatCurrency(debt.totalInterestPaid || 0)}</td>
               </tr>` : ''}
               ${debt.totalPaid > 0 ? `
               <tr>
                 <td style="padding:10px; border-bottom:1px solid var(--border-color); color:var(--text-secondary); border-right:1px solid var(--border-color);">ยอดเงินรวมที่จ่ายจริง</td>
                 <td style="padding:10px; border-bottom:1px solid var(--border-color); font-weight:600; text-align:right;">${Utils.formatCurrency(debt.totalPaid || 0)}</td>
               </tr>` : ''}
-              <tr style="background: rgba(220, 53, 69, 0.05);">
+              <tr style="background: rgba(254, 240, 138, 0.05);">
                 <td style="padding:12px 10px; border-bottom:none; font-weight:600; color:var(--text-primary); border-right:1px solid var(--border-color);">ยอดคงเหลือ (ล่าสุด)</td>
-                <td style="padding:12px 10px; border-bottom:none; font-weight:bold; color:var(--text-danger); font-size:16px; text-align:right;">${Utils.formatCurrency(debt.currentBalance)}</td>
+                <td style="padding:12px 10px; border-bottom:none; font-weight:bold; color:#fef08a; font-size:16px; text-align:right;">${Utils.formatCurrency(debt.currentBalance)}</td>
               </tr>
             </tbody>
           </table>
         </div>
-    </div>
-    <div>
-      <div class="progress-bar">
-        <div class="progress-fill success" style="width:${paidPct}%"></div>
+        
+        ${botInfoHtml}
       </div>
-      <div class="progress-info">
-        <span>ชำระแล้ว ${paidPct}%</span>
-        <span>${Utils.formatCurrency(paid)} / ${Utils.formatCurrency(debt.principal)}</span>
-      </div>
-    </div>
-    ${paymentHtml}
+    </details>
+
+    <!-- 2. ตารางผ่อน -->
     ${scheduleHtml}
-    ${botInfoHtml}
+
+    <!-- 3. ประวัติการชำระ -->
+    ${paymentHtml}
   `;
 
   document.getElementById('detailModal').classList.add('active');
@@ -928,34 +994,64 @@ async function refreshDebts() {
     return a.name.localeCompare(b.name);
   });
 
-  // Calculate Total Monthly Payment (Active Debts)
+  // Calculate Summary Stats & Predictions
   let maxMonths = 0;
-  const totalMonthly = allDebts
-    .filter(d => d.status === 'active')
-    .reduce((sum, d) => {
-      const payment = d.monthlyPayment || d.minPayment || 0;
-      const paymentAmountForCalc = payment || (d.type === 'credit_card' ? InterestEngine.calculateMinPayment(d.currentBalance, 'credit_card') : 0);
+  let totalMonthly = 0;
+  
+  // We calculate months for ALL active debts first
+  allDebts.forEach(d => {
+    if (d.status !== 'active') return;
+    
+    const balance = parseFloat(d.currentBalance || 0);
+    const rate = parseFloat(d.annualRate || 0);
+    const initialBalance = parseFloat(d.principal || balance);
+    const currentMin = d.type === 'credit_card' ? InterestEngine.calculateMinPayment(balance, 'credit_card') : (parseFloat(d.minPayment) || 0);
+    const monthlyNeeded = parseFloat(d.monthlyPayment) || currentMin;
+    totalMonthly += monthlyNeeded;
 
-      if (paymentAmountForCalc > 0) {
-        let result;
-        if (d.type === 'credit_card') {
-          result = InterestEngine.generateCreditCardSchedule(d.currentBalance, d.annualRate, d.monthlyPayment || 0, d.startDate);
-        } else if (d.interestType === 'daily_accrual') {
-          result = InterestEngine.generateDailyAccrualSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc, d.startDate);
-        } else if (d.interestType === 'fixed_rate') {
-          result = InterestEngine.generateFixedRateSchedule(d.principal, d.annualRate, paymentAmountForCalc);
-        } else {
-          result = InterestEngine.generateAmortizationSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc);
-        }
-        if (result && result.totalMonths > maxMonths) maxMonths = result.totalMonths;
+    const initialMin = d.type === 'credit_card' ? InterestEngine.calculateMinPayment(initialBalance, 'credit_card') : (parseFloat(d.minPayment) || 0);
+
+    const payments = d.payments || [];
+    const latestActualAmount = payments.length > 0 ? parseFloat(payments[payments.length - 1].amount) : 0;
+    
+    // Prediction is based on: Set Monthly > Last Actual Amount > Initial Min > Current Min
+    const paymentForCalc = parseFloat(d.monthlyPayment) || Math.max(latestActualAmount, initialMin, currentMin);
+    
+    // Store this in the object so cards can use it without re-calculating
+    d.paymentAmountForCalc = paymentForCalc;
+    
+    // 3. Real-world Reality (Today's Interest & Min)
+    const daysSinceLast = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
+    const newInterest = InterestEngine.dailyAccrual(balance, rate, daysSinceLast);
+    const accruedSinceLast = (d.accruedInterest || 0) + newInterest;
+    d.realTimeMin = InterestEngine.calculateMinPayment(balance + accruedSinceLast, d.type);
+    d.todayInterest = accruedSinceLast;
+
+    if (paymentForCalc > 0) {
+      let result;
+      if (d.type === 'credit_card') {
+        result = InterestEngine.generateCreditCardSchedule(balance, rate, paymentForCalc, d.startDate);
+      } else if (d.interestType === 'daily_accrual') {
+        result = InterestEngine.generateDailyAccrualSchedule(balance, rate, paymentForCalc, d.startDate);
+      } else if (d.interestType === 'fixed_rate') {
+        result = InterestEngine.generateFixedRateSchedule(parseFloat(d.principal), rate, paymentForCalc);
+      } else {
+        result = InterestEngine.generateAmortizationSchedule(balance, rate, paymentForCalc);
       }
-      return sum + paymentAmountForCalc;
-    }, 0);
+      
+      d.monthsToPayoff = result.totalMonths;
+      d.predictionResult = result;
+      
+      if (result.totalMonths > maxMonths) maxMonths = result.totalMonths;
+    } else {
+      d.monthsToPayoff = null;
+    }
+  });
 
   const totalMonthlyEl = document.getElementById('totalMonthlyPayment');
   if (totalMonthlyEl) totalMonthlyEl.textContent = amountsVisible ? Utils.formatCurrency(totalMonthly) : '••••••';
 
-  const payoffEl = document.getElementById('estimatedPayoffDate');
+  const payoffEl = document.getElementById('estimatedPayoffDateNew');
   if (payoffEl) {
     if (maxMonths > 0) {
       const payoffDate = Utils.addMonths(new Date(), maxMonths);
@@ -1017,6 +1113,9 @@ async function refreshDebts() {
                 </div>
               </div>
               <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0; margin-left: 12px;">
+                <button class="btn btn-sm edit-history-btn" data-id="${d.id}" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-secondary); cursor:pointer; padding:6px 12px; border-radius: 6px; font-size: 12px;" title="แก้ไขประวัติล่าสุด">
+                  แก้ไขล่าสุด
+                </button>
                 <button class="btn btn-sm detail-debt" data-id="${d.id}" style="background:var(--bg-tertiary); border:1px solid rgba(255,255,255,0.1); color:var(--text-accent); cursor:pointer; padding:6px 12px; border-radius: 6px; font-size: 12px; display:flex; align-items:center; gap:6px; font-weight: 600;" title="ดูรายละเอียด">
                   ดูรายละเอียด
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -1035,22 +1134,13 @@ async function refreshDebts() {
         const paidPct = d.principal > 0 ? Utils.percentage(paid, d.principal) : 100;
         const paymentAmount = d.monthlyPayment || d.minPayment || 0;
 
-        // 4.1 Calculate Quick Prediction for this item
+        // 4.1 Use Pre-calculated Prediction
         let predictionSummaryHtml = '';
-        const paymentAmountForCalc = paymentAmount || (d.type === 'credit_card' ? InterestEngine.calculateMinPayment(d.currentBalance, 'credit_card') : 0);
+        const monthsToPayoff = d.monthsToPayoff;
+        const result = d.predictionResult;
+        const paymentAmountForCalc = d.paymentAmountForCalc || 0;
 
-        if (paymentAmountForCalc > 0) {
-          let result;
-          if (d.type === 'credit_card') {
-            result = InterestEngine.generateCreditCardSchedule(d.currentBalance, d.annualRate, d.monthlyPayment || 0, d.startDate);
-          } else if (d.interestType === 'daily_accrual') {
-            result = InterestEngine.generateDailyAccrualSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc, d.startDate);
-          } else if (d.interestType === 'fixed_rate') {
-            result = InterestEngine.generateFixedRateSchedule(d.principal, d.annualRate, paymentAmountForCalc);
-          } else {
-            result = InterestEngine.generateAmortizationSchedule(d.currentBalance, d.annualRate, paymentAmountForCalc);
-          }
-
+        if (monthsToPayoff !== null && result) {
           predictionSummaryHtml = `
           <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:4px;">
             <tbody>
@@ -1095,27 +1185,37 @@ async function refreshDebts() {
         }
 
         // Dynamic color based on repayment progress (Text only)
-        let statusColor = '#ef4444'; // 0-25% (Vibrant Red)
+        let statusColor = '#ffffff'; // 0-25% (White)
         if (paidPct >= 90) statusColor = '#22c55e';      // 90%+ (Green)
         else if (paidPct >= 75) statusColor = '#4ade80'; // 75-90% (Light Green)
         else if (paidPct >= 50) statusColor = '#fcd34d'; // 50-75% (Yellow)
         else if (paidPct >= 25) statusColor = '#fb923c'; // 25-50% (Orange)
 
         return `
-    <div class="debt-item" data-id="${d.id}" style="padding: 16px; position: relative; cursor: pointer; transition: all 0.2s ease;">
-          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;" onclick="window.toggleDebtItem(this)">
+    <div class="debt-item" data-id="${d.id}" style="padding: 10px 14px; position: relative; cursor: pointer; transition: all 0.2s ease;">
+          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;" onclick="window.toggleDebtItem(this)">
             <div style="flex: 1; min-width: 0;">
-              <span style="font-size: 16px; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; min-width: 0;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
+              <span style="font-size: 14px; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; min-width: 0;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
             </div>
             <div style="text-align: right; flex-shrink: 0;">
-              <div style="font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">คงเหลือ</div>
-              <div style="font-size: 18px; font-weight: 700; color: ${statusColor}; letter-spacing: -0.5px;">${Utils.formatCurrency(d.currentBalance)}</div>
+              <div style="font-size: 8px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0;">คงเหลือ</div>
+              <div style="font-size: 15px; font-weight: 700; color: ${statusColor}; letter-spacing: -0.5px;">${Utils.formatCurrency(d.currentBalance)}</div>
             </div>
           </div>
 
-          <div class="progress-container" style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0;" onclick="window.toggleDebtItem(this)">
+          <div class="progress-container" style="height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0;" onclick="window.toggleDebtItem(this)">
             <div class="progress-fill" style="width: ${paidPct}%; height: 100%; background: ${statusColor}; border-radius: 2px; opacity: 0.6; transition: width 0.8s ease;"></div>
           </div>
+          
+          <!-- Progress Dopamine -->
+          ${d.status !== 'paid' ? `
+          <div style="margin-top: 8px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.01) 100%); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="window.toggleDebtItem(this)">
+            <div style="font-size: 16px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">🎉</div>
+            <div style="flex: 1;">
+               ${paidPct > 0 ? `<div style="font-size: 11px; color: #4ade80; font-weight: 600;">จ่ายหนี้ไปแล้ว ${paidPct.toFixed(1)}%</div>` : `<div style="font-size: 11px; color: #4ade80; font-weight: 600;">เริ่มต้นก้าวแรก!</div>`}
+            </div>
+          </div>
+          ` : ''}
           
           <details class="debt-item-details" style="margin-top: 0; border-top: none;">
             <summary style="display:none"></summary>
@@ -1124,7 +1224,8 @@ async function refreshDebts() {
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.07);">
               <span class="badge" style="font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 3px 8px; border-radius: 4px;">${Utils.debtTypeName(d.type)}</span>
               <span class="badge" style="font-size: 11px; background: rgba(255,193,7,0.08); color: var(--text-warning); padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(255,193,7,0.15);">ดอกเบี้ย ${d.annualRate}%</span>
-              ${paymentAmountForCalc > 0 ? `<span class="badge" style="font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 3px 8px; border-radius: 4px;">จ่าย ~${Utils.formatCurrency(paymentAmountForCalc).replace(' ฿', '')} ฿/เดือน</span>` : ''}
+              ${d.realTimeMin > 0 ? `<span class="badge" style="font-size: 11px; background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.15); padding: 3px 8px; border-radius: 4px;">ขั้นต่ำวันนี้: ${Utils.formatNumber(d.realTimeMin)} ฿</span>` : ''}
+              ${paymentAmountForCalc > 0 ? `<span class="badge" style="font-size: 11px; background: rgba(34,197,94,0.08); color: #4ade80; border: 1px solid rgba(34,197,94,0.15); padding: 3px 8px; border-radius: 4px;">เป้าหมาย: ${Utils.formatNumber(paymentAmountForCalc)} ฿</span>` : ''}
             </div>
 
             ${predictionSummaryHtml}
@@ -1243,7 +1344,7 @@ async function refreshDebts() {
         let schedule = null;
         if (paymentAmountForCalc > 0) {
           if (debt.type === 'credit_card') {
-            schedule = InterestEngine.generateCreditCardSchedule(debt.currentBalance, debt.annualRate, debt.monthlyPayment || 0, debt.startDate);
+            schedule = InterestEngine.generateCreditCardSchedule(debt.currentBalance, debt.annualRate, paymentAmountForCalc, debt.startDate);
           } else if (debt.interestType === 'daily_accrual') {
             schedule = InterestEngine.generateDailyAccrualSchedule(debt.currentBalance, debt.annualRate, paymentAmountForCalc, debt.startDate);
           } else if (debt.interestType === 'fixed_rate') {
@@ -1267,4 +1368,149 @@ async function refreshDebts() {
       }
     });
   });
+}
+
+// --- Payment Modal What-If Logic ---
+function setupModalWhatIfSimulation(debt, existingPayment) {
+  const container = document.getElementById('paymentWhatIfContainer');
+  const amountInput = document.getElementById('paymentAmount');
+  const slider = document.getElementById('paymentWhatIfSlider');
+  const resultEl = document.getElementById('paymentWhatIfResult');
+  
+  const whatIfInput = document.getElementById('paymentWhatIfInput');
+  
+  // Hide if editing existing or debt is undefined/fully paid
+  if (existingPayment || !debt || debt.status === 'paid') {
+      container.style.display = 'none';
+      if(amountInput) {
+          amountInput.oninput = null; // Clear old bindings
+          amountInput.onblur = null;
+      }
+      return;
+  }
+
+  // Use the same interest-adjusted balance logic for the simulator's mandatory minimum
+  const daysSinceLast = InterestEngine.daysBetween(debt.lastInterestDate, Utils.today());
+  const newInterest = InterestEngine.dailyAccrual(debt.currentBalance, debt.annualRate, daysSinceLast);
+  const totalBalanceForMin = debt.currentBalance + (debt.accruedInterest || 0) + newInterest;
+
+  // Baseline for comparison (your established habit/goal)
+  const habitPayment = debt.paymentAmountForCalc || debt.monthlyPayment || InterestEngine.calculateMinPayment(totalBalanceForMin, debt.type);
+  
+  // Dynamic minimum for the floor of the slider
+  const mandatoryMin = InterestEngine.calculateMinPayment(totalBalanceForMin, debt.type);
+  const sliderMin = Math.max(mandatoryMin, (debt.type === 'personal_loan' ? 300 : mandatoryMin));
+
+  if (sliderMin <= 0) {
+      container.style.display = 'none';
+      return;
+  }
+
+  container.style.display = 'block';
+
+  // Setup bounds for slider
+  let sliderMax = Math.min(debt.currentBalance, habitPayment + 20000);
+  if (sliderMax <= sliderMin) sliderMax = sliderMin + 1000;
+  
+  slider.min = sliderMin;
+  slider.max = sliderMax;
+
+  document.getElementById('paymentWhatIfMinValue').textContent = Utils.formatCurrency(sliderMin);
+  document.getElementById('paymentWhatIfMaxValue').textContent = Utils.formatCurrency(sliderMax);
+
+  // Set initial value to your established habit/goal
+  amountInput.value = ''; // Keep blank as per user request
+  slider.value = habitPayment; 
+
+  const currentPayment = habitPayment; 
+
+  // Render logic
+  const renderResult = (val) => {
+      if(val < sliderMin) {
+          resultEl.innerHTML = `<span style="color: var(--text-warning); font-size: 11px;">⚠️ กรุณาชำระขั้นต่ำ ${Utils.formatCurrency(sliderMin)}</span>`;
+          return;
+      }
+      const extraAmount = val - habitPayment;
+      const comparison = InterestEngine.comparePayments(
+          debt.currentBalance,
+          debt.annualRate,
+          habitPayment,
+          extraAmount,
+          debt.type,
+          debt.lastInterestDate
+      );
+
+      // Scenarios: Goal (val == habit), Diligence (val > habit), Lapse (val < habit)
+      const diff = Math.abs(val - habitPayment);
+      const isGoal = diff < 0.01;
+      const isLapse = val < habitPayment - 0.01;
+      const isHighDiligence = val > habitPayment + 0.01;
+
+      if (isGoal) {
+          resultEl.innerHTML = `
+            <div style="font-size: 11px; color: var(--text-tertiary);">
+              คุณจะปลดหนี้นี้หมดในอีก <b style="color: #4ade80;">${comparison.minPayment.totalMonths} เดือน</b> ตามแผน ✌️
+            </div>
+          `;
+      } else if (isLapse) {
+          const extraMonths = comparison.extraPayment.totalMonths - comparison.minPayment.totalMonths;
+          resultEl.innerHTML = `
+            <div style="font-size: 12px; color: #f87171; margin-bottom: 2px; font-weight: 600;">
+              ⚠️ วินัยหย่อน! จะหมดหนี้ช้าลงเป็น <b>${comparison.extraPayment.totalMonths} เดือน</b>
+            </div>
+            <div style="font-size: 11px; color: var(--text-tertiary);">
+              ต้องทนอยู่กับหนี้นี้นานขึ้นอีก <b>${extraMonths} เดือน</b> เลยนะ! 😭
+            </div>
+          `;
+      } else {
+          resultEl.innerHTML = `
+            <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 2px;">
+              หมดเร็วขึ้นเหลือ <b>${comparison.extraPayment.totalMonths} เดือน!</b> <span style="font-size: 11px; color: var(--text-tertiary); font-weight: normal;">(จากเดิม ${comparison.minPayment.totalMonths} เดือน)</span>
+            </div>
+            <div style="font-size: 11px; color: #4ade80;">
+              ประหยัดดอกเบี้ยได้ <b>${Utils.formatCurrency(comparison.savings.interest)}</b> ว้าว! 🎉
+            </div>
+          `;
+      }
+  };
+
+  // Bind input -> slider -> result
+  amountInput.oninput = (e) => {
+      let val = parseFloat(e.target.value);
+      if(!isNaN(val)) {
+          slider.value = Math.min(Math.max(val, sliderMin), sliderMax);
+          renderResult(val);
+      } else {
+          // If empty, show default min payment result
+          renderResult(sliderMin);
+          slider.value = sliderMin;
+      }
+  };
+
+  amountInput.onblur = (e) => {
+      let val = parseFloat(e.target.value);
+      // We don't force them to enter min value anymore to let them have an empty field if they prefer
+      if (isNaN(val)) {
+          renderResult(sliderMin);
+      } else if (val < sliderMin) {
+          // But if they entered less than minimum, we still calculate the warning but keep their value intact, 
+          // or we can auto-correct it. Let's auto-correct it to prevent saving invalid data
+          val = sliderMin;
+          amountInput.value = val;
+          slider.value = val;
+          renderResult(val);
+      } else {
+          renderResult(val);
+      }
+  };
+
+  // Bind slider -> input -> result
+  slider.oninput = (e) => {
+      const val = parseFloat(e.target.value);
+      amountInput.value = val;
+      renderResult(val);
+  };
+
+  // Initial draw using your habit as the starting point for consistency with the main card
+  renderResult(habitPayment);
 }

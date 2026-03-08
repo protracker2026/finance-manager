@@ -16,7 +16,7 @@ export const InterestEngine = {
         personal_loan: {
             maxRate: 25,           // เพดาน 25% (ไม่มีหลักประกัน)
             minPaymentPct: 3,      // ชำระขั้นต่ำ 3% ของยอดคงค้าง
-            minPaymentFloor: 0,    // ไม่มีขั้นต่ำแบบ fixed
+            minPaymentFloor: 300,  // ขั้นต่ำสุด 300 บาท
             method: 'reducing_balance',
             label: 'สินเชื่อส่วนบุคคล',
             description: 'ดอกเบี้ยลดต้นลดดอก คิดจากยอดคงค้าง × (อัตรา / 12)'

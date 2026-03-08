@@ -2852,7 +2852,7 @@ async function refreshTransactions() {
               <td data-label="ประเภท"><span class="badge badge-${g.type}">${g.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
               <td data-label="หมวดหมู่">${g.category} <span style="font-size:0.7em; opacity:0.5;">▸</span></td>
               <td data-label="วันที่" style="text-align:right; color:var(--text-tertiary);">${g.count}</td>
-              <td data-label="จำนวน" class="amount ${g.type}" style="text-align:right">
+              <td data-label="จำนวน" class="amount ${g.type}" style="text-align:right; ${g.category === 'เงินกู้/เงินสดจากบัตร' ? 'color: #fbbf24 !important;' : ''}">
                   ${g.type === 'income' ? '+' : '-'}${Utils.formatCurrency(g.amount)}
               </td>
             </tr>
@@ -2911,13 +2911,13 @@ async function refreshTransactions() {
           ${[...txns].sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)).map(t => `
             <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
               <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
-              <td data-label="ประเภท"><span class="badge badge-${t.type}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
+              <td data-label="ประเภท"><span class="badge badge-${t.type}" style="${t.category === 'เงินกู้/เงินสดจากบัตร' ? 'background: rgba(251, 191, 36, 0.2); color: #fbbf24;' : ''}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
               <td data-label="หมวดหมู่">
                   ${t.note ? t.note : t.category}
                   ${(t.quantity && t.quantity > 1 && t.unitPrice) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice)}</span>` : ''}
               </td>
               <td data-label="หมายเหตุ">${t.note || '-'}</td>
-              <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right">
+              <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right; ${t.category === 'เงินกู้/เงินสดจากบัตร' ? 'color: #fbbf24 !important;' : ''}">
                   ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
                   <div class="mobile-edit-overlay" data-id="${t.id}" title="แก้ไข"></div>
               </td>
