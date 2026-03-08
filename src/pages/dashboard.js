@@ -130,18 +130,18 @@ export async function renderDashboard(container) {
         <div class="metric-card">
           <span class="m-label">จ่ายดอกเบี้ยสะสม</span>
           <span class="m-value" style="color:#fb923c">-${Utils.formatCurrency(debtSummary.totalInterestPaid)}</span>
-          <div style="font-size: 9px; color: var(--text-tertiary); margin-top: 4px; opacity: 0.6;">เงินที่จ่ายทิ้งเปล่าไปแล้ว</div>
+          <div style="font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px; opacity: 0.6;">เงินที่จ่ายทิ้งเปล่าไปแล้ว</div>
         </div>
         <div class="metric-card">
           <span class="m-label">ชำระเงินต้นแล้ว</span>
           <div style="display: flex; justify-content: center; align-items: baseline; gap: 4px; flex-wrap: wrap;">
             <span class="m-value" style="color:var(--text-success)">${Utils.formatCurrency(debtSummary.totalPaid - debtSummary.totalInterestPaid)}</span>
-            <span style="font-size: 10px; color: var(--text-tertiary); opacity: 0.6;">/ ${Utils.formatCurrency(debtSummary.totalOriginal)}</span>
+            <span style="font-size: 12px; color: var(--text-tertiary); opacity: 0.6;">/ ${Utils.formatCurrency(debtSummary.totalOriginal)}</span>
           </div>
-          <div style="margin-top: 8px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+          <div style="margin-top: 8px; height: 5px; background: rgba(255,255,255,0.05); border-radius: 2.5px; overflow: hidden;">
             <div style="width: ${Math.min(100, ((debtSummary.totalPaid - debtSummary.totalInterestPaid) / debtSummary.totalOriginal * 100)) || 0}%; height: 100%; background: var(--text-success); box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);"></div>
           </div>
-          <div style="margin-top: 2px; font-size: 9px; color: var(--text-success); font-weight: 600; text-align: right; display: flex; justify-content: space-between; align-items: center;">
+          <div style="margin-top: 4px; font-size: 10.5px; color: var(--text-success); font-weight: 600; text-align: right; display: flex; justify-content: space-between; align-items: center;">
             <span style="color: var(--text-tertiary); font-weight: normal; opacity: 0.6;">จ่ายรวม: ${Utils.formatCurrency(debtSummary.totalPaid)}</span>
             <span>${(((debtSummary.totalPaid - debtSummary.totalInterestPaid) / debtSummary.totalOriginal) * 100).toFixed(1)}%</span>
           </div>

@@ -1074,8 +1074,8 @@ details[open].txn-list-details summary svg {
 /* === Common Metrics Elements === */
 .metric-card {
     background: rgba(255, 255, 255, 0.03);
-    padding: var(--space-md);
-    border-radius: 12px;
+    padding: 18px 20px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.03);
     transition: transform 0.2s ease;
 }
@@ -1086,15 +1086,15 @@ details[open].txn-list-details summary svg {
 }
 
 .metric-card .m-label {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--text-tertiary);
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     display: block;
 }
 
 .metric-card .m-value {
-    font-size: var(--font-size-lg);
+    font-size: 20px;
     font-weight: 700;
     font-family: var(--font-mono);
 }
@@ -1179,7 +1179,7 @@ details[open].txn-list-details summary svg {
     }
 
     .metric-card {
-        padding: var(--space-sm);
+        padding: 14px 16px;
         overflow: hidden;
     }
 }
