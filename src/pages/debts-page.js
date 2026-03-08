@@ -4,7 +4,7 @@ import { InterestEngine } from '../modules/interest.js';
 import { Utils } from '../modules/utils.js';
 
 let amountsVisible = true;
-let activeSortOrder = 'avalanche'; // 'avalanche' | 'snowball' | null
+let activeSortOrder = 'avalanche'; // 'avalanche' | 'snowball' | 'smart' | null
 let activeGrouping = null; // 'payoffable' | 'installment' | null
 
 export async function renderDebtsPage(container) {
@@ -78,8 +78,9 @@ export async function renderDebtsPage(container) {
     <div class="debt-sort-bar">
       <div class="debt-sort-controls">
         <span class="label">เรียงตาม:</span>
-        <button class="sort-btn ${activeSortOrder === 'avalanche' ? 'active' : ''}" data-sort="avalanche">ดอกเบี้ยสูง (Avalanche)</button>
-        <button class="sort-btn ${activeSortOrder === 'snowball' ? 'active' : ''}" data-sort="snowball">ยอดน้อย (Snowball)</button>
+        <button class="sort-btn ${activeSortOrder === 'avalanche' ? 'active' : ''}" data-sort="avalanche">ดอกเบี้ยสูง</button>
+        <button class="sort-btn ${activeSortOrder === 'snowball' ? 'active' : ''}" data-sort="snowball">ยอดน้อย</button>
+        <button class="sort-btn ${activeSortOrder === 'smart' ? 'active' : ''}" data-sort="smart">⚡ คุ้มค่าสุด</button>
         <button class="sort-btn ${activeGrouping === 'payoffable' ? 'active' : ''}" data-sort="payoffable">โปะได้</button>
         <button class="sort-btn ${activeGrouping === 'installment' ? 'active' : ''}" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
       </div>
@@ -348,8 +349,8 @@ function setupDebtEvents() {
     btn.addEventListener('click', async (e) => {
       const sortValue = e.currentTarget.dataset.sort;
 
-      // Group A: Sort order (avalanche / snowball) - toggle or switch
-      if (['avalanche', 'snowball'].includes(sortValue)) {
+      // Group A: Sort order (avalanche / snowball / smart) - toggle or switch
+      if (['avalanche', 'snowball', 'smart'].includes(sortValue)) {
         activeSortOrder = (activeSortOrder === sortValue) ? null : sortValue;
       } 
       // Group B: Grouping (payoffable / installment) - toggle or switch
@@ -1017,7 +1018,17 @@ async function refreshDebts() {
     if (a.status === 'paid' && b.status !== 'paid') return 1;
     if (a.status !== 'paid' && b.status === 'paid') return -1;
 
-    if (isSnowball) {
+    const isSmart = activeSortOrder === 'smart';
+    if (isSmart) {
+      // Score = annualRate / currentBalance  →  higher = pay this first
+      const balA = parseFloat(a.currentBalance || 1);
+      const balB = parseFloat(b.currentBalance || 1);
+      const rateA = parseFloat(a.annualRate || 0);
+      const rateB = parseFloat(b.annualRate || 0);
+      const scoreA = rateA / balA;
+      const scoreB = rateB / balB;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+    } else if (isSnowball) {
       const balA = parseFloat(a.currentBalance || 0);
       const balB = parseFloat(b.currentBalance || 0);
       if (balA !== balB) return balA - balB;
