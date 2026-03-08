@@ -9,30 +9,12 @@ export async function renderDashboard(container) {
   const debtSummary = await DebtModule.getDebtSummary();
 
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: var(--space-xl); display: flex; justify-content: space-between; align-items: center; width: 100%;">
-      <div>
+    <div class="page-header" style="margin-bottom: var(--space-xl); display: flex; justify-content: center; align-items: center; width: 100%; text-align: center;">
+      <div style="width: 100%;">
         <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0; font-weight: 500;">
           สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
         </p>
       </div>
-      <button id="dashAddTxnBtn" style="
-        padding: 5px 14px; 
-        font-size: 11.5px; 
-        font-weight: 600; 
-        background: rgba(74, 222, 128, 0.1); 
-        color: #4ade80; 
-        border: 1px solid rgba(74, 222, 128, 0.4); 
-        border-radius: 6px; 
-        cursor: pointer; 
-        transition: all 0.2s; 
-        box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); 
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      " onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        เพิ่มรายการ
-      </button>
     </div>
 
     <!-- สรุปตัวเลข (Redesigned) -->
@@ -42,9 +24,31 @@ export async function renderDashboard(container) {
         <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}">
           ${Utils.formatCurrency(summary.balance)}
         </div>
-        <div class="sub-label">
-           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-           สภาพคล่องเดือนนี้
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px;">
+          <div class="sub-label">
+             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+             สภาพคล่องเดือนนี้
+          </div>
+          <button id="dashAddTxnBtn" style="
+            padding: 5px 14px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            background: rgba(74, 222, 128, 0.1); 
+            color: #4ade80; 
+            border: 1px solid rgba(74, 222, 128, 0.4); 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); 
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+          " onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            เพิ่มรายการ
+          </button>
         </div>
       </div>
       

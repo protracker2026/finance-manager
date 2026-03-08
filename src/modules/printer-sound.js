@@ -93,25 +93,7 @@ export const PrinterSound = {
 
     stopPrint() {
         this.isPrinting = false;
-        if (this._loopSource && this._printGain) {
-            const now = this.ctx.currentTime;
-            // Quick 100ms fade-out then hard stop
-            this._printGain.gain.cancelScheduledValues(now);
-            this._printGain.gain.setValueAtTime(this._printGain.gain.value, now);
-            this._printGain.gain.linearRampToValueAtTime(0, now + 0.1);
-
-            const src = this._loopSource;
-            const gain = this._printGain;
-            // Schedule cleanup after fade completes
-            setTimeout(() => {
-                try { src.stop(); src.disconnect(); } catch (e) {}
-                try { gain.disconnect(); } catch (e) {}
-            }, 150);
-
-            // Nullify immediately so no other code can double-stop
-            this._loopSource = null;
-            this._printGain = null;
-        }
+        this._killLoop();
     },
 
     async playTear() {
