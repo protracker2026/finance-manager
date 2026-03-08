@@ -1122,13 +1122,19 @@ async function refreshDebts() {
     if (d.status === 'paid') {
       groups.paid.items.push(d);
       groups.paid.sum += parseFloat(d.principal);
-    } else if (isPayoffable && isPayoff && filter === 'all') {
-      groups.payoff.items.push(d);
-      groups.payoff.sum += parseFloat(d.currentBalance);
-    } else if (isInstallment && isInst && filter === 'all') {
-      groups.installment.items.push(d);
-      groups.installment.sum += parseFloat(d.currentBalance);
-    } else if (isPrioritySort && filter === 'all' && !isPayoffable && !isInstallment) {
+    } else if (isPayoffable && filter === 'all') {
+      // If "Payoffable" grouping is on, ONLY show payoffable items. Skip others.
+      if (isPayoff) {
+        groups.payoff.items.push(d);
+        groups.payoff.sum += parseFloat(d.currentBalance);
+      }
+    } else if (isInstallment && filter === 'all') {
+      // If "Installment" grouping is on, ONLY show installment items. Skip others.
+      if (isInst) {
+        groups.installment.items.push(d);
+        groups.installment.sum += parseFloat(d.currentBalance);
+      }
+    } else if (isPrioritySort && filter === 'all') {
       // Global priority group (only if no specific grouping is active)
       groups.priority.items.push(d);
       groups.priority.sum += parseFloat(d.currentBalance);
