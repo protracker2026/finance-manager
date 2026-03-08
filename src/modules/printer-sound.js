@@ -10,6 +10,7 @@ export const PrinterSound = {
     _currentSource: null,
     _loopSource: null,
     _playId: 0,
+    _tearId: 0,
 
     async init() {
         if (this.ctx) return;
@@ -85,9 +86,10 @@ export const PrinterSound = {
     },
 
     async playTear() {
+        const currentTearId = ++this._tearId;
         await this.init();
         if (this.ctx.state === 'suspended') await this.ctx.resume();
-        if (!this.audioBuffer) return;
+        if (!this.audioBuffer || this._tearId !== currentTearId) return;
 
         // Play the "cut/tear" portion of the MP3
         const tearSource = this.ctx.createBufferSource();
