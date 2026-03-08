@@ -78,6 +78,7 @@ export async function renderDebtsPage(container) {
         <span class="label">เรียงตาม:</span>
         <button class="sort-btn active" data-sort="avalanche">ดอกเบี้ยสูง (Avalanche)</button>
         <button class="sort-btn" data-sort="snowball">ยอดน้อย (Snowball)</button>
+        <button class="sort-btn" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
         <button class="sort-btn" data-sort="name">ชื่อ</button>
       </div>
       <div style="margin-left:auto;" class="debt-sort-controls">
@@ -991,6 +992,12 @@ async function refreshDebts() {
 
     if (sort === 'avalanche') return b.annualRate - a.annualRate; // High interest first
     if (sort === 'snowball') return a.currentBalance - b.currentBalance; // Low balance first
+    if (sort === 'installment') {
+        const aIsInst = (a.interestType === 'fixed_rate' || parseFloat(a.annualRate) === 0) ? 1 : 0;
+        const bIsInst = (b.interestType === 'fixed_rate' || parseFloat(b.annualRate) === 0) ? 1 : 0;
+        if (aIsInst !== bIsInst) return bIsInst - aIsInst; // Installment first
+        return a.currentBalance - b.currentBalance; // Then by balance
+    }
     return a.name.localeCompare(b.name);
   });
 
@@ -1069,27 +1076,42 @@ async function refreshDebts() {
   // 3. Grouping
   const groups = {
     priority: { title: '🎯 ลำดับการชำระ (Priority)', items: [], sum: 0 },
+    installment: { title: '📦 สินเชื่อคงที่ / ผ่อน 0%', items: [], sum: 0 },
     credit_card: { title: '💳 บัตรเครดิต (หมุนเวียน)', items: [], sum: 0 },
     personal_loan: { title: '🏦 สินเชื่อ / ผ่อนชำระ', items: [], sum: 0 },
     paid: { title: '✅ ชำระหมดแล้ว', items: [], sum: 0 }
   };
 
   const isPrioritySort = (sort === 'avalanche' || sort === 'snowball');
+  const isInstallmentSort = (sort === 'installment');
 
   debts.forEach(d => {
+    const isInst = (d.interestType === 'fixed_rate' || parseFloat(d.annualRate) === 0);
+
     if (d.status === 'paid') {
       groups.paid.items.push(d);
-      groups.paid.sum += d.principal;
+      groups.paid.sum += parseFloat(d.principal);
+    } else if (isInstallmentSort && filter === 'all') {
+      if (isInst) {
+        groups.installment.items.push(d);
+        groups.installment.sum += parseFloat(d.currentBalance);
+      } else if (d.type === 'credit_card') {
+        groups.credit_card.items.push(d);
+        groups.credit_card.sum += parseFloat(d.currentBalance);
+      } else {
+        groups.personal_loan.items.push(d);
+        groups.personal_loan.sum += parseFloat(d.currentBalance);
+      }
     } else if (isPrioritySort && filter === 'all') {
       // Global priority group
       groups.priority.items.push(d);
-      groups.priority.sum += d.currentBalance;
+      groups.priority.sum += parseFloat(d.currentBalance);
     } else if (d.type === 'credit_card') {
       groups.credit_card.items.push(d);
-      groups.credit_card.sum += d.currentBalance;
+      groups.credit_card.sum += parseFloat(d.currentBalance);
     } else {
       groups.personal_loan.items.push(d); // Includes vehicle loans
-      groups.personal_loan.sum += d.currentBalance;
+      groups.personal_loan.sum += parseFloat(d.currentBalance);
     }
   });
 
@@ -1287,6 +1309,7 @@ async function refreshDebts() {
   };
 
   html += renderGroup('priority', groups.priority);
+  html += renderGroup('installment', groups.installment);
   html += renderGroup('credit_card', groups.credit_card);
   html += renderGroup('personal_loan', groups.personal_loan);
   html += renderGroup('paid', groups.paid, true); // Render paid as details
