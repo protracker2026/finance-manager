@@ -78,6 +78,7 @@ export async function renderDebtsPage(container) {
         <span class="label">เรียงตาม:</span>
         <button class="sort-btn active" data-sort="avalanche">ดอกเบี้ยสูง (Avalanche)</button>
         <button class="sort-btn" data-sort="snowball">ยอดน้อย (Snowball)</button>
+        <button class="sort-btn" data-sort="payoffable">โปะได้</button>
         <button class="sort-btn" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
       </div>
       <div style="margin-left:auto;" class="debt-sort-controls">
@@ -1000,6 +1001,12 @@ async function refreshDebts() {
 
     if (sort === 'avalanche') return b.annualRate - a.annualRate; // High interest first
     if (sort === 'snowball') return a.currentBalance - b.currentBalance; // Low balance first
+    if (sort === 'payoffable') {
+        const aIsPayoffable = (a.interestType !== 'fixed_rate' && parseFloat(a.annualRate) > 0) ? 1 : 0;
+        const bIsPayoffable = (b.interestType !== 'fixed_rate' && parseFloat(b.annualRate) > 0) ? 1 : 0;
+        if (aIsPayoffable !== bIsPayoffable) return bIsPayoffable - aIsPayoffable; // Payoffable first
+        return b.annualRate - a.annualRate; // Then by high interest
+    }
     if (sort === 'installment') {
         const aIsInst = (a.interestType === 'fixed_rate' || parseFloat(a.annualRate) === 0) ? 1 : 0;
         const bIsInst = (b.interestType === 'fixed_rate' || parseFloat(b.annualRate) === 0) ? 1 : 0;
@@ -1084,6 +1091,7 @@ async function refreshDebts() {
   // 3. Grouping
   const groups = {
     priority: { title: '🎯 ลำดับการชำระ (Priority)', items: [], sum: 0 },
+    payoff: { title: '🔥 โปะได้ (ลดต้นลดดอก)', items: [], sum: 0 },
     installment: { title: '📦 สินเชื่อคงที่ / ผ่อน 0%', items: [], sum: 0 },
     credit_card: { title: '💳 บัตรเครดิต (หมุนเวียน)', items: [], sum: 0 },
     personal_loan: { title: '🏦 สินเชื่อ / ผ่อนชำระ', items: [], sum: 0 },
@@ -1092,9 +1100,11 @@ async function refreshDebts() {
 
   const isPrioritySort = (sort === 'avalanche' || sort === 'snowball');
   const isInstallmentSort = (sort === 'installment');
+  const isPayoffableSort = (sort === 'payoffable');
 
   debts.forEach(d => {
     const isInst = (d.interestType === 'fixed_rate' || parseFloat(d.annualRate) === 0);
+    const isPayoffable = !isInst;
 
     if (d.status === 'paid') {
       groups.paid.items.push(d);
@@ -1103,6 +1113,17 @@ async function refreshDebts() {
       if (isInst) {
         groups.installment.items.push(d);
         groups.installment.sum += parseFloat(d.currentBalance);
+      } else if (d.type === 'credit_card') {
+        groups.credit_card.items.push(d);
+        groups.credit_card.sum += parseFloat(d.currentBalance);
+      } else {
+        groups.personal_loan.items.push(d);
+        groups.personal_loan.sum += parseFloat(d.currentBalance);
+      }
+    } else if (isPayoffableSort && filter === 'all') {
+      if (isPayoffable) {
+        groups.payoff.items.push(d);
+        groups.payoff.sum += parseFloat(d.currentBalance);
       } else if (d.type === 'credit_card') {
         groups.credit_card.items.push(d);
         groups.credit_card.sum += parseFloat(d.currentBalance);
@@ -1317,6 +1338,7 @@ async function refreshDebts() {
   };
 
   html += renderGroup('priority', groups.priority);
+  html += renderGroup('payoff', groups.payoff);
   html += renderGroup('installment', groups.installment);
   html += renderGroup('credit_card', groups.credit_card);
   html += renderGroup('personal_loan', groups.personal_loan);
