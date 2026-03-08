@@ -96,8 +96,8 @@
             linear-gradient(90deg, rgba(59, 130, 246, 0.03), rgba(0, 255, 0, 0.01), rgba(59, 130, 246, 0.03));
         background-size: 100% 4px, 4px 100%;
 
-        max-width: 400px;
         /* Slightly wider for better balance */
+        width: 100%;
         margin: 0 auto var(--space-lg);
         position: relative;
         overflow: hidden;
@@ -139,45 +139,57 @@
         z-index: 5;
     }
 
-        .data-table {
-            padding-top: 24px; /* Reset padding because buttons moved to header */
-            margin-top: 5px;
-        }
-        .data-table::after {
-            top: 31px;
-        }
-        .print-group-tablet {
-            display: flex !important;
-            margin-left: auto;
-            margin-right: 10px;
-        }
-        .print-group-mobile {
-            display: none !important;
-        }
+    .data-table {
+        padding-top: 24px;
+        /* Reset padding because buttons moved to header */
+        margin-top: 5px;
+    }
+
+    .data-table::after {
+        top: 31px;
+    }
+
+    .print-group-tablet {
+        display: flex !important;
+        margin-left: auto;
+        margin-right: 10px;
+    }
+
+    .print-group-mobile {
+        display: none !important;
+    }
 
     @media (max-width: 600px) {
         .print-group-tablet {
             display: flex !important;
             margin-left: 0;
             margin-right: 0;
-            width: 100%; /* Full width on mobile to stack or sit nicely */
+            width: 100%;
+            /* Full width on mobile to stack or sit nicely */
             justify-content: center;
             margin-bottom: 5px;
-            order: 3; /* Push below the title and add button if wrapping */
+            order: 3;
+            /* Push below the title and add button if wrapping */
         }
+
         .print-group-mobile {
             display: none !important;
         }
+
         .data-table {
-            padding-top: 24px; /* Same clean look as iPad */
+            padding-top: 24px;
+            /* Same clean look as iPad */
         }
+
         .data-table::before {
             content: "POS";
             margin-bottom: 10px;
         }
+
         .data-table::after {
             left: 55px;
-            top: 31px; /* Align with POS text */
+            top: 31px;
+            /* Align with POS text */
         }
     }
 
@@ -1095,30 +1107,66 @@ details[open].txn-list-details summary svg {
     .dashboard-summary-premium,
     .debt-summary-compact {
         flex-direction: column;
-        align-items: stretch;
+        align-items: center !important;
         gap: var(--space-lg);
-        padding: var(--space-lg);
+        padding: var(--space-xl) !important;
+        text-align: center;
     }
 
     .dashboard-summary-premium .summary-metrics {
         min-width: 0;
+        width: 100%;
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
     }
 
     .debt-summary-compact .summary-metrics {
-        min-width: 100%;
+        width: 100% !important;
+        max-width: 550px !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .debt-summary-compact .summary-metrics .metric-item {
+        justify-content: center !important;
+        gap: 40px !important;
+        /* Larger gap for better separation of label/value */
+        width: 100%;
+    }
+
+    .debt-summary-compact .summary-metrics .metric-item .metric-label {
+        flex: 1;
+        text-align: right;
+    }
+
+    .debt-summary-compact .summary-metrics .metric-item .metric-value {
+        flex: 1;
+        text-align: left;
     }
 
     .dashboard-summary-premium .summary-divider,
     .debt-summary-compact .summary-divider {
         width: 100%;
+        max-width: 350px;
         height: 1px;
         background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1), transparent);
     }
 
     .dashboard-summary-premium .summary-main .value-huge {
         font-size: 2.25rem;
+    }
+
+    .print-group-tablet {
+        display: flex !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        gap: 6px;
+    }
+
+    #addTransactionBtn {
+        margin-left: 8px;
     }
 
     /* Shrink metric card values on tablet to prevent wrapping */
@@ -1137,6 +1185,7 @@ details[open].txn-list-details summary svg {
 }
 
 @media (max-width: 600px) {
+
     .dashboard-summary-premium .summary-metrics,
     .debt-summary-compact .summary-metrics {
         grid-template-columns: 1fr;
@@ -1570,22 +1619,20 @@ button.ai-analyzing {
     inset: -1px;
     padding: 2px;
     border-radius: inherit;
-    background: linear-gradient(
-        135deg, 
-        #4285f4, 
-        #9b72cb, 
-        #d96570, 
-        #4facfe, 
-        #00f2fe, 
-        #4285f4
-    );
+    background: linear-gradient(135deg,
+            #4285f4,
+            #9b72cb,
+            #d96570,
+            #4facfe,
+            #00f2fe,
+            #4285f4);
     background-size: 400% 400%;
     animation: ai-gradient-flow 4s ease infinite;
-    -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
+    -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
-    mask: 
-        linear-gradient(#fff 0 0) content-box, 
+    mask:
+        linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -1599,9 +1646,17 @@ button.ai-analyzing {
 }
 
 @keyframes ai-gradient-flow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 @keyframes geminiGlow {
@@ -1726,9 +1781,10 @@ button.ai-analyzing {
     align-items: center;
     gap: 8px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
+    box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05); /* Top inner highlight for 3D feel */
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    /* Top inner highlight for 3D feel */
     cursor: pointer;
     font-family: var(--font-family);
     position: relative;
@@ -1738,7 +1794,7 @@ button.ai-analyzing {
 .btn-ai-submit:hover {
     border-color: rgba(74, 222, 128, 0.4);
     background: linear-gradient(145deg, #333336, #27272a);
-    box-shadow: 
+    box-shadow:
         0 6px 15px rgba(0, 0, 0, 0.5),
         0 0 10px rgba(74, 222, 128, 0.1);
     transform: translateY(-1px);
@@ -1751,7 +1807,8 @@ button.ai-analyzing {
 
 /* Subtle Shimmer Effect on icon */
 .btn-ai-submit svg {
-    color: #4ade80; /* Brighter icon for contrast */
+    color: #4ade80;
+    /* Brighter icon for contrast */
     filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.3));
     transition: all 0.3s;
 }
@@ -1773,9 +1830,11 @@ button.ai-analyzing {
     0% {
         box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
     }
+
     70% {
         box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
     }
+
     100% {
         box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
     }
@@ -1890,6 +1949,7 @@ button.ai-analyzing {
         opacity: 0;
         transform: scale(0.8) translateY(4px);
     }
+
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -1897,16 +1957,20 @@ button.ai-analyzing {
 }
 
 @keyframes chipPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3);
     }
+
     50% {
         box-shadow: 0 0 0 4px rgba(59, 130, 246, 0);
     }
 }
 
 /* === Modern Dark Modal Styling (Match Screenshot) === */
-.tabs, .add-method-tabs {
+.tabs,
+.add-method-tabs {
     display: flex;
     background: rgba(255, 255, 255, 0.05);
     padding: 6px;
@@ -1915,7 +1979,8 @@ button.ai-analyzing {
     gap: 6px;
 }
 
-.tab-btn, .method-tab-btn {
+.tab-btn,
+.method-tab-btn {
     flex: 1;
     padding: 12px;
     border: none;
@@ -1932,7 +1997,8 @@ button.ai-analyzing {
     gap: 8px;
 }
 
-.tab-btn.active, .method-tab-btn.active {
+.tab-btn.active,
+.method-tab-btn.active {
     background: rgba(0, 0, 0, 0.25);
     color: var(--text-primary);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -1983,7 +2049,8 @@ button.ai-analyzing {
 
 .magic-input-wrapper .form-input {
     flex: 1;
-    width: auto !important; /* Allow it to shrink/grow in flexbox */
+    width: auto !important;
+    /* Allow it to shrink/grow in flexbox */
 }
 
 /* AI Action Buttons - Glassmorphic AI Look */
@@ -2025,7 +2092,8 @@ button.ai-analyzing {
 }
 
 .btn-ai-check {
-    color: #4facfe !important; /* Tech Blue */
+    color: #4facfe !important;
+    /* Tech Blue */
     border-color: rgba(79, 172, 254, 0.3);
 }
 
@@ -2040,7 +2108,8 @@ button.ai-analyzing {
 }
 
 .btn-ai-plus {
-    color: #4ade80 !important; /* Green */
+    color: #4ade80 !important;
+    /* Green */
     border-color: rgba(74, 222, 128, 0.3);
 }
 
@@ -2050,7 +2119,8 @@ button.ai-analyzing {
 }
 
 /* Form Inputs */
-.form-input, .form-select {
+.form-input,
+.form-select {
     background: rgba(0, 0, 0, 0.2) !important;
     border: 1px solid rgba(255, 255, 255, 0.05) !important;
     padding: 12px 15px !important;
@@ -2060,7 +2130,8 @@ button.ai-analyzing {
     width: 100%;
 }
 
-.form-input:focus, .form-select:focus {
+.form-input:focus,
+.form-select:focus {
     border-color: var(--accent-primary) !important;
     background: rgba(0, 0, 0, 0.3) !important;
     outline: none;
@@ -2099,12 +2170,25 @@ button.ai-analyzing {
 }
 
 /* Section Transitions */
-.entry-section { display: none; }
-.entry-section.active { display: block; animation: floatUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.entry-section {
+    display: none;
+}
+
+.entry-section.active {
+    display: block;
+    animation: floatUpModal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 @keyframes floatUpModal {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Modal Footer Buttons */
@@ -2123,6 +2207,3 @@ button.ai-analyzing {
     border-radius: 12px;
     justify-content: center;
 }
-
-
-
