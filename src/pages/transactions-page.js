@@ -547,6 +547,8 @@ function setupTransactionEvents() {
       await updateCategoryOptions(parsed.type);
     }
     if (parsed.amount) document.getElementById('txnAmount').value = parsed.amount;
+    else document.getElementById('txnAmount').value = ''; // Clear if no amount
+
     if (parsed.quantity) document.getElementById('txnQuantity').value = parsed.quantity;
     else document.getElementById('txnQuantity').value = 1;
 
@@ -561,6 +563,7 @@ function setupTransactionEvents() {
       }
     }
     if (parsed.note) document.getElementById('txnNote').value = parsed.note;
+    else document.getElementById('txnNote').value = ''; // Clear if no note
 
     if (parsed.category) {
       const catSelect = document.getElementById('txnCategory');
@@ -595,7 +598,11 @@ function setupTransactionEvents() {
       if (matched) {
         catSelect.value = matched.value;
         console.log('[AI] Category matched:', matched.value);
+      } else {
+        catSelect.value = ''; // No match, reset category
       }
+    } else {
+      document.getElementById('txnCategory').value = ''; // Clear if no category
     }
   }
 
@@ -605,11 +612,14 @@ function setupTransactionEvents() {
     window._isVoiceProcessing = true;
     setSimulatedVoiceState('analyzing');
     try {
+      console.log('[AI] Processing text:', text);
       const parsed = await AIModule.parseTransaction(text);
+      console.log('[AI] Result:', parsed);
+
       // Show Receipt Modal
       const overlay = document.getElementById('aiReceiptOverlay');
       if (overlay) {
-        document.getElementById('aiReceiptNote').textContent = parsed.note || '-';
+        document.getElementById('aiReceiptNote').textContent = parsed.note || 'ไม่มีชื่อรายการ';
         document.getElementById('aiReceiptAmount').textContent = Utils.formatNumber(parsed.amount);
         document.getElementById('aiReceiptCategory').textContent = parsed.category || 'อื่นๆ';
 
@@ -626,6 +636,7 @@ function setupTransactionEvents() {
           qtyRow.style.display = 'none';
         }
       }
+      
       if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
 
       // Fill the form FIRST, then show receipt
@@ -633,15 +644,17 @@ function setupTransactionEvents() {
 
       if (overlay) {
         overlay.classList.add('active');
+        console.log('[AI] Receipt Overlay showing...');
 
         // Auto-save logic
         if (window._aiReceiptTimer) clearTimeout(window._aiReceiptTimer);
         window._aiReceiptTimer = setTimeout(() => {
           const receiptConfirmBtn = document.getElementById('receiptConfirmBtn');
           if (receiptConfirmBtn && overlay.classList.contains('active')) {
+            console.log('[AI] Auto-saving receipt...');
             receiptConfirmBtn.click();
           }
-        }, 2000);
+        }, 3000); // Increased to 3s to allow user to see it
       }
     } catch (error) {
       console.error('AI Processing Error:', error);
@@ -677,12 +690,12 @@ function setupTransactionEvents() {
   function showBatchSummaryReceipt(results) {
     const now = new Date();
     const printTime = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'numeric', day: 'numeric' }) + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    
+
     // Calculate totals
     const totalIncome = results.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
     const totalExpense = results.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
     const netTotal = totalIncome - totalExpense;
-    
+
     let summaryEl = document.getElementById('aiBatchSummaryOverlay');
     if (!summaryEl) {
       summaryEl = document.createElement('div');
@@ -701,36 +714,36 @@ function setupTransactionEvents() {
         <div style="font-size: 8px; opacity: 0.7; margin-top: 0px; font-weight: 400;">${printTime}</div>
       </div>
       
-      <div style="border-top: 1px solid #333; margin: 4px 0;"></div>
+      <div style="border-top: 1px solid #444; margin: 4px 0;"></div>
 
       <div class="ai-receipt-body" style="max-height: 35vh; overflow-y: auto; padding-right: 0px; margin-bottom: 4px;">
         ${results.map((r, i) => `
-          <div style="margin-bottom: 4px;">
+          <div style="margin-bottom: 2px;">
             <div class="ai-receipt-row" style="margin-bottom: 0; line-height: 1.1;">
-              <span class="ai-receipt-label" style="font-weight:700; color:#111; display: flex; align-items: baseline; gap: 3px; font-size: 0.8rem;">
+              <span class="ai-receipt-label" style="font-weight:700; color:#333; display: flex; align-items: baseline; gap: 3px; font-size: 0.8rem;">
                  <span style="font-weight: 900;">${r.quantity}</span>
                  <span style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${r.note}</span>
               </span>
-              <span class="ai-receipt-value" style="font-weight:700; color:#111; font-size: 0.8rem;">${r.type === 'income' ? '' : '-'}${Utils.formatNumber(r.amount)}</span>
+              <span class="ai-receipt-value" style="font-weight:700; color:#333; font-size: 0.8rem;">${r.type === 'income' ? '' : '-'}${Utils.formatNumber(r.amount)}</span>
             </div>
             <div style="font-size: 0.6rem; opacity: 0.5; padding-left: 10px; margin-top: -1px; display: flex; justify-content: space-between;">
               <span>${r.category}</span>
               <span>${r.timeStr}</span>
             </div>
-            <div style="border-bottom: 1px dotted rgba(0,0,0,0.08); margin: 2px 0 2px 10px;"></div>
+            <div style="border-bottom: 1px dotted rgba(0,0,0,0.08); margin: 1px 0 1px 10px;"></div>
           </div>
         `).join('')}
       </div>
       
-      <div style="border-top: 1px solid #333; padding-top: 4px; margin-top: 2px;">
+      <div style="border-top: 1px solid #444; padding-top: 4px; margin-top: 2px;">
         <div class="ai-receipt-row" style="font-size: 0.75rem; margin-bottom: 1px;">
           <span class="ai-receipt-label">รายรับ/รายจ่าย</span>
-          <span class="ai-receipt-value" style="color: #111;">+${Utils.formatNumber(totalIncome)} / -${Utils.formatNumber(totalExpense)}</span>
+          <span class="ai-receipt-value" style="color: #444;">+${Utils.formatNumber(totalIncome)} / -${Utils.formatNumber(totalExpense)}</span>
         </div>
         
-        <div class="ai-receipt-row" style="font-weight: 900; font-size: 0.95rem; margin-top: 2px; border-top: 1px dotted #333; padding-top: 4px;">
-          <span class="ai-receipt-label" style="color:#111;">ยอดสุทธิ</span>
-          <span class="ai-receipt-value" style="color: #111;">${netTotal >= 0 ? '' : '-'}${Utils.formatNumber(Math.abs(netTotal))} ฿</span>
+        <div class="ai-receipt-row" style="font-weight: 900; font-size: 0.95rem; margin-top: 2px; border-top: 1px dotted #444; padding-top: 4px;">
+          <span class="ai-receipt-label" style="color:#222;">ยอดสุทธิ</span>
+          <span class="ai-receipt-value" style="color: #222;">${netTotal >= 0 ? '' : '-'}${Utils.formatNumber(Math.abs(netTotal))} ฿</span>
         </div>
       </div>
 
@@ -756,7 +769,7 @@ function setupTransactionEvents() {
 
     const handleConfirm = async () => {
       if (window._aiBatchSummaryTimer) clearTimeout(window._aiBatchSummaryTimer);
-      
+
       const confirmBtn = document.getElementById('aiBatchConfirmBtn');
       if (confirmBtn) {
         confirmBtn.disabled = true;
@@ -766,7 +779,7 @@ function setupTransactionEvents() {
       await saveBatch(results);
       summaryEl.classList.remove('active');
       closeTxnModal(); // Close the entry modal too
-      
+
       // Auto-scroll to the transactions list (POS)
       const listEl = document.getElementById('txnListDetails');
       if (listEl) listEl.scrollIntoView({ behavior: 'smooth' });
@@ -777,7 +790,7 @@ function setupTransactionEvents() {
       summaryEl.classList.remove('active');
       await saveBatch(results);
       closeTxnModal();
-      
+
       const listEl = document.getElementById('txnListDetails');
       if (listEl) listEl.scrollIntoView({ behavior: 'smooth' });
 
@@ -830,7 +843,7 @@ function setupTransactionEvents() {
 
       try {
         const parsed = await AIModule.parseTransaction(text);
-        
+
         // Collect for summary receipt WITHOUT saving yet
         const now = new Date();
         batchResults.push({
@@ -862,7 +875,7 @@ function setupTransactionEvents() {
 
   // AI Input Composition State (Scoped)
   let isComposing = false;
-  
+
   if (aiVoiceInput) {
     aiVoiceInput.addEventListener('compositionstart', () => { isComposing = true; });
     aiVoiceInput.addEventListener('compositionend', () => { isComposing = false; });
@@ -936,11 +949,11 @@ function setupTransactionEvents() {
       try {
         // If we are in continuous mode, trigger Save & Next, else Save & Close
         if (window._isContinuousAi) {
-          await saveTxn(false); 
+          await saveTxn(false);
         } else {
           await saveTxn(true);
         }
-        
+
         const overlay = document.getElementById('aiReceiptOverlay');
         if (overlay) overlay.classList.remove('active');
       } catch (error) {
@@ -1269,12 +1282,12 @@ function setupTransactionEvents() {
     const qtyInput = document.getElementById('txnQuantity');
     const priceInput = document.getElementById('txnUnitPrice');
     const amountInput = document.getElementById('txnAmount');
-    
+
     if (!qtyInput || !priceInput || !amountInput) return;
 
     const qty = parseFloat(qtyInput.value) || 0;
     const price = parseFloat(priceInput.value) || 0;
-    
+
     if (qty > 0 && price > 0) {
       amountInput.value = (qty * price).toFixed(2);
     }
@@ -1518,7 +1531,7 @@ async function openTxnModal(txn = null) {
     // New entry: show both, default to Smart
     if (smartTab) smartTab.style.display = 'flex';
     if (methodTabs) methodTabs.style.display = 'flex';
-    
+
     // Default to Smart Add
     document.querySelectorAll('.method-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.entry-section').forEach(s => s.classList.remove('active'));
@@ -1623,7 +1636,7 @@ function _renderTxnItem(t, type) {
       </div>
       <div style="flex:1; min-width:0;">
         <div style="font-size:14px; font-weight:600; color: var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display: flex; align-items: center; gap: 6px;">
-          ${t.note || '-'}
+          ${t.note || 'ไม่มีชื่อรายการ'}
           ${(t.quantity && t.quantity > 1) ? `<span style="font-size:11px; font-weight:400; background: rgba(255,255,255,0.05); padding: 1px 6px; border-radius: 4px; color: var(--text-tertiary);">x${t.quantity}</span>` : ''}
         </div>
         <div style="font-size:11px; color:var(--text-tertiary); margin-top:2px; display: flex; align-items: center; gap: 4px;">
@@ -2030,13 +2043,13 @@ window.showPrintReceiptModal = function (options = {}) {
     const catArr = Object.keys(catsInfo).map(k => ({ category: k, ...catsInfo[k] })).sort((a, b) => b.amount - a.amount);
 
     itemsHtml = catArr.map(c => `
-      <div style="margin-bottom:12px; font-size:12px;">
+      <div style="margin-bottom:5px; font-size:12px;">
         <div style="display:flex; align-items:baseline; gap:6px;">
-          <span style="font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
+          <span style="font-weight:600; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
             [กลุ่ม] ${c.category}
           </span>
           <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:4px; opacity:0.6;"></div>
-          <span style="font-weight:800; white-space:nowrap; color:#111; font-family:'Courier New', monospace;">
+          <span style="font-weight:800; white-space:nowrap; color:#333; font-family:'Courier New', monospace;">
             ${c.type === 'income' ? '+' : '-'}${Utils.formatCurrency(c.amount)}
           </span>
         </div>
@@ -2059,17 +2072,17 @@ window.showPrintReceiptModal = function (options = {}) {
       }
 
       return `
-      <div style="margin-bottom:12px; font-size:12px;">
+      <div style="margin-bottom:5px; font-size:12px;">
         <div style="display:flex; align-items:baseline; gap:6px;">
-          <span style="font-weight:600; color:#111; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
+          <span style="font-weight:600; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px;">
             ${qtyPrefix}${displayName}${qtyInfo}
           </span>
-          <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:4px; opacity:0.6;"></div>
-          <span style="font-weight:800; white-space:nowrap; color:#111; font-family:'Courier New', monospace;">
+          <div style="flex:1; border-bottom:1px dotted #aaa; margin-bottom:2px; opacity:0.6;"></div>
+          <span style="font-weight:800; white-space:nowrap; color:#333; font-family:'Courier New', monospace;">
             ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
           </span>
         </div>
-        <div style="font-size:10px; color:#888; margin-top:2px; font-family:monospace;">
+        <div style="font-size:10px; color:#888; margin-top:0px; font-family:monospace;">
           ${(() => {
           const d = new Date(t.date);
           const timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -2269,35 +2282,35 @@ window.showPrintReceiptModal = function (options = {}) {
       <div class="receipt-wrapper">
         <div class="receipt-paper" id="receiptPaper">
           <div class="receipt-inner">
-            <div style="text-align:center;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:14px;">
-              <div style="font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:4px;">💳 FINANCE MGR</div>
-              <div style="font-size:10px;color:#555;line-height:1.7;">
+            <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:10px;">
+              <div style="font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:4px; color:#222;">💳 FINANCE MGR</div>
+              <div style="font-size:10px;color:#555;line-height:1.3;">
                 ใบสรุปรายรับ-รายจ่าย<br>
                 ${periodLabel}<br>
                 พิมพ์: ${new Date().toLocaleString('th-TH')}
               </div>
             </div>
 
-            <div style="margin-bottom:14px;">
+            <div style="margin-bottom:8px;">
               ${txns.length > 0 ? itemsHtml : '<div style="text-align:center;color:#999;font-size:12px;padding:12px;">ไม่มีรายการ</div>'}
             </div>
 
-            <div style="border-top:2px solid #111;padding-top:10px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;">
+            <div style="border-top:2px solid #333;padding-top:6px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0;">
                 <span>รายรับรวม</span>
-                <span style="color:#000;font-weight:700;">+${Utils.formatCurrency(income)}</span>
+                <span style="color:#333;font-weight:700;">+${Utils.formatCurrency(income)}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0;">
                 <span>รายจ่ายรวม</span>
-                <span style="color:#000;font-weight:700;">-${Utils.formatCurrency(expense)}</span>
+                <span style="color:#333;font-weight:700;">-${Utils.formatCurrency(expense)}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;">
+              <div style="display:flex;justify-content:space-between;border-top:1px dashed #ccc;margin-top:4px;padding-top:6px;">
                 <span style="font-weight:900;font-size:14px;">ยอดสุทธิ</span>
-                <span style="font-weight:900;font-size:16px;color:#000;">${balance >= 0 ? '+' : ''}${Utils.formatCurrency(balance)}</span>
+                <span style="font-weight:900;font-size:16px;color:#333;">${balance >= 0 ? '+' : ''}${Utils.formatCurrency(balance)}</span>
               </div>
             </div>
 
-            <div style="text-align:center;margin-top:18px;font-size:10px;color:#999;border-top:1px dashed #ccc;padding-top:12px;line-height:1.8;">
+            <div style="text-align:center;margin-top:14px;font-size:10px;color:#999;border-top:1px dashed #ccc;padding-top:10px;line-height:1.4;">
               *** ขอบคุณที่ใช้บริการ ***<br>
               Finance Manager · ${new Date().getFullYear()}
             </div>
@@ -2307,18 +2320,20 @@ window.showPrintReceiptModal = function (options = {}) {
       </div>
 
       <div style="display:flex;gap:12px;margin-top:80px;position:relative;z-index:10;flex-wrap:wrap;justify-content:center;">
+        <button id="pausePrintBtn" style="display:none;background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">⏸ พักการพิมพ์</button>
         <button id="closePrintBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;">✕ ปิด</button>
-        <button id="savePrintBtn" style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid #3b82f6;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📄 บันทึก PDF</button>
-        <button id="exportImageBtn" style="background:#3b82f6;color:#fff;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📸 บันทึกรูปภาพ</button>
+        <button id="savePrintBtn" style="${skipAnimation ? '' : 'display:none;'}background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid #3b82f6;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📄 บันทึก PDF</button>
+        <button id="exportImageBtn" style="${skipAnimation ? '' : 'display:none;'}background:#3b82f6;color:#fff;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📸 บันทึกรูปภาพ</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(overlay);
 
-  requestAnimationFrame(() => {
+  const startModalSequence = () => {
+    requestAnimationFrame(() => {
     overlay.classList.add('visible');
-    
+
     // Auto-scroll overlay to show content
     if (skipAnimation) {
       overlay.scrollTop = 100;
@@ -2332,21 +2347,21 @@ window.showPrintReceiptModal = function (options = {}) {
         paper.style.transition = 'none';
         paper.style.transform = 'translateY(40px)';
         paper.classList.add('showcase');
-        
+
         const printer = document.querySelector('.printer-body');
         if (printer) {
-           printer.style.display = 'none';
+          printer.style.display = 'none';
         }
-        
+
         const wrapper = paper.parentElement;
         if (wrapper) {
           wrapper.style.overflow = 'visible';
           wrapper.style.marginTop = '20px'; // Add some space since printer is gone
         }
-        
+
         const light = document.getElementById('printerLight');
         if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
-        
+
         overlay.scrollTo({ top: 100, behavior: 'instant' });
         return;
       }
@@ -2357,6 +2372,29 @@ window.showPrintReceiptModal = function (options = {}) {
       let timeUntilNextState = 0;
       let lastTime = null;
       let finished = false;
+      let isPaused = false;
+      window._isPrintCancelled = false;
+      let soundStarted = false;
+
+      const pauseBtn = document.getElementById('pausePrintBtn');
+      if (pauseBtn && !skipAnimation) {
+         pauseBtn.style.display = 'block';
+         pauseBtn.addEventListener('click', () => {
+             isPaused = !isPaused;
+             if (isPaused) {
+                 pauseBtn.innerHTML = '▶ พิมพ์ต่อ';
+                 PrinterSound.stopPrint();
+                 const light = document.getElementById('printerLight');
+                 if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; }
+             } else {
+                 pauseBtn.innerHTML = '⏸ พักการพิมพ์';
+                 lastTime = window.performance.now(); // reset timer
+                 PrinterSound.playPrint();
+                 const light = document.getElementById('printerLight');
+                 if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+             }
+         });
+      }
 
       paper.style.transition = 'none';
       paper.style.transform = 'translateY(-100%)';
@@ -2367,13 +2405,21 @@ window.showPrintReceiptModal = function (options = {}) {
       const MIN_STEP = 0.5;
 
       function printTick(timestamp) {
-        if (finished) return; // Guard: don't re-enter after completion
+        if (finished || window._isPrintCancelled) return; 
 
         if (!lastTime) lastTime = timestamp;
         const delta = timestamp - lastTime;
         lastTime = timestamp;
 
-        if (progress === 0 && timestamp > 0) PrinterSound.playPrint();
+        if (isPaused) {
+            requestAnimationFrame(printTick);
+            return;
+        }
+
+        if (!soundStarted && timestamp > 0) {
+            soundStarted = true;
+            PrinterSound.playPrint();
+        }
 
         if (progress >= 100) {
           finished = true; // Mark as done so this block only runs once
@@ -2386,8 +2432,14 @@ window.showPrintReceiptModal = function (options = {}) {
           if (sb) Array.from(sb.children).forEach(s => { s.style.animation = 'none'; s.style.height = '3px'; });
           if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; light.style.animation = 'none'; }
 
+          // Show export actions
+          if (pauseBtn) pauseBtn.style.display = 'none';
+          document.getElementById('savePrintBtn').style.display = '';
+          document.getElementById('exportImageBtn').style.display = '';
+
           // Trigger "Tear and Showcase"
-          setTimeout(() => {
+          window._pendingTearTimeout = setTimeout(() => {
+            if (window._isPrintCancelled) return; // Prevent tear sound if cancelled
             PrinterSound.playTear();
             if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
             paper.style.transition = 'none';
@@ -2401,7 +2453,8 @@ window.showPrintReceiptModal = function (options = {}) {
             const wrapper = paper.parentElement;
             if (wrapper) wrapper.style.overflow = 'visible';
 
-            setTimeout(() => {
+            window._pendingShowcaseTimeout = setTimeout(() => {
+              if (window._isPrintCancelled) return;
               if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
               paper.classList.add('showcase');
 
@@ -2468,8 +2521,25 @@ window.showPrintReceiptModal = function (options = {}) {
       requestAnimationFrame(printTick);
     }, 300);
   });
+  };
+
+  if (!skipAnimation) {
+    PrinterSound.init().then(startModalSequence).catch(startModalSequence);
+  } else {
+    startModalSequence();
+  }
 
   const closeOverlay = () => {
+    // Globally cancel animation loop and sound
+    const pauseBtn = document.getElementById('pausePrintBtn');
+    if (pauseBtn) pauseBtn.click();
+    window._isPrintCancelled = true;
+    PrinterSound.stopPrint();
+    
+    // Clear callbacks to avoid ghost tear sounds
+    if (window._pendingTearTimeout) clearTimeout(window._pendingTearTimeout);
+    if (window._pendingShowcaseTimeout) clearTimeout(window._pendingShowcaseTimeout);
+
     overlay.classList.remove('visible');
     setTimeout(() => overlay.remove(), 300);
   };
@@ -2582,11 +2652,11 @@ async function saveTxn(closeModal = true) {
   const saveNextBtn = document.getElementById('txnSaveNextBtn');
   const setBtnsLoading = (isLoading) => {
     [saveBtn, saveNextBtn].forEach(btn => {
-       if (btn) {
-         btn.disabled = isLoading;
-         if (isLoading) btn.classList.add('btn-loading');
-         else btn.classList.remove('btn-loading');
-       }
+      if (btn) {
+        btn.disabled = isLoading;
+        if (isLoading) btn.classList.add('btn-loading');
+        else btn.classList.remove('btn-loading');
+      }
     });
   };
 

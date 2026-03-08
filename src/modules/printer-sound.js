@@ -9,6 +9,7 @@ export const PrinterSound = {
     isPrinting: false,
     _currentSource: null,
     _loopSource: null,
+    _playId: 0,
 
     async init() {
         if (this.ctx) return;
@@ -37,9 +38,13 @@ export const PrinterSound = {
     },
 
     async playPrint() {
+        const currentPlayId = ++this._playId;
         await this.init();
         if (this.ctx.state === 'suspended') await this.ctx.resume();
-        if (this.isPrinting || !this.audioBuffer) return;
+        
+        // Prevent race condition: if stopPrint was called (or another playRequested) while initializing, abort this play
+        if (this._playId !== currentPlayId || this.isPrinting || !this.audioBuffer) return;
+        
         this.isPrinting = true;
 
         // Based on new file "receipt-printer-02.mp3"
@@ -63,6 +68,7 @@ export const PrinterSound = {
     },
 
     stopPrint() {
+        this._playId++; // Invalidate any pending play requests
         this.isPrinting = false;
         if (this._loopSource) {
             const now = this.ctx.currentTime;

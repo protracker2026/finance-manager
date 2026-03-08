@@ -1368,7 +1368,7 @@ details[open] .toggle-icon {
     padding: 12px 14px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
     font-family: 'Space Mono', 'Courier New', monospace;
-    color: #333;
+    color: #444;
     border-radius: 4px;
     position: relative;
 }
@@ -1376,27 +1376,27 @@ details[open] .toggle-icon {
 .ai-receipt-header {
     text-align: center;
     border-bottom: 2px dashed #ccc;
-    padding-bottom: 10px;
-    margin-bottom: 12px;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .ai-receipt-header h3 {
     font-size: 1.25rem;
     letter-spacing: 2px;
-    color: #111;
+    color: #222;
     margin: 0;
     font-weight: 700;
 }
 
 .ai-receipt-body {
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
 .ai-receipt-row {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .ai-receipt-label {
@@ -2101,6 +2101,7 @@ button.ai-analyzing {
     font-weight: 700;
     font-size: 13.5px;
     border-radius: 12px;
+    justify-content: center;
 }
 
 
