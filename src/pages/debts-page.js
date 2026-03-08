@@ -1018,13 +1018,17 @@ async function refreshDebts() {
     if (a.status !== 'paid' && b.status === 'paid') return -1;
 
     if (isSnowball) {
-      if (a.currentBalance !== b.currentBalance) return a.currentBalance - b.currentBalance;
+      const balA = parseFloat(a.currentBalance || 0);
+      const balB = parseFloat(b.currentBalance || 0);
+      if (balA !== balB) return balA - balB;
     } else if (isAvalanche) {
-      if (b.annualRate !== a.annualRate) return b.annualRate - a.annualRate;
+      const rateA = parseFloat(a.annualRate || 0);
+      const rateB = parseFloat(b.annualRate || 0);
+      if (rateA !== rateB) return rateB - rateA;
     }
     
     // Fallback sort
-    return a.name.localeCompare(b.name);
+    return (a.name || '').localeCompare(b.name || '');
   });
 
   // Calculate Summary Stats & Predictions
@@ -1124,8 +1128,8 @@ async function refreshDebts() {
     } else if (isInstallment && isInst && filter === 'all') {
       groups.installment.items.push(d);
       groups.installment.sum += parseFloat(d.currentBalance);
-    } else if (isPrioritySort && filter === 'all' && (!isPayoffable && !isInstallment)) {
-      // Global priority group (only if no specific grouping is active)
+    } else if (isPrioritySort && filter === 'all') {
+      // Global priority group
       groups.priority.items.push(d);
       groups.priority.sum += parseFloat(d.currentBalance);
     } else if (d.type === 'credit_card') {
