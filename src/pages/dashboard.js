@@ -70,7 +70,7 @@ export async function renderDashboard(container) {
         </div>
         <div class="metric-card">
           <span class="m-label">ชำระเงินต้นแล้ว</span>
-          <div style="display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap;">
+          <div style="display: flex; justify-content: center; align-items: baseline; gap: 4px; flex-wrap: wrap;">
             <span class="m-value" style="color:var(--text-success)">${Utils.formatCurrency(debtSummary.totalPaid - debtSummary.totalInterestPaid)}</span>
             <span style="font-size: 10px; color: var(--text-tertiary); opacity: 0.6;">/ ${Utils.formatCurrency(debtSummary.totalOriginal)}</span>
           </div>
