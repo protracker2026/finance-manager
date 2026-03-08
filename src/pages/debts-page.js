@@ -343,11 +343,20 @@ function setupDebtEvents() {
 
   // === Sort & Filter Events ===
   document.querySelectorAll('.sort-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       const clickedBtn = e.currentTarget;
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
       clickedBtn.classList.add('active');
-      refreshDebts();
+      
+      await refreshDebts();
+      
+      // Auto-scroll to the top of the debt list
+      const container = document.getElementById('debtsContainer');
+      if (container) {
+        const yOffset = -120; // Account for fixed header / sort bar
+        const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
     });
   });
 
