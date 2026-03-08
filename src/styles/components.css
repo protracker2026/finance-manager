@@ -62,7 +62,7 @@
     display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
 
     .data-table,
     .data-table tbody,
@@ -139,7 +139,6 @@
         z-index: 5;
     }
 
-    @media (max-width: 1024px) {
         .data-table {
             padding-top: 24px; /* Reset padding because buttons moved to header */
             margin-top: 5px;
@@ -155,7 +154,6 @@
         .print-group-mobile {
             display: none !important;
         }
-    }
 
     @media (max-width: 600px) {
         .print-group-tablet {
@@ -668,7 +666,7 @@
     margin-bottom: var(--space-xl);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
     .charts-grid {
         grid-template-columns: 1fr;
     }
@@ -989,7 +987,8 @@ details[open].txn-list-details summary svg {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-lg);
-    min-width: 350px;
+    min-width: 0;
+    flex-shrink: 1;
 }
 
 /* === Original Debt Summary (Restored for Debt Page) === */
@@ -1088,7 +1087,7 @@ details[open].txn-list-details summary svg {
     font-family: var(--font-mono);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
     .charts-grid {
         grid-template-columns: 1fr;
     }
@@ -1102,9 +1101,9 @@ details[open].txn-list-details summary svg {
     }
 
     .dashboard-summary-premium .summary-metrics {
-        min-width: 100%;
-        grid-template-columns: 1fr;
-        gap: var(--space-sm);
+        min-width: 0;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
     }
 
     .debt-summary-compact .summary-metrics {
@@ -1120,6 +1119,27 @@ details[open].txn-list-details summary svg {
 
     .dashboard-summary-premium .summary-main .value-huge {
         font-size: 2.25rem;
+    }
+
+    /* Shrink metric card values on tablet to prevent wrapping */
+    .metric-card .m-value {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    .metric-card {
+        padding: var(--space-sm);
+        overflow: hidden;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-summary-premium .summary-metrics,
+    .debt-summary-compact .summary-metrics {
+        grid-template-columns: 1fr;
     }
 }
 

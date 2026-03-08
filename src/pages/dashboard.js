@@ -9,22 +9,15 @@ export async function renderDashboard(container) {
   const debtSummary = await DebtModule.getDebtSummary();
 
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: var(--space-xl); display: flex; justify-content: center; align-items: center; width: 100%; text-align: center;">
-      <div style="width: 100%;">
+    <div class="page-header" style="margin-bottom: var(--space-xl); display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <div>
         <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0; font-weight: 500;">
           สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
         </p>
       </div>
-    </div>
-
-    <!-- สรุปตัวเลข (Redesigned) -->
-    <div class="dashboard-summary-premium" style="position: relative;">
       <button id="dashAddTxnBtn" style="
-        position: absolute;
-        top: 15px;
-        right: 15px;
         padding: 5px 14px; 
-        font-size: 11px; 
+        font-size: 11.5px; 
         font-weight: 600; 
         background: rgba(74, 222, 128, 0.1); 
         color: #4ade80; 
@@ -36,12 +29,14 @@ export async function renderDashboard(container) {
         display: flex;
         align-items: center;
         gap: 6px;
-        z-index: 10;
-        opacity: 1;
       " onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         เพิ่มรายการ
       </button>
+    </div>
+
+    <!-- สรุปตัวเลข (Redesigned) -->
+    <div class="dashboard-summary-premium">
       <div class="summary-main">
         <div class="label">ยอดคงเหลือสุทธิ</div>
         <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}">

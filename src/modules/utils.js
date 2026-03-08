@@ -1,7 +1,7 @@
 // Utility functions
 export const Utils = {
     formatCurrency(amount) {
-        return this.formatNumber(amount) + ' ฿';
+        return this.formatNumber(amount) + '\u00a0฿';
     },
 
     formatNumber(amount) {

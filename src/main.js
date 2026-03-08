@@ -76,6 +76,33 @@ document.addEventListener('gesturestart', function (e) {
 
 // Start app
 document.addEventListener('DOMContentLoaded', async () => {
+    // Sidebar toggle logic
+    const closeBtn = document.getElementById('sidebar-toggle-close');
+    const openBtn = document.getElementById('sidebar-toggle-open');
+    
+    // Check saved state
+    const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    if (isCollapsed) {
+        document.body.classList.add('sidebar-collapsed');
+        if (openBtn) openBtn.style.display = 'flex';
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.body.classList.add('sidebar-collapsed');
+            localStorage.setItem('sidebar-collapsed', 'true');
+            if (openBtn) openBtn.style.display = 'flex';
+        });
+    }
+
+    if (openBtn) {
+        openBtn.addEventListener('click', () => {
+            document.body.classList.remove('sidebar-collapsed');
+            localStorage.setItem('sidebar-collapsed', 'false');
+            openBtn.style.display = 'none';
+        });
+    }
+
     // Init Auth
     await AuthModule.init();
 

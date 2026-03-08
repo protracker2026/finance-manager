@@ -47,8 +47,17 @@
     <!-- Login Container -->
     <div id="login-container" style="display: none;"></div>
 
+    <!-- Sidebar Open Button (Visible when sidebar is collapsed) -->
+    <button id="sidebar-toggle-open" class="sidebar-toggle-open-btn" aria-label="Open Sidebar" title="แสดงแถบเมนู" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
+      <button id="sidebar-toggle-close" class="sidebar-toggle-close-btn" aria-label="Close Sidebar" title="ซ่อนแถบเมนู">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+
       <div class="sidebar-logo">
         <h1>
           <span class="logo-icon">💰</span>

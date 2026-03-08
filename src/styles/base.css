@@ -149,6 +149,68 @@ a:hover {
     flex: 1;
     padding: var(--space-xl);
     min-height: 100vh;
+    transition: margin-left var(--transition-base);
+}
+
+/* === Sidebar Toggle Buttons === */
+.sidebar-toggle-close-btn {
+    position: absolute;
+    top: 24px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.sidebar-toggle-close-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.sidebar-toggle-open-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius);
+    z-index: 90;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-fast);
+}
+
+.sidebar-toggle-open-btn:hover {
+    background: var(--bg-tertiary);
+}
+
+/* === Collapsed State === */
+body.sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+}
+
+body.sidebar-collapsed .main-content {
+    margin-left: 0;
+}
+
+@media (max-width: 1024px) {
+    .sidebar-toggle-open-btn {
+        display: none !important;
+    }
 }
 
 /* === Page Header === */
@@ -565,20 +627,19 @@ a:hover {
 }
 
 /* === Responsive === */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .sidebar {
-        display: none;
+        display: none !important;
     }
 
     .bottom-nav {
-        display: flex;
+        display: flex !important;
     }
 
     .main-content {
-        margin-left: 0;
+        margin-left: 0 !important;
         padding: var(--space-md);
         padding-bottom: 80px;
-        /* Space for bottom nav */
         overflow-x: hidden;
         max-width: 100vw;
     }

@@ -2423,7 +2423,7 @@ window.showPrintReceiptModal = function (options = {}) {
 
         if (progress >= 100) {
           finished = true; // Mark as done so this block only runs once
-          PrinterSound.stopPrint();
+          PrinterSound.stopAll(); // Immediately kill print loop before tear
           paper.style.transition = 'transform 0.2s ease-out';
           paper.style.transform = 'translateY(0)';
           const sb = document.getElementById('printerSoundBar');
@@ -2530,13 +2530,11 @@ window.showPrintReceiptModal = function (options = {}) {
   }
 
   const closeOverlay = () => {
-    // Globally cancel animation loop and sound
-    const pauseBtn = document.getElementById('pausePrintBtn');
-    if (pauseBtn) pauseBtn.click();
+    // Kill ALL sounds immediately (print loop + tear)
     window._isPrintCancelled = true;
-    PrinterSound.stopPrint();
+    PrinterSound.stopAll();
     
-    // Clear callbacks to avoid ghost tear sounds
+    // Clear scheduled callbacks to prevent ghost sounds
     if (window._pendingTearTimeout) clearTimeout(window._pendingTearTimeout);
     if (window._pendingShowcaseTimeout) clearTimeout(window._pendingShowcaseTimeout);
 
@@ -2824,9 +2822,10 @@ async function refreshTransactions() {
       window._groupedTxnData = groupedArr;
 
       tableEl.innerHTML = `
-      <div style="position: relative;">
-        <!-- Segmented Print Buttons Group -->
-        <div class="print-group-mobile" style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: flex-end; padding: 12px 18px 0;">
+          <!-- Segmented Print Buttons Group -->
+          <div class="print-group-mobile" style="display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
           <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             ใบเสร็จ
@@ -2836,6 +2835,7 @@ async function refreshTransactions() {
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
             ภาพรวม
           </button>
+        </div>
         </div>
         <table class="data-table">
         <thead>
@@ -2881,9 +2881,10 @@ async function refreshTransactions() {
       });
     } else {
       tableEl.innerHTML = `
-      <div style="position: relative;">
-        <!-- Segmented Print Buttons Group -->
-        <div class="print-group-mobile" style="position: absolute; top: 15px; right: 18px; z-index: 10; display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: flex-end; padding: 12px 18px 0;">
+          <!-- Segmented Print Buttons Group -->
+          <div class="print-group-mobile" style="display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
           <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             ใบเสร็จ
@@ -2893,6 +2894,7 @@ async function refreshTransactions() {
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
             ภาพรวม
           </button>
+        </div>
         </div>
         <table class="data-table">
         <thead>

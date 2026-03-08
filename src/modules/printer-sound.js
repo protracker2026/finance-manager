@@ -1,31 +1,29 @@
 /**
  * Utility to use a real MP3 recording for thermal printer sound effects.
- * Asset: src/assets/sounds/receipt-printer.mp3
+ * Asset: src/assets/sounds/receipt-printer-02.mp3
  */
 export const PrinterSound = {
     ctx: null,
     masterGain: null,
     audioBuffer: null,
     isPrinting: false,
-    _currentSource: null,
     _loopSource: null,
-    _playId: 0,
-    _tearId: 0,
+    _printGain: null,
+    _tearSource: null,
+    _tearGain: null,
 
     async init() {
         if (this.ctx) return;
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Use a high shelf filter to gently reduce harsh highs instead of brutally cutting them off
         this.highCutFilter = this.ctx.createBiquadFilter();
         this.highCutFilter.type = 'highshelf';
-        this.highCutFilter.frequency.value = 3000; // Target the piercing frequencies
-        this.highCutFilter.gain.value = -8; // Reduce highs by 8dB to remove harshness without sounding muffled
+        this.highCutFilter.frequency.value = 3000;
+        this.highCutFilter.gain.value = -8;
         
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = 0.5;
 
-        // Connect chain: source -> filter -> masterGain -> destination
         this.highCutFilter.connect(this.masterGain);
         this.masterGain.connect(this.ctx.destination);
 
@@ -39,67 +37,129 @@ export const PrinterSound = {
     },
 
     async playPrint() {
-        const currentPlayId = ++this._playId;
         await this.init();
         if (this.ctx.state === 'suspended') await this.ctx.resume();
+        if (!this.audioBuffer) return;
         
-        // Prevent race condition: if stopPrint was called (or another playRequested) while initializing, abort this play
-        if (this._playId !== currentPlayId || this.isPrinting || !this.audioBuffer) return;
-        
+        // *** FIX: Force-kill any existing loop BEFORE creating a new one ***
+        this._killLoop();
+
         this.isPrinting = true;
 
-        // Based on new file "receipt-printer-02.mp3"
         this._loopSource = this.ctx.createBufferSource();
         this._loopSource.buffer = this.audioBuffer;
         this._loopSource.loop = true;
-        
-        // Loop a good middle section of the new file
         this._loopSource.loopStart = 0.2;
         this._loopSource.loopEnd = 1.5;
 
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0, this.ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(1, this.ctx.currentTime + 0.1);
+        this._printGain = this.ctx.createGain();
+        this._printGain.gain.setValueAtTime(0, this.ctx.currentTime);
+        this._printGain.gain.linearRampToValueAtTime(1, this.ctx.currentTime + 0.1);
 
-        this._loopSource.connect(gain);
-        gain.connect(this.highCutFilter); // Route through the lowpass filter
+        this._loopSource.connect(this._printGain);
+        this._printGain.connect(this.highCutFilter);
         this._loopSource.start(0, 0.2);
+    },
 
-        this._printGain = gain;
+    /** Internal: immediately kill the loop source with no fade */
+    _killLoop() {
+        if (this._loopSource) {
+            try {
+                this._loopSource.stop();
+                this._loopSource.disconnect();
+            } catch (e) { /* already stopped */ }
+            this._loopSource = null;
+        }
+        if (this._printGain) {
+            try { this._printGain.disconnect(); } catch (e) {}
+            this._printGain = null;
+        }
+    },
+
+    /** Internal: immediately kill the tear source */
+    _killTear() {
+        if (this._tearSource) {
+            try {
+                this._tearSource.stop();
+                this._tearSource.disconnect();
+            } catch (e) { /* already stopped */ }
+            this._tearSource = null;
+        }
+        if (this._tearGain) {
+            try { this._tearGain.disconnect(); } catch (e) {}
+            this._tearGain = null;
+        }
     },
 
     stopPrint() {
-        this._playId++; // Invalidate any pending play requests
         this.isPrinting = false;
-        if (this._loopSource) {
+        if (this._loopSource && this._printGain) {
             const now = this.ctx.currentTime;
-            
-            // The animation has a final 0.2s ease-out animation.
-            // Wait 0.2s before fading out so the sound perfectly syncs with the paper stopping.
+            // Quick 100ms fade-out then hard stop
+            this._printGain.gain.cancelScheduledValues(now);
             this._printGain.gain.setValueAtTime(this._printGain.gain.value, now);
-            this._printGain.gain.setValueAtTime(this._printGain.gain.value, now + 0.2); // Hold volume
-            this._printGain.gain.linearRampToValueAtTime(0, now + 0.35); // Fade out over 150ms
-            
-            this._loopSource.stop(now + 0.4);
+            this._printGain.gain.linearRampToValueAtTime(0, now + 0.1);
+
+            const src = this._loopSource;
+            const gain = this._printGain;
+            // Schedule cleanup after fade completes
+            setTimeout(() => {
+                try { src.stop(); src.disconnect(); } catch (e) {}
+                try { gain.disconnect(); } catch (e) {}
+            }, 150);
+
+            // Nullify immediately so no other code can double-stop
             this._loopSource = null;
+            this._printGain = null;
         }
     },
 
     async playTear() {
-        const currentTearId = ++this._tearId;
         await this.init();
         if (this.ctx.state === 'suspended') await this.ctx.resume();
-        if (!this.audioBuffer || this._tearId !== currentTearId) return;
+        if (!this.audioBuffer) return;
 
-        // Play the "cut/tear" portion of the MP3
+        // Kill any existing tear sound first
+        this._killTear();
+        // Also ensure print loop is dead
+        this._killLoop();
+
         const tearSource = this.ctx.createBufferSource();
         tearSource.buffer = this.audioBuffer;
 
-        // Try to trigger near the end for the cut sound
-        const tearDuration = 1.0;
-        let cutOffset = Math.max(0, this.audioBuffer.duration - tearDuration);
+        // Use only 0.5s of the end of the file to avoid repeated sounds
+        const tearDuration = 0.5;
+        const cutOffset = Math.max(0, this.audioBuffer.duration - tearDuration);
 
-        tearSource.connect(this.highCutFilter); // Route through the lowpass filter
-        tearSource.start(0, cutOffset);
+        // Create a gain node with fade-out to prevent abrupt end / lingering
+        const now = this.ctx.currentTime;
+        const tearGain = this.ctx.createGain();
+        tearGain.gain.setValueAtTime(0.8, now);
+        tearGain.gain.setValueAtTime(0.8, now + tearDuration * 0.6); // Hold for 60%
+        tearGain.gain.linearRampToValueAtTime(0, now + tearDuration); // Fade out last 40%
+
+        tearSource.connect(tearGain);
+        tearGain.connect(this.highCutFilter);
+        tearSource.start(0, cutOffset, tearDuration); // 3rd arg = max duration
+
+        // Store references so stopAll can kill it
+        this._tearSource = tearSource;
+        this._tearGain = tearGain;
+
+        // Auto-cleanup when the sound finishes naturally
+        tearSource.onended = () => {
+            if (this._tearSource === tearSource) {
+                this._tearSource = null;
+                this._tearGain = null;
+            }
+            try { tearGain.disconnect(); } catch (e) {}
+        };
+    },
+
+    /** Stop everything — print loop AND tear sound. Call this on overlay close. */
+    stopAll() {
+        this.isPrinting = false;
+        this._killLoop();
+        this._killTear();
     }
 };
