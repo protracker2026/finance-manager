@@ -79,7 +79,6 @@ export async function renderDebtsPage(container) {
         <button class="sort-btn active" data-sort="avalanche">ดอกเบี้ยสูง (Avalanche)</button>
         <button class="sort-btn" data-sort="snowball">ยอดน้อย (Snowball)</button>
         <button class="sort-btn" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
-        <button class="sort-btn" data-sort="name">ชื่อ</button>
       </div>
       <div style="margin-left:auto;" class="debt-sort-controls">
          <span class="label">ฟิลเตอร์:</span>
