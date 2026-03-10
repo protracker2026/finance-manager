@@ -2841,47 +2841,51 @@ async function refreshTransactions() {
         <div style="display: flex; justify-content: flex-end; padding: 12px 18px 0;">
           <!-- Segmented Print Buttons Group -->
           <div class="print-group-mobile" style="display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-          <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            ใบเสร็จ
-          </button>
-          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
-          <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-            ภาพรวม
-          </button>
+            <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              ใบเสร็จ
+            </button>
+            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+            <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              ภาพรวม
+            </button>
+          </div>
         </div>
+        
+        <div class="transaction-list" style="margin-top: 15px;">
+          ${groupedArr.map((g, idx) => {
+            const isIncome = g.type === 'income';
+            const colorVar = isIncome ? 'var(--text-success)' : (g.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : 'var(--text-danger)');
+            const sign = isIncome ? '+' : '-';
+            return `
+            <div class="transaction-item grouped-row" data-group-idx="${idx}">
+              <div class="transaction-icon ${g.type}">
+                <span style="font-size: 18px;">${isIncome ? '💰' : '💸'}</span>
+              </div>
+              <div class="details">
+                <div class="header">
+                  <div class="title">${g.category}</div>
+                  <div class="amount ${g.type}" style="color: ${colorVar}">${sign}${Utils.formatCurrency(g.amount)}</div>
+                </div>
+                <div class="footer">
+                  <div class="meta">${g.count} รายการ</div>
+                  <div style="font-size: 12px; color: var(--text-tertiary); opacity: 0.5;">▸</div>
+                </div>
+              </div>
+            </div>
+            `;
+          }).join('')}
         </div>
-        <table class="data-table">
-        <thead>
-          <tr>
-            <th>ประเภท</th>
-            <th>หมวดหมู่</th>
-            <th style="text-align:right">จำนวน(ครั้ง)</th>
-            <th style="text-align:right">รวมเป็นเงิน</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${groupedArr.map((g, idx) => `
-            <tr data-qty="${g.count}" data-group-idx="${idx}" class="grouped-row" style="cursor:pointer;">
-              <td data-label="ประเภท"><span class="badge badge-${g.type}">${g.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
-              <td data-label="หมวดหมู่">${g.category} <span style="font-size:0.7em; opacity:0.5;">▸</span></td>
-              <td data-label="วันที่" style="text-align:right; color:var(--text-tertiary);">${g.count}</td>
-              <td data-label="จำนวน" class="amount ${g.type}" style="text-align:right; ${g.category === 'เงินกู้/เงินสดจากบัตร' ? 'color: #fbbf24 !important;' : ''}">
-                  ${g.type === 'income' ? '+' : '-'}${Utils.formatCurrency(g.amount)}
-              </td>
-            </tr>
-          `).join('')}
-          <tr class="receipt-footer">
-              <td colspan="3" style="text-align:center; font-weight:bold; padding-top:10px;">ยอดรวมสุทธิ</td>
-              <td colspan="1" style="text-align:center; font-weight:bold; font-size:1.2em; padding-top:10px;">
-                  ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
-              </td>
-          </tr>
-        </tbody>
-      </table>
+
+        <div style="padding: 20px 16px; margin: 15px 16px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); text-align: center;">
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">ยอดรวมสุทธิ</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono);">
+            ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+          </div>
+        </div>
       </div>
-      <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
+      <div style="padding: 0 16px 20px; color: var(--text-tertiary); font-size: var(--font-size-xs);">
         สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กดที่หมวดหมู่เพื่อดูรายย่อยและแก้ไข)
       </div>
       `;
@@ -2900,58 +2904,59 @@ async function refreshTransactions() {
         <div style="display: flex; justify-content: flex-end; padding: 12px 18px 0;">
           <!-- Segmented Print Buttons Group -->
           <div class="print-group-mobile" style="display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-          <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            ใบเสร็จ
-          </button>
-          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
-          <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-            ภาพรวม
-          </button>
+            <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              ใบเสร็จ
+            </button>
+            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+            <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              ภาพรวม
+            </button>
+          </div>
         </div>
+        
+        <div class="transaction-list" style="margin-top: 15px;">
+          ${[...txns].sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => {
+            const isIncome = t.type === 'income';
+            const colorVar = isIncome ? 'var(--text-success)' : (t.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : 'var(--text-danger)');
+            const sign = isIncome ? '+' : '-';
+            return `
+            <div class="transaction-item txn-row" data-id="${t.id}">
+              <div class="transaction-icon ${t.type}">
+                <span style="font-size: 18px;">${isIncome ? '💰' : '💸'}</span>
+              </div>
+              <div class="details">
+                <div class="header">
+                  <div class="title">${t.note || t.category}</div>
+                  <div class="amount ${t.type}" style="color: ${colorVar}">${sign}${Utils.formatCurrency(t.amount)}</div>
+                </div>
+                <div class="footer">
+                  <div class="meta">
+                    <span>${t.category}</span>
+                    <span style="opacity: 0.3;">•</span>
+                    <span>${Utils.formatDateTimeShort(t.date).split(' ')[1]}</span>
+                  </div>
+                  <div class="actions">
+                    <button class="btn btn-sm edit-txn" data-id="${t.id}" style="padding: 2px; background: transparent; border: none; opacity: 0.5; font-size: 12px;">✏️</button>
+                    <button class="btn btn-sm delete-txn" data-id="${t.id}" style="padding: 2px; background: transparent; border: none; opacity: 0.5; font-size: 12px;">🗑️</button>
+                  </div>
+                </div>
+                <div class="mobile-edit-overlay" data-id="${t.id}" style="position: absolute; inset: 0; z-index: 1;"></div>
+              </div>
+            </div>
+            `;
+          }).join('')}
         </div>
-        <table class="data-table">
-        <thead>
-          <tr>
-            <th>วันที่</th>
-            <th>ประเภท</th>
-            <th>หมวดหมู่</th>
-            <th>หมายเหตุ</th>
-            <th style="text-align:right">จำนวน</th>
-            <th style="text-align:center">จัดการ</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${[...txns].sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)).map(t => `
-            <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
-              <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
-              <td data-label="ประเภท"><span class="badge badge-${t.type}" style="${t.category === 'เงินกู้/เงินสดจากบัตร' ? 'background: rgba(251, 191, 36, 0.2); color: #fbbf24;' : ''}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
-              <td data-label="หมวดหมู่">
-                  ${t.note ? t.note : t.category}
-                  ${(t.quantity && t.quantity > 1 && t.unitPrice) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice)}</span>` : ''}
-              </td>
-              <td data-label="หมายเหตุ">${t.note || '-'}</td>
-              <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right; ${t.category === 'เงินกู้/เงินสดจากบัตร' ? 'color: #fbbf24 !important;' : ''}">
-                  ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
-                  <div class="mobile-edit-overlay" data-id="${t.id}" title="แก้ไข"></div>
-              </td>
-              <td data-label="จัดการ" style="text-align:center">
-                <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข">✏️</button>
-                <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ">🗑️</button>
-              </td>
-            </tr>
-          `).join('')}
-          <tr class="receipt-footer">
-              <td colspan="4" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
-              <td colspan="2" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
-                  ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
-              </td>
-          </tr>
-        </tbody>
-      </table>
+
+        <div style="padding: 20px 16px; margin: 15px 16px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); text-align: center;">
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;">ยอดรวมสุทธิ</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono);">
+            ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+          </div>
+        </div>
       </div>
-      <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
+      <div style="padding: 0 16px 20px; color: var(--text-tertiary); font-size: var(--font-size-xs);">
         แสดง ${txns.length} รายการ
       </div>
       `;

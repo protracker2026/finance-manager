@@ -202,17 +202,27 @@ export async function renderDashboard(container) {
     const btn = e.currentTarget;
     btn.classList.add('refresh-btn-spinning');
     
+    // Ensure animation is seen for at least a short duration
+    const animPromise = new Promise(resolve => setTimeout(resolve, 600));
+    
     stopDashboardTicker();
+    
+    // Perform data refresh
+    await TransactionModule.getAll({}); // Prefetch to speed up or just let renderDashboard do it
+    
+    await animPromise; // Wait for animation minimum time
+    
     await renderDashboard(container);
     
     Utils.showToast('รีเฟรชข้อมูลหน้าหลักสำเร็จ');
     
-    // Find the new button since renderDashboard completely overwrites the DOM
+    // Find the new button and show completion state if needed
     const newBtn = document.getElementById('refreshDashboardBtn');
     if (newBtn) {
+      newBtn.classList.add('refresh-btn-spinning');
       setTimeout(() => {
         newBtn.classList.remove('refresh-btn-spinning');
-      }, 800);
+      }, 200);
     }
   });
 }

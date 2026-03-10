@@ -1341,6 +1341,95 @@ details[open].txn-list-details summary svg {
     font-family: var(--font-mono);
 }
 
+/* === Transaction List (New) === */
+.transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 16px;
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: all var(--transition-fast) ease;
+    backdrop-filter: blur(8px);
+}
+
+.transaction-item:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-card-hover);
+    transform: translateX(4px);
+}
+
+.transaction-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.transaction-icon.income { background: rgba(34, 197, 94, 0.1); }
+.transaction-icon.expense { background: rgba(239, 68, 68, 0.1); }
+
+.transaction-item .details {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-item .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.transaction-item .title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-item .amount {
+    font-size: 15px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+}
+
+.transaction-item .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.transaction-item .meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.transaction-item .actions {
+    display: flex;
+    gap: 8px;
+    position: relative;
+    z-index: 2; /* Above mobile overlay */
+}
+
 @media (max-width: 600px) {
     .debt-item-main {
         grid-template-columns: 1fr;
