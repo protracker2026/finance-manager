@@ -22,6 +22,9 @@ export async function renderTransactionsPage(container) {
         <p class="subtitle">บันทึกและติดตามรายรับ-รายจ่ายของคุณ</p>
       </div>
       <div style="display:flex; gap:10px;">
+        <button class="btn btn-secondary" id="refreshTransactionsBtn" title="รีเฟรชข้อมูล" style="padding: 8px; min-width: 38px; display:flex; align-items:center; justify-content:center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </button>
         <button class="btn btn-secondary" id="openBulkDeleteBtn">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6L18 20a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
             <span style="color: var(--accent-danger);">เลือกลบ</span>
@@ -425,6 +428,18 @@ function setupTransactionEvents() {
       e.preventDefault();
       e.stopPropagation();
       openTxnModal();
+    }
+
+    if (target.id === 'refreshTransactionsBtn' || target.closest('#refreshTransactionsBtn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const btn = target.id === 'refreshTransactionsBtn' ? target : target.closest('#refreshTransactionsBtn');
+      btn.classList.add('refresh-btn-spinning');
+      
+      refreshTransactions().then(() => {
+        setTimeout(() => btn.classList.remove('refresh-btn-spinning'), 800);
+        Utils.showToast('รีเฟรชข้อมูลสำเร็จ');
+      });
     }
 
     // Toggle Entry Methods (Smart vs Manual)

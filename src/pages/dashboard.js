@@ -4,16 +4,37 @@ import { DebtModule } from '../modules/debts.js';
 import { InterestEngine } from '../modules/interest.js';
 import { Utils } from '../modules/utils.js';
 
+let dashboardTickerInterval = null;
+let dashboardTickerStartTime = null;
+
 export async function renderDashboard(container) {
   const { start, end, year, month } = Utils.getMonthRange();
   const summary = await TransactionModule.getSummary(start, end);
   const debtSummary = await DebtModule.getDebtSummary();
 
+  // Pre-calculate today's live interest for all active debts
+  const activeDebts = (debtSummary.debts || []).filter(d => d.status === 'active' && parseFloat(d.annualRate) > 0 && d.interestType !== 'fixed_rate');
+  let totalDailyInterest = 0;
+  let totalAccruedNow = 0;
+  
+  activeDebts.forEach(d => {
+    const daysSince = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
+    const newInterest = InterestEngine.dailyAccrual(d.currentBalance, d.annualRate, daysSince);
+    const accrued = (d.accruedInterest || 0) + newInterest;
+    totalAccruedNow += accrued;
+    totalDailyInterest += InterestEngine.dailyInterest(d.currentBalance, d.annualRate);
+  });
+
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: var(--space-md); display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%;">
-      <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0 0 12px 0; font-weight: 500;">
-        สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
-      </p>
+    <div class="page-header" style="margin-bottom: var(--space-md); display: flex; align-items: flex-start; justify-content: space-between; width: 100%;">
+      <div style="text-align: left;">
+        <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0 0 4px 0; font-weight: 500;">
+          สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
+        </p>
+      </div>
+      <button class="btn" id="refreshDashboardBtn" title="รีเฟรชข้อมูล" style="padding: 8px; min-width: 38px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      </button>
     </div>
 
     <!-- สรุปตัวเลข (Redesigned) -->
@@ -67,6 +88,15 @@ export async function renderDashboard(container) {
           <span class="m-value" style="color:#fb923c">-${Utils.formatCurrency(debtSummary.totalInterestPaid)}</span>
           <div style="font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px; opacity: 0.6;">เงินที่จ่ายทิ้งเปล่าไปแล้ว</div>
         </div>
+        ${activeDebts.length > 0 ? `
+        <div class="metric-card live-interest-dashboard">
+          <span class="m-label" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+            🔥 ดอกเบี้ยกำลังวิ่ง (วันนี้)
+          </span>
+          <span class="m-value" style="color:#fb923c; font-family: var(--font-mono, monospace);" id="dashLiveInterest">+${totalAccruedNow.toFixed(2)} ฿</span>
+          <div style="font-size: 10.5px; color: var(--text-tertiary); margin-top: 6px; opacity: 0.6;">+${Utils.formatNumber(totalDailyInterest)} ฿/วัน จากหนี้ ${activeDebts.length} รายการ</div>
+        </div>
+        ` : ''}
         <div class="metric-card">
           <span class="m-label">ชำระเงินต้นแล้ว</span>
           <div style="display: flex; justify-content: center; align-items: baseline; gap: 4px; flex-wrap: wrap;">
@@ -160,7 +190,68 @@ export async function renderDashboard(container) {
 
   // Render Charts
   await renderCharts(year, month);
+
+  // Start Dashboard Interest Ticker
+  startDashboardTicker(activeDebts, totalAccruedNow);
+
+  // Refresh button listener
+  document.getElementById('refreshDashboardBtn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.classList.add('refresh-btn-spinning');
+    
+    stopDashboardTicker();
+    await renderDashboard(container);
+    
+    Utils.showToast('รีเฟรชข้อมูลหน้าหลักสำเร็จ');
+    
+    // Find the new button since renderDashboard completely overwrites the DOM
+    const newBtn = document.getElementById('refreshDashboardBtn');
+    if (newBtn) {
+      setTimeout(() => {
+        newBtn.classList.remove('refresh-btn-spinning');
+      }, 800);
+    }
+  });
 }
+
+function startDashboardTicker(activeDebts, initialAccrued) {
+  stopDashboardTicker();
+  if (activeDebts.length === 0) return;
+  
+  dashboardTickerStartTime = Date.now();
+  
+  // Pre-calculate total per-second rate
+  let totalPerSecond = 0;
+  activeDebts.forEach(d => {
+    totalPerSecond += parseFloat(d.currentBalance) * (parseFloat(d.annualRate) / 100 / 365 / 86400);
+  });
+
+  dashboardTickerInterval = setInterval(() => {
+    const el = document.getElementById('dashLiveInterest');
+    if (!el) {
+      stopDashboardTicker();
+      return;
+    }
+    const elapsed = (Date.now() - dashboardTickerStartTime) / 1000;
+    const total = initialAccrued + (totalPerSecond * elapsed);
+    el.textContent = `+${total.toFixed(2)} ฿`;
+  }, 60000);
+}
+
+function stopDashboardTicker() {
+  if (dashboardTickerInterval) {
+    clearInterval(dashboardTickerInterval);
+    dashboardTickerInterval = null;
+  }
+  dashboardTickerStartTime = null;
+}
+
+// Clean up dashboard ticker on navigation
+window.addEventListener('hashchange', () => {
+  if (window.location.hash !== '#dashboard' && window.location.hash !== '' && window.location.hash !== '#') {
+    stopDashboardTicker();
+  }
+});
 
 async function renderCharts(currentYear, currentMonth) {
   // Income vs Expense - last 6 months

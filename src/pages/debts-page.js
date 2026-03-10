@@ -6,7 +6,8 @@ import { Utils } from '../modules/utils.js';
 let amountsVisible = true;
 let activeSortOrder = 'avalanche'; // 'avalanche' | 'snowball' | 'smart' | null
 let activeGrouping = null; // 'payoffable' | 'installment' | null
-let scrollDebounceTimer = null;
+let interestTickerInterval = null;
+let tickerStartTime = null;
 
 export async function renderDebtsPage(container) {
   const summary = await DebtModule.getDebtSummary();
@@ -29,6 +30,9 @@ export async function renderDebtsPage(container) {
         </div>
       </div>
       <div style="display:flex; gap:var(--space-sm);">
+        <button class="btn" id="refreshDebtsBtn" title="รีเฟรชข้อมูล" style="padding: 8px; min-width: 38px; display:flex; align-items:center; justify-content:center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </button>
         <button class="btn" id="exportDebtPdfBtn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           PDF Report
@@ -252,6 +256,7 @@ export async function renderDebtsPage(container) {
   setupDebtEvents();
   
   await refreshDebts();
+  startInterestTicker();
 }
 
 function setupDebtEvents() {
@@ -368,17 +373,12 @@ function setupDebtEvents() {
 
       await refreshDebts();
       
-      // Scroll only when both sort order AND grouping are selected (pair is complete)
-      clearTimeout(scrollDebounceTimer);
-      if (activeSortOrder && activeGrouping) {
-        scrollDebounceTimer = setTimeout(() => {
-          const container = document.getElementById('debtsContainer');
-          if (container) {
-            const yOffset = -120;
-            const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          }
-        }, 400);
+      // Auto-scroll to the top of the debt list
+      const container = document.getElementById('debtsContainer');
+      if (container) {
+        const yOffset = -120;
+        const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
       }
     });
   });
@@ -388,6 +388,22 @@ function setupDebtEvents() {
   document.getElementById('exportDebtPdfBtn').addEventListener('click', async () => {
     const summary = await DebtModule.getDebtSummary();
     await Utils.exportDebtsToPDF(summary);
+  });
+
+  // Refresh button
+  document.getElementById('refreshDebtsBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.classList.add('refresh-btn-spinning');
+    
+    stopInterestTicker();
+    await refreshDebts();
+    startInterestTicker();
+    
+    setTimeout(() => {
+      btn.classList.remove('refresh-btn-spinning');
+    }, 800);
+    
+    Utils.showToast('รีเฟรชข้อมูลสำเร็จ', 'success');
   });
 }
 
@@ -1266,7 +1282,21 @@ async function refreshDebts() {
     <div class="debt-item" data-id="${d.id}" style="padding: 10px 14px; position: relative; cursor: pointer; transition: all 0.2s ease;">
           <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;" onclick="window.toggleDebtItem(this)">
             <div style="flex: 1; min-width: 0;">
-              <span style="font-size: 14px; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; min-width: 0;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 14px; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; min-width: 0;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
+                ${d.status !== 'paid' && parseFloat(d.annualRate) > 0 && d.interestType !== 'fixed_rate' ? `
+                <span class="live-interest-chip"
+                      data-debt-id="${d.id}"
+                      data-rate="${d.annualRate}"
+                      data-balance="${d.currentBalance}"
+                      data-accrued="${d.todayInterest || 0}"
+                      data-last-date="${d.lastInterestDate}"
+                      style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(251, 146, 60, 0.12); border: 1px solid rgba(251, 146, 60, 0.25); border-radius: 20px; font-size: 11px; white-space: nowrap; flex-shrink: 0;">
+                  <span style="font-size: 10px;">🔥</span>
+                  <span class="live-interest-value" data-ticker-id="${d.id}" style="font-family: var(--font-mono, monospace); font-weight: 700; color: #fb923c; font-size: 11px; letter-spacing: -0.3px;">+${(d.todayInterest || 0).toFixed(2)}</span>
+                </span>
+                ` : ''}
+              </div>
             </div>
             <div style="text-align: right; flex-shrink: 0;">
               <div style="font-size: 8px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0;">คงเหลือ</div>
@@ -1277,7 +1307,7 @@ async function refreshDebts() {
           <div class="progress-container" style="height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0;" onclick="window.toggleDebtItem(this)">
             <div class="progress-fill" style="width: ${paidPct}%; height: 100%; background: ${statusColor}; border-radius: 2px; opacity: 0.6; transition: width 0.8s ease;"></div>
           </div>
-          
+
           <!-- Progress Dopamine -->
           ${d.status !== 'paid' ? `
           <div style="margin-top: 8px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.01) 100%); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="window.toggleDebtItem(this)">
@@ -1295,7 +1325,7 @@ async function refreshDebts() {
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.07);">
               <span class="badge" style="font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-tertiary); padding: 3px 8px; border-radius: 4px;">${Utils.debtTypeName(d.type)}</span>
               <span class="badge" style="font-size: 11px; background: rgba(255,193,7,0.08); color: var(--text-warning); padding: 3px 8px; border-radius: 4px; border: 1px solid rgba(255,193,7,0.15);">ดอกเบี้ย ${d.annualRate}%</span>
-              ${d.realTimeMin > 0 ? `<span class="badge" style="font-size: 11px; background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.15); padding: 3px 8px; border-radius: 4px;">ขั้นต่ำวันนี้: ${Utils.formatNumber(d.realTimeMin)} ฿</span>` : ''}
+              ${d.realTimeMin > 0 ? `<span class="badge" id="live-interest-min-value-${d.id}" data-base-min="${d.realTimeMin - (d.todayInterest || 0)}" style="font-size: 11px; background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.15); padding: 3px 8px; border-radius: 4px;">ขั้นต่ำวันนี้: ${Utils.formatNumber(d.realTimeMin)} ฿</span>` : ''}
               ${paymentAmountForCalc > 0 ? `<span class="badge" style="font-size: 11px; background: rgba(34,197,94,0.08); color: #4ade80; border: 1px solid rgba(34,197,94,0.15); padding: 3px 8px; border-radius: 4px;">เป้าหมาย: ${Utils.formatNumber(paymentAmountForCalc)} ฿</span>` : ''}
             </div>
 
@@ -1356,6 +1386,68 @@ async function refreshDebts() {
 
     return `<div class="debt-group">${headerHtml}${listHtml}</div>`;
   };
+
+  // === Total Interest Summary Card ===
+  const activeForInterest = allDebts.filter(d => d.status === 'active' && parseFloat(d.annualRate) > 0 && d.interestType !== 'fixed_rate');
+  if (activeForInterest.length > 0) {
+    let totalAccruedNow = 0;
+    let totalDailyRate = 0;
+    const perDebtRows = activeForInterest.map(d => {
+      const daily = InterestEngine.dailyInterest(d.currentBalance, d.annualRate);
+      totalDailyRate += daily;
+      totalAccruedNow += (d.todayInterest || 0);
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <span style="font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%;">${d.name}</span>
+          <span style="font-size: 12px; color: #fb923c; font-family: var(--font-mono, monospace); font-weight: 600;">+${daily.toFixed(2)} ฿/วัน</span>
+        </div>`;
+    }).join('');
+
+    const totalMonthlyInterest = totalDailyRate * 30;
+    const totalYearlyInterest = totalDailyRate * 365;
+
+    html += `
+    <div style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(251, 146, 60, 0.06) 0%, rgba(239, 68, 68, 0.03) 100%); border: 1px solid rgba(251, 146, 60, 0.15); border-radius: 12px; padding: 16px; position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.04), transparent); animation: interestSweep 4s ease-in-out infinite;"></div>
+      
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span style="font-size: 20px;">🔥</span>
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: #fb923c;">ดอกเบี้ยกำลังวิ่ง (ทุกหนี้รวม)</div>
+          <div style="font-size: 11px; color: var(--text-tertiary); opacity: 0.7;">จาก ${activeForInterest.length} รายการที่มีดอกเบี้ย</div>
+        </div>
+        <div style="margin-left: auto; text-align: right;">
+          <div id="totalLiveInterest" style="font-size: 20px; font-weight: 800; color: #fb923c; font-family: var(--font-mono, monospace); text-shadow: 0 0 12px rgba(251, 146, 60, 0.3); letter-spacing: -0.5px;">+${totalAccruedNow.toFixed(2)} ฿</div>
+          <div style="font-size: 10px; color: var(--text-tertiary); opacity: 0.6;">สะสม ณ ขณะนี้</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+        <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
+          <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อวัน</div>
+          <div style="font-size: 14px; font-weight: 700; color: #fb923c; font-family: var(--font-mono, monospace);">+${totalDailyRate.toFixed(2)} ฿</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
+          <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อเดือน</div>
+          <div style="font-size: 14px; font-weight: 700; color: #f87171; font-family: var(--font-mono, monospace);">+${totalMonthlyInterest.toFixed(0)} ฿</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
+          <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อปี</div>
+          <div style="font-size: 14px; font-weight: 700; color: #ef4444; font-family: var(--font-mono, monospace);">+${Utils.formatNumber(totalYearlyInterest)} ฿</div>
+        </div>
+      </div>
+
+      <details style="border-top: 1px dashed rgba(251, 146, 60, 0.15); padding-top: 10px;">
+        <summary style="cursor: pointer; font-size: 11px; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 4px; list-style: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          รายละเอียดแยกตามหนี้
+        </summary>
+        <div style="margin-top: 8px;">
+          ${perDebtRows}
+        </div>
+      </details>
+    </div>`;
+  }
 
   html += renderGroup('priority', groups.priority);
   html += renderGroup('payoff', groups.payoff);
@@ -1441,7 +1533,74 @@ async function refreshDebts() {
       }
     });
   });
+  // Start ticker after rendering
+  startInterestTicker();
 }
+
+// === Live Interest Ticker ===
+function startInterestTicker() {
+  stopInterestTicker();
+  tickerStartTime = Date.now();
+
+  interestTickerInterval = setInterval(() => {
+    const chips = document.querySelectorAll('.live-interest-chip');
+    if (chips.length === 0) {
+      stopInterestTicker();
+      return;
+    }
+
+    const elapsedSeconds = (Date.now() - tickerStartTime) / 1000;
+    let totalLiveInterest = 0;
+
+    chips.forEach(chip => {
+      const debtId = chip.dataset.debtId;
+      const rate = parseFloat(chip.dataset.rate) || 0;
+      const balance = parseFloat(chip.dataset.balance) || 0;
+      const accrued = parseFloat(chip.dataset.accrued) || 0;
+
+      // Interest per second = balance × (rate / 100 / 365 / 86400)
+      const perSecond = balance * (rate / 100 / 365 / 86400);
+      const liveInterest = accrued + (perSecond * elapsedSeconds);
+      totalLiveInterest += liveInterest;
+
+      // Update the inline chip
+      const tickerEl = chip.querySelector('.live-interest-value');
+      if (tickerEl) {
+        tickerEl.textContent = `+${liveInterest.toFixed(4)}`;
+      }
+
+      // Update the minimum payment badge if it exists
+      const minBadgeEl = document.getElementById(`live-interest-min-value-${debtId}`);
+      if (minBadgeEl) {
+        // Base min is the minimum payment WITHOUT today's interest
+        const baseMin = parseFloat(minBadgeEl.dataset.baseMin) || 0;
+        const newTotalMin = baseMin + liveInterest;
+        minBadgeEl.textContent = `ขั้นต่ำวันนี้: ${newTotalMin.toFixed(2)} ฿`;
+      }
+    });
+
+    // Update total summary if exists
+    const totalEl = document.getElementById('totalLiveInterest');
+    if (totalEl) {
+      totalEl.textContent = `+${totalLiveInterest.toFixed(2)} ฿`;
+    }
+  }, 60000);
+}
+
+function stopInterestTicker() {
+  if (interestTickerInterval) {
+    clearInterval(interestTickerInterval);
+    interestTickerInterval = null;
+  }
+  tickerStartTime = null;
+}
+
+// Clean up ticker when leaving page
+window.addEventListener('hashchange', () => {
+  if (!window.location.hash.includes('debts')) {
+    stopInterestTicker();
+  }
+});
 
 // --- Payment Modal What-If Logic ---
 function setupModalWhatIfSimulation(debt, existingPayment) {

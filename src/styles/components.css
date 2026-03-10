@@ -2207,3 +2207,90 @@ button.ai-analyzing {
     border-radius: 12px;
     justify-content: center;
 }
+
+/* === Live Interest Ticker === */
+@keyframes interestPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes interestGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(251, 146, 60, 0.2); }
+    50% { box-shadow: 0 0 16px rgba(251, 146, 60, 0.4); }
+}
+
+.live-interest-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 1px solid rgba(251, 146, 60, 0.2);
+    border-radius: 8px;
+    animation: interestGlow 3s ease-in-out infinite;
+    cursor: pointer;
+}
+
+.live-interest-badge .interest-icon {
+    font-size: 16px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    flex-shrink: 0;
+}
+
+.live-interest-badge .interest-label {
+    font-size: 11px;
+    color: #fb923c;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.live-interest-badge .live-interest-value {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 13px;
+    font-weight: 700;
+    color: #fb923c;
+    margin-left: auto;
+    letter-spacing: -0.3px;
+    text-shadow: 0 0 8px rgba(251, 146, 60, 0.3);
+    animation: interestPulse 2s ease-in-out infinite;
+}
+
+.live-interest-badge .interest-per-day {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+/* Dashboard live interest card */
+.live-interest-dashboard {
+    position: relative;
+    overflow: hidden;
+}
+
+.live-interest-dashboard::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.05), transparent);
+    animation: interestSweep 4s ease-in-out infinite;
+}
+
+@keyframes interestSweep {
+    0% { left: -50%; }
+    100% { left: 150%; }
+}
+
+/* Refresh button spin */
+@keyframes refreshSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.refresh-btn-spinning svg {
+    animation: refreshSpin 0.8s ease-in-out;
+}
