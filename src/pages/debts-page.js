@@ -254,7 +254,7 @@ export async function renderDebtsPage(container) {
   `;
 
   setupDebtEvents();
-  
+
   await refreshDebts();
   startInterestTicker();
 }
@@ -358,7 +358,7 @@ function setupDebtEvents() {
       // Group A: Sort order (avalanche / snowball / smart) - toggle or switch
       if (['avalanche', 'snowball', 'smart'].includes(sortValue)) {
         activeSortOrder = (activeSortOrder === sortValue) ? null : sortValue;
-      } 
+      }
       // Group B: Grouping (payoffable / installment) - toggle or switch
       else if (['payoffable', 'installment'].includes(sortValue)) {
         activeGrouping = (activeGrouping === sortValue) ? null : sortValue;
@@ -372,7 +372,7 @@ function setupDebtEvents() {
       });
 
       await refreshDebts();
-      
+
       // Auto-scroll to the top of the debt list
       const container = document.getElementById('debtsContainer');
       if (container) {
@@ -394,15 +394,15 @@ function setupDebtEvents() {
   document.getElementById('refreshDebtsBtn').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     btn.classList.add('refresh-btn-spinning');
-    
+
     stopInterestTicker();
     await refreshDebts();
     startInterestTicker();
-    
+
     setTimeout(() => {
       btn.classList.remove('refresh-btn-spinning');
     }, 800);
-    
+
     Utils.showToast('รีเฟรชข้อมูลสำเร็จ', 'success');
   });
 }
@@ -537,7 +537,7 @@ function openPaymentModal(debt, payment = null) {
     const realLifeBalance = debt.currentBalance + accruedSinceLast;
 
     const expected = parseFloat(debt.monthlyPayment) || 0;
-    const minPay = debt.type === 'credit_card' 
+    const minPay = debt.type === 'credit_card'
       ? InterestEngine.calculateMinPayment(realLifeBalance, 'credit_card')
       : (parseFloat(debt.minPayment) || InterestEngine.calculateMinPayment(debt.currentBalance, debt.type));
 
@@ -600,11 +600,11 @@ window.editPayment = function (paymentId, debtId) {
     if (payment) {
       // Fetch full debt object for What-If context
       DebtModule.getById(debtId).then(debtObj => {
-        if(debtObj) {
-           openPaymentModal(debtObj, payment);
+        if (debtObj) {
+          openPaymentModal(debtObj, payment);
         } else {
-           // Fallback if not physically found
-           openPaymentModal({ id: debtId, name: document.getElementById('detailTitle').textContent }, payment);
+          // Fallback if not physically found
+          openPaymentModal({ id: debtId, name: document.getElementById('detailTitle').textContent }, payment);
         }
       });
     } else {
@@ -1059,7 +1059,7 @@ async function refreshDebts() {
       const rateB = parseFloat(b.annualRate || 0);
       if (rateA !== rateB) return rateB - rateA;
     }
-    
+
     // Fallback sort
     return (a.name || '').localeCompare(b.name || '');
   });
@@ -1067,11 +1067,11 @@ async function refreshDebts() {
   // Calculate Summary Stats & Predictions
   let maxMonths = 0;
   let totalMonthly = 0;
-  
+
   // We calculate months for ALL active debts first
   allDebts.forEach(d => {
     if (d.status !== 'active') return;
-    
+
     const balance = parseFloat(d.currentBalance || 0);
     const rate = parseFloat(d.annualRate || 0);
     const initialBalance = parseFloat(d.principal || balance);
@@ -1083,13 +1083,13 @@ async function refreshDebts() {
 
     const payments = d.payments || [];
     const latestActualAmount = payments.length > 0 ? parseFloat(payments[payments.length - 1].amount) : 0;
-    
+
     // Prediction is based on: Set Monthly > Last Actual Amount > Initial Min > Current Min
     const paymentForCalc = parseFloat(d.monthlyPayment) || Math.max(latestActualAmount, initialMin, currentMin);
-    
+
     // Store this in the object so cards can use it without re-calculating
     d.paymentAmountForCalc = paymentForCalc;
-    
+
     // 3. Real-world Reality (Today's Interest & Min)
     const daysSinceLast = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
     const newInterest = InterestEngine.dailyAccrual(balance, rate, daysSinceLast);
@@ -1108,10 +1108,10 @@ async function refreshDebts() {
       } else {
         result = InterestEngine.generateAmortizationSchedule(balance, rate, paymentForCalc);
       }
-      
+
       d.monthsToPayoff = result.totalMonths;
       d.predictionResult = result;
-      
+
       if (result.totalMonths > maxMonths) maxMonths = result.totalMonths;
     } else {
       d.monthsToPayoff = null;
@@ -1608,17 +1608,17 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
   const amountInput = document.getElementById('paymentAmount');
   const slider = document.getElementById('paymentWhatIfSlider');
   const resultEl = document.getElementById('paymentWhatIfResult');
-  
+
   const whatIfInput = document.getElementById('paymentWhatIfInput');
-  
+
   // Hide if editing existing or debt is undefined/fully paid
   if (existingPayment || !debt || debt.status === 'paid') {
-      container.style.display = 'none';
-      if(amountInput) {
-          amountInput.oninput = null; // Clear old bindings
-          amountInput.onblur = null;
-      }
-      return;
+    container.style.display = 'none';
+    if (amountInput) {
+      amountInput.oninput = null; // Clear old bindings
+      amountInput.onblur = null;
+    }
+    return;
   }
 
   // Use the same interest-adjusted balance logic for the simulator's mandatory minimum
@@ -1628,14 +1628,14 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
 
   // Baseline for comparison (your established habit/goal)
   const habitPayment = debt.paymentAmountForCalc || debt.monthlyPayment || InterestEngine.calculateMinPayment(totalBalanceForMin, debt.type);
-  
+
   // Dynamic minimum for the floor of the slider
   const mandatoryMin = InterestEngine.calculateMinPayment(totalBalanceForMin, debt.type);
   const sliderMin = Math.max(mandatoryMin, (debt.type === 'personal_loan' ? 300 : mandatoryMin));
 
   if (sliderMin <= 0) {
-      container.style.display = 'none';
-      return;
+    container.style.display = 'none';
+    return;
   }
 
   container.style.display = 'block';
@@ -1643,7 +1643,7 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
   // Setup bounds for slider
   let sliderMax = Math.min(debt.currentBalance, habitPayment + 20000);
   if (sliderMax <= sliderMin) sliderMax = sliderMin + 1000;
-  
+
   slider.min = sliderMin;
   slider.max = sliderMax;
 
@@ -1652,41 +1652,41 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
 
   // Set initial value to your established habit/goal
   amountInput.value = ''; // Keep blank as per user request
-  slider.value = habitPayment; 
+  slider.value = habitPayment;
 
-  const currentPayment = habitPayment; 
+  const currentPayment = habitPayment;
 
   // Render logic
   const renderResult = (val) => {
-      if(val < sliderMin) {
-          resultEl.innerHTML = `<span style="color: var(--text-warning); font-size: 11px;">⚠️ กรุณาชำระขั้นต่ำ ${Utils.formatCurrency(sliderMin)}</span>`;
-          return;
-      }
-      const extraAmount = val - habitPayment;
-      const comparison = InterestEngine.comparePayments(
-          debt.currentBalance,
-          debt.annualRate,
-          habitPayment,
-          extraAmount,
-          debt.type,
-          debt.lastInterestDate
-      );
+    if (val < sliderMin) {
+      resultEl.innerHTML = `<span style="color: var(--text-warning); font-size: 11px;">⚠️ กรุณาชำระขั้นต่ำ ${Utils.formatCurrency(sliderMin)}</span>`;
+      return;
+    }
+    const extraAmount = val - habitPayment;
+    const comparison = InterestEngine.comparePayments(
+      debt.currentBalance,
+      debt.annualRate,
+      habitPayment,
+      extraAmount,
+      debt.type,
+      debt.lastInterestDate
+    );
 
-      // Scenarios: Goal (val == habit), Diligence (val > habit), Lapse (val < habit)
-      const diff = Math.abs(val - habitPayment);
-      const isGoal = diff < 0.01;
-      const isLapse = val < habitPayment - 0.01;
-      const isHighDiligence = val > habitPayment + 0.01;
+    // Scenarios: Goal (val == habit), Diligence (val > habit), Lapse (val < habit)
+    const diff = Math.abs(val - habitPayment);
+    const isGoal = diff < 0.01;
+    const isLapse = val < habitPayment - 0.01;
+    const isHighDiligence = val > habitPayment + 0.01;
 
-      if (isGoal) {
-          resultEl.innerHTML = `
+    if (isGoal) {
+      resultEl.innerHTML = `
             <div style="font-size: 11px; color: var(--text-tertiary);">
               คุณจะปลดหนี้นี้หมดในอีก <b style="color: #4ade80;">${comparison.minPayment.totalMonths} เดือน</b> ตามแผน ✌️
             </div>
           `;
-      } else if (isLapse) {
-          const extraMonths = comparison.extraPayment.totalMonths - comparison.minPayment.totalMonths;
-          resultEl.innerHTML = `
+    } else if (isLapse) {
+      const extraMonths = comparison.extraPayment.totalMonths - comparison.minPayment.totalMonths;
+      resultEl.innerHTML = `
             <div style="font-size: 12px; color: #f87171; margin-bottom: 2px; font-weight: 600;">
               ⚠️ วินัยหย่อน! จะหมดหนี้ช้าลงเป็น <b>${comparison.extraPayment.totalMonths} เดือน</b>
             </div>
@@ -1694,8 +1694,8 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
               ต้องทนอยู่กับหนี้นี้นานขึ้นอีก <b>${extraMonths} เดือน</b> เลยนะ! 😭
             </div>
           `;
-      } else {
-          resultEl.innerHTML = `
+    } else {
+      resultEl.innerHTML = `
             <div style="font-size: 12px; color: var(--text-primary); margin-bottom: 2px;">
               หมดเร็วขึ้นเหลือ <b>${comparison.extraPayment.totalMonths} เดือน!</b> <span style="font-size: 11px; color: var(--text-tertiary); font-weight: normal;">(จากเดิม ${comparison.minPayment.totalMonths} เดือน)</span>
             </div>
@@ -1703,44 +1703,44 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
               ประหยัดดอกเบี้ยได้ <b>${Utils.formatCurrency(comparison.savings.interest)}</b> ว้าว! 🎉
             </div>
           `;
-      }
+    }
   };
 
   // Bind input -> slider -> result
   amountInput.oninput = (e) => {
-      let val = parseFloat(e.target.value);
-      if(!isNaN(val)) {
-          slider.value = Math.min(Math.max(val, sliderMin), sliderMax);
-          renderResult(val);
-      } else {
-          // If empty, show default min payment result
-          renderResult(sliderMin);
-          slider.value = sliderMin;
-      }
+    let val = parseFloat(e.target.value);
+    if (!isNaN(val)) {
+      slider.value = Math.min(Math.max(val, sliderMin), sliderMax);
+      renderResult(val);
+    } else {
+      // If empty, show default min payment result
+      renderResult(sliderMin);
+      slider.value = sliderMin;
+    }
   };
 
   amountInput.onblur = (e) => {
-      let val = parseFloat(e.target.value);
-      // We don't force them to enter min value anymore to let them have an empty field if they prefer
-      if (isNaN(val)) {
-          renderResult(sliderMin);
-      } else if (val < sliderMin) {
-          // But if they entered less than minimum, we still calculate the warning but keep their value intact, 
-          // or we can auto-correct it. Let's auto-correct it to prevent saving invalid data
-          val = sliderMin;
-          amountInput.value = val;
-          slider.value = val;
-          renderResult(val);
-      } else {
-          renderResult(val);
-      }
+    let val = parseFloat(e.target.value);
+    // We don't force them to enter min value anymore to let them have an empty field if they prefer
+    if (isNaN(val)) {
+      renderResult(sliderMin);
+    } else if (val < sliderMin) {
+      // But if they entered less than minimum, we still calculate the warning but keep their value intact, 
+      // or we can auto-correct it. Let's auto-correct it to prevent saving invalid data
+      val = sliderMin;
+      amountInput.value = val;
+      slider.value = val;
+      renderResult(val);
+    } else {
+      renderResult(val);
+    }
   };
 
   // Bind slider -> input -> result
   slider.oninput = (e) => {
-      const val = parseFloat(e.target.value);
-      amountInput.value = val;
-      renderResult(val);
+    const val = parseFloat(e.target.value);
+    amountInput.value = val;
+    renderResult(val);
   };
 
   // Initial draw using your habit as the starting point for consistency with the main card

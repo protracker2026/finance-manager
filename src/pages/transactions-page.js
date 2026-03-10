@@ -435,7 +435,7 @@ function setupTransactionEvents() {
       e.stopPropagation();
       const btn = target.id === 'refreshTransactionsBtn' ? target : target.closest('#refreshTransactionsBtn');
       btn.classList.add('refresh-btn-spinning');
-      
+
       refreshTransactions().then(() => {
         setTimeout(() => btn.classList.remove('refresh-btn-spinning'), 800);
         Utils.showToast('รีเฟรชข้อมูลสำเร็จ');
@@ -651,7 +651,7 @@ function setupTransactionEvents() {
           qtyRow.style.display = 'none';
         }
       }
-      
+
       if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
 
       // Fill the form FIRST, then show receipt
@@ -2347,195 +2347,195 @@ window.showPrintReceiptModal = function (options = {}) {
 
   const startModalSequence = () => {
     requestAnimationFrame(() => {
-    overlay.classList.add('visible');
+      overlay.classList.add('visible');
 
-    // Auto-scroll overlay to show content
-    if (skipAnimation) {
-      overlay.scrollTop = 100;
-    }
-
-    setTimeout(() => {
-      const paper = document.getElementById('receiptPaper');
-      if (!paper) return;
-
+      // Auto-scroll overlay to show content
       if (skipAnimation) {
+        overlay.scrollTop = 100;
+      }
+
+      setTimeout(() => {
+        const paper = document.getElementById('receiptPaper');
+        if (!paper) return;
+
+        if (skipAnimation) {
+          paper.style.transition = 'none';
+          paper.style.transform = 'translateY(40px)';
+          paper.classList.add('showcase');
+
+          const printer = document.querySelector('.printer-body');
+          if (printer) {
+            printer.style.display = 'none';
+          }
+
+          const wrapper = paper.parentElement;
+          if (wrapper) {
+            wrapper.style.overflow = 'visible';
+            wrapper.style.marginTop = '20px'; // Add some space since printer is gone
+          }
+
+          const light = document.getElementById('printerLight');
+          if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+
+          overlay.scrollTo({ top: 100, behavior: 'instant' });
+          return;
+        }
+
+        let progress = 0;
+        let targetProgress = 0;
+        let stateVelocity = 0;
+        let timeUntilNextState = 0;
+        let lastTime = null;
+        let finished = false;
+        let isPaused = false;
+        window._isPrintCancelled = false;
+        let soundStarted = false;
+
+        const pauseBtn = document.getElementById('pausePrintBtn');
+        if (pauseBtn && !skipAnimation) {
+          pauseBtn.style.display = 'block';
+          pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            if (isPaused) {
+              pauseBtn.innerHTML = '▶ พิมพ์ต่อ';
+              PrinterSound.stopPrint();
+              const light = document.getElementById('printerLight');
+              if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; }
+            } else {
+              pauseBtn.innerHTML = '⏸ พักการพิมพ์';
+              lastTime = window.performance.now(); // reset timer
+              PrinterSound.playPrint();
+              const light = document.getElementById('printerLight');
+              if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+            }
+          });
+        }
+
         paper.style.transition = 'none';
-        paper.style.transform = 'translateY(40px)';
-        paper.classList.add('showcase');
+        paper.style.transform = 'translateY(-100%)';
 
-        const printer = document.querySelector('.printer-body');
-        if (printer) {
-          printer.style.display = 'none';
-        }
+        const totalItems = txns.length || 1;
+        const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
+        const avgStep = 100 / baseSteps;
+        const MIN_STEP = 0.5;
 
-        const wrapper = paper.parentElement;
-        if (wrapper) {
-          wrapper.style.overflow = 'visible';
-          wrapper.style.marginTop = '20px'; // Add some space since printer is gone
-        }
+        function printTick(timestamp) {
+          if (finished || window._isPrintCancelled) return;
 
-        const light = document.getElementById('printerLight');
-        if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+          if (!lastTime) lastTime = timestamp;
+          const delta = timestamp - lastTime;
+          lastTime = timestamp;
 
-        overlay.scrollTo({ top: 100, behavior: 'instant' });
-        return;
-      }
-
-      let progress = 0;
-      let targetProgress = 0;
-      let stateVelocity = 0;
-      let timeUntilNextState = 0;
-      let lastTime = null;
-      let finished = false;
-      let isPaused = false;
-      window._isPrintCancelled = false;
-      let soundStarted = false;
-
-      const pauseBtn = document.getElementById('pausePrintBtn');
-      if (pauseBtn && !skipAnimation) {
-         pauseBtn.style.display = 'block';
-         pauseBtn.addEventListener('click', () => {
-             isPaused = !isPaused;
-             if (isPaused) {
-                 pauseBtn.innerHTML = '▶ พิมพ์ต่อ';
-                 PrinterSound.stopPrint();
-                 const light = document.getElementById('printerLight');
-                 if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; }
-             } else {
-                 pauseBtn.innerHTML = '⏸ พักการพิมพ์';
-                 lastTime = window.performance.now(); // reset timer
-                 PrinterSound.playPrint();
-                 const light = document.getElementById('printerLight');
-                 if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
-             }
-         });
-      }
-
-      paper.style.transition = 'none';
-      paper.style.transform = 'translateY(-100%)';
-
-      const totalItems = txns.length || 1;
-      const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
-      const avgStep = 100 / baseSteps;
-      const MIN_STEP = 0.5;
-
-      function printTick(timestamp) {
-        if (finished || window._isPrintCancelled) return; 
-
-        if (!lastTime) lastTime = timestamp;
-        const delta = timestamp - lastTime;
-        lastTime = timestamp;
-
-        if (isPaused) {
+          if (isPaused) {
             requestAnimationFrame(printTick);
             return;
-        }
+          }
 
-        if (!soundStarted && timestamp > 0) {
+          if (!soundStarted && timestamp > 0) {
             soundStarted = true;
             PrinterSound.playPrint();
-        }
-
-        if (progress >= 100) {
-          finished = true; // Mark as done so this block only runs once
-          PrinterSound.stopAll(); // Immediately kill print loop before tear
-          paper.style.transition = 'transform 0.2s ease-out';
-          paper.style.transform = 'translateY(0)';
-          const sb = document.getElementById('printerSoundBar');
-          const light = document.getElementById('printerLight');
-
-          if (sb) Array.from(sb.children).forEach(s => { s.style.animation = 'none'; s.style.height = '3px'; });
-          if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; light.style.animation = 'none'; }
-
-          // Show export actions
-          if (pauseBtn) pauseBtn.style.display = 'none';
-          document.getElementById('savePrintBtn').style.display = '';
-          document.getElementById('exportImageBtn').style.display = '';
-
-          // Trigger "Tear and Showcase"
-          window._pendingTearTimeout = setTimeout(() => {
-            if (window._isPrintCancelled) return; // Prevent tear sound if cancelled
-            PrinterSound.playTear();
-            if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
-            paper.style.transition = 'none';
-            paper.classList.add('tearing');
-
-            // Fade out the printer body during tear
-            const printer = document.querySelector('.printer-body');
-            if (printer) printer.classList.add('fade-out');
-
-            // Allow full visibility of the paper once it's independent
-            const wrapper = paper.parentElement;
-            if (wrapper) wrapper.style.overflow = 'visible';
-
-            window._pendingShowcaseTimeout = setTimeout(() => {
-              if (window._isPrintCancelled) return;
-              if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
-              paper.classList.add('showcase');
-
-              // Smoothly scroll up slightly to frame the independent receipt better
-              overlay.scrollTo({ top: 150, behavior: 'smooth' });
-
-              // Subtle "shake" or entry pop
-              if (navigator.vibrate) navigator.vibrate([20, 40]);
-            }, 400);
-          }, 800);
-          return; // Stop the rAF loop here
-        }
-
-        timeUntilNextState -= delta;
-        if (timeUntilNextState <= 0) {
-          const mood = Math.random();
-          let step, delay, isInstant = false;
-
-          if (progress > 85) {
-            // Fast finish near the end (Paper just rolls out smoothly)
-            step = Math.max(MIN_STEP * 3, avgStep * 2.5);
-            delay = 20 + Math.random() * 15;
-          } else if (mood < 0.65) {
-            // 65% Smooth printing
-            step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
-            delay = 50 + Math.random() * 45;
-          } else if (mood < 0.75) {
-            // 10% Dead Pause (Stuck for a moment)
-            step = 0;
-            delay = 180 + Math.random() * 120;
-          } else if (mood < 0.90) {
-            // 15% Heavy Jerky (Processing dense text - snaps mechanically)
-            step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
-            delay = 100 + Math.random() * 50;
-            isInstant = true; // Instantly jump paper down instead of sliding
-          } else {
-            // 10% Fast Stutter (Catching up)
-            step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
-            delay = 30 + Math.random() * 20;
           }
 
-          timeUntilNextState = delay;
-          targetProgress = Math.min(100, targetProgress + step);
+          if (progress >= 100) {
+            finished = true; // Mark as done so this block only runs once
+            PrinterSound.stopAll(); // Immediately kill print loop before tear
+            paper.style.transition = 'transform 0.2s ease-out';
+            paper.style.transform = 'translateY(0)';
+            const sb = document.getElementById('printerSoundBar');
+            const light = document.getElementById('printerLight');
 
-          if (isInstant) {
-            progress = targetProgress;
-            stateVelocity = 0;
-          } else if (delay > 0) {
-            stateVelocity = step / delay;
-          } else {
-            stateVelocity = 0;
+            if (sb) Array.from(sb.children).forEach(s => { s.style.animation = 'none'; s.style.height = '3px'; });
+            if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; light.style.animation = 'none'; }
+
+            // Show export actions
+            if (pauseBtn) pauseBtn.style.display = 'none';
+            document.getElementById('savePrintBtn').style.display = '';
+            document.getElementById('exportImageBtn').style.display = '';
+
+            // Trigger "Tear and Showcase"
+            window._pendingTearTimeout = setTimeout(() => {
+              if (window._isPrintCancelled) return; // Prevent tear sound if cancelled
+              PrinterSound.playTear();
+              if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
+              paper.style.transition = 'none';
+              paper.classList.add('tearing');
+
+              // Fade out the printer body during tear
+              const printer = document.querySelector('.printer-body');
+              if (printer) printer.classList.add('fade-out');
+
+              // Allow full visibility of the paper once it's independent
+              const wrapper = paper.parentElement;
+              if (wrapper) wrapper.style.overflow = 'visible';
+
+              window._pendingShowcaseTimeout = setTimeout(() => {
+                if (window._isPrintCancelled) return;
+                if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+                paper.classList.add('showcase');
+
+                // Smoothly scroll up slightly to frame the independent receipt better
+                overlay.scrollTo({ top: 150, behavior: 'smooth' });
+
+                // Subtle "shake" or entry pop
+                if (navigator.vibrate) navigator.vibrate([20, 40]);
+              }, 400);
+            }, 800);
+            return; // Stop the rAF loop here
           }
+
+          timeUntilNextState -= delta;
+          if (timeUntilNextState <= 0) {
+            const mood = Math.random();
+            let step, delay, isInstant = false;
+
+            if (progress > 85) {
+              // Fast finish near the end (Paper just rolls out smoothly)
+              step = Math.max(MIN_STEP * 3, avgStep * 2.5);
+              delay = 20 + Math.random() * 15;
+            } else if (mood < 0.65) {
+              // 65% Smooth printing
+              step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
+              delay = 50 + Math.random() * 45;
+            } else if (mood < 0.75) {
+              // 10% Dead Pause (Stuck for a moment)
+              step = 0;
+              delay = 180 + Math.random() * 120;
+            } else if (mood < 0.90) {
+              // 15% Heavy Jerky (Processing dense text - snaps mechanically)
+              step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
+              delay = 100 + Math.random() * 50;
+              isInstant = true; // Instantly jump paper down instead of sliding
+            } else {
+              // 10% Fast Stutter (Catching up)
+              step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
+              delay = 30 + Math.random() * 20;
+            }
+
+            timeUntilNextState = delay;
+            targetProgress = Math.min(100, targetProgress + step);
+
+            if (isInstant) {
+              progress = targetProgress;
+              stateVelocity = 0;
+            } else if (delay > 0) {
+              stateVelocity = step / delay;
+            } else {
+              stateVelocity = 0;
+            }
+          }
+
+          if (progress < targetProgress && stateVelocity > 0) {
+            progress += stateVelocity * delta;
+            if (progress > targetProgress) progress = targetProgress;
+          }
+
+          paper.style.transform = `translateY(${-(100 - progress)}%)`;
+          requestAnimationFrame(printTick);
         }
 
-        if (progress < targetProgress && stateVelocity > 0) {
-          progress += stateVelocity * delta;
-          if (progress > targetProgress) progress = targetProgress;
-        }
-
-        paper.style.transform = `translateY(${-(100 - progress)}%)`;
         requestAnimationFrame(printTick);
-      }
-
-      requestAnimationFrame(printTick);
-    }, 300);
-  });
+      }, 300);
+    });
   };
 
   if (!skipAnimation) {
@@ -2548,7 +2548,7 @@ window.showPrintReceiptModal = function (options = {}) {
     // Kill ALL sounds immediately (print loop + tear)
     window._isPrintCancelled = true;
     PrinterSound.stopAll();
-    
+
     // Clear scheduled callbacks to prevent ghost sounds
     if (window._pendingTearTimeout) clearTimeout(window._pendingTearTimeout);
     if (window._pendingShowcaseTimeout) clearTimeout(window._pendingShowcaseTimeout);
