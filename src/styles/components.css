@@ -1310,13 +1310,13 @@ details[open].txn-list-details summary svg {
 
 /* Detail Expanding Section */
 .debt-item-details {
-    background: var(--bg-primary);
     padding: 0;
     font-size: var(--font-size-sm);
     border-top: 1px solid var(--border-color);
 }
 
 .debt-item-details[open] {
+    background: var(--bg-primary);
     padding: var(--space-md);
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

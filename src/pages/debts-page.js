@@ -1279,8 +1279,11 @@ async function refreshDebts() {
         else if (paidPct >= 25) statusColor = '#fb923c'; // 25-50% (Orange)
 
         return `
-    <div class="debt-item" data-id="${d.id}" style="padding: 10px 14px; position: relative; cursor: pointer; transition: all 0.2s ease;">
-          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;" onclick="window.toggleDebtItem(this)">
+    <div class="debt-item" data-id="${d.id}" style="padding: 6px 12px 10px 12px; position: relative; cursor: pointer; transition: all 0.2s ease; overflow: hidden;">
+          <div class="progress-container" style="position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: rgba(255,255,255,0.05); border-radius: 0; margin: 0; z-index: 1;">
+            <div class="progress-fill" style="width: ${paidPct}%; height: 100%; background: ${statusColor}; opacity: 0.8; transition: width 0.8s ease;"></div>
+          </div>
+          <div class="debt-item-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0px; position: relative; z-index: 2;" onclick="window.toggleDebtItem(this)">
             <div style="flex: 1; min-width: 0;">
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 14px; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; min-width: 0;">${d.name || 'หนี้สินที่ไม่มีชื่อ'}</span>
@@ -1304,22 +1307,18 @@ async function refreshDebts() {
             </div>
           </div>
 
-          <div class="progress-container" style="height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0;" onclick="window.toggleDebtItem(this)">
-            <div class="progress-fill" style="width: ${paidPct}%; height: 100%; background: ${statusColor}; border-radius: 2px; opacity: 0.6; transition: width 0.8s ease;"></div>
-          </div>
-
-          <!-- Progress Dopamine -->
-          ${d.status !== 'paid' ? `
-          <div style="margin-top: 8px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.01) 100%); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="window.toggleDebtItem(this)">
-            <div style="font-size: 16px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">🎉</div>
-            <div style="flex: 1;">
-               ${paidPct > 0 ? `<div style="font-size: 11px; color: #4ade80; font-weight: 600;">จ่ายหนี้ไปแล้ว ${paidPct.toFixed(1)}%</div>` : `<div style="font-size: 11px; color: #4ade80; font-weight: 600;">เริ่มต้นก้าวแรก!</div>`}
-            </div>
-          </div>
-          ` : ''}
-          
-          <details class="debt-item-details" style="margin-top: 0; border-top: none;">
+          <details class="debt-item-details" style="margin-top: 0; border-top: none; position: relative; z-index: 2; padding-bottom: 4px;">
             <summary style="display:none"></summary>
+
+            <!-- Progress Dopamine -->
+            ${d.status !== 'paid' ? `
+            <div style="margin-top: 8px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.01) 100%); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="window.toggleDebtItem(this)">
+              <div style="font-size: 16px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">🎉</div>
+              <div style="flex: 1;">
+                 ${paidPct > 0 ? `<div style="font-size: 11px; color: #4ade80; font-weight: 600;">จ่ายหนี้ไปแล้ว ${paidPct.toFixed(1)}%</div>` : `<div style="font-size: 11px; color: #4ade80; font-weight: 600;">เริ่มต้นก้าวแรก!</div>`}
+              </div>
+            </div>
+            ` : ''}
             
             <!-- Details section: type, rate, payment info -->
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.07);">
@@ -1566,7 +1565,7 @@ function startInterestTicker() {
       // Update the inline chip
       const tickerEl = chip.querySelector('.live-interest-value');
       if (tickerEl) {
-        tickerEl.textContent = `+${liveInterest.toFixed(4)}`;
+        tickerEl.textContent = `+${liveInterest.toFixed(2)}`;
       }
 
       // Update the minimum payment badge if it exists
