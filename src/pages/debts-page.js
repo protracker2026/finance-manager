@@ -386,14 +386,6 @@ function setupDebtEvents() {
       });
 
       await refreshDebts();
-
-      // Auto-scroll to the top of the debt list
-      const container = document.getElementById('debtsContainer');
-      if (container) {
-        const yOffset = -120;
-        const y = container.getBoundingClientRect().top + window.scrollY + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
     });
   });
 
