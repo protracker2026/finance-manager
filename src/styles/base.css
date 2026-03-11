@@ -149,7 +149,7 @@ a:hover {
 .main-content {
     margin-left: var(--sidebar-width);
     flex: 1;
-    padding: var(--space-xl);
+    padding: 12px var(--space-xl) var(--space-xl);
     min-height: 100vh;
     transition: margin-left var(--transition-base);
 }

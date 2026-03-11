@@ -45,19 +45,13 @@ export async function renderDashboard(container) {
   });
 
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: 0;">
-      <div>
-        <h1 class="page-title" style="margin: 0; display: none;">Dashboard</h1>
-        <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0 0 2px 0; font-weight: 500; line-height: 1.5;">
-          สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
-        </p>
-      </div>
-    </div>
-
     <!-- สรุปตัวเลข (Redesigned) -->
     <div class="dashboard-summary-premium">
       <div class="summary-main">
-        <div class="label">ยอดคงเหลือสุทธิ</div>
+        <div class="label" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>ยอดคงเหลือสุทธิ</span>
+          <span style="font-size: 10px; opacity: 0.6; font-weight: 500;">${Utils.getFullMonthName(month)} ${year + 543}</span>
+        </div>
         <div class="value-huge" style="color: ${summary.balance >= 0 ? 'var(--text-success)' : '#fef08a'};">
           ${Utils.formatCurrency(summary.balance)}
         </div>
