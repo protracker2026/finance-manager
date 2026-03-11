@@ -50,7 +50,7 @@ export async function renderDashboard(container) {
       <div class="summary-main">
         <div class="label" style="display: flex; justify-content: space-between; align-items: center;">
           <span>ยอดคงเหลือสุทธิ</span>
-          <span style="font-size: 10px; opacity: 0.6; font-weight: 500;">${Utils.getFullMonthName(month)} ${year + 543}</span>
+          <span style="opacity: 0.8; font-weight: 500;">${Utils.getFullMonthName(month)} ${year + 543}</span>
         </div>
         <div class="value-huge" style="color: ${summary.balance >= 0 ? 'var(--text-success)' : '#fef08a'};">
           ${Utils.formatCurrency(summary.balance)}
@@ -61,9 +61,6 @@ export async function renderDashboard(container) {
              สภาพคล่องเดือนนี้
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-            <button class="btn" id="refreshDashboardBtn" title="รีเฟรชข้อมูล" style="padding: 5px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            </button>
           <button id="dashAddTxnBtn" style="
             padding: 5px 14px; 
             font-size: 11px; 
@@ -209,35 +206,6 @@ export async function renderDashboard(container) {
 
   // Start Dashboard Interest Ticker
   startDashboardTicker(activeDebts, totalAccruedNow);
-
-  // Refresh button listener
-  document.getElementById('refreshDashboardBtn')?.addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    btn.classList.add('refresh-btn-spinning');
-    
-    // Ensure animation is seen for at least a short duration
-    const animPromise = new Promise(resolve => setTimeout(resolve, 600));
-    
-    stopDashboardTicker();
-    
-    // Perform data refresh
-    await TransactionModule.getAll({}); // Prefetch to speed up or just let renderDashboard do it
-    
-    await animPromise; // Wait for animation minimum time
-    
-    await renderDashboard(container);
-    
-    Utils.showToast('รีเฟรชข้อมูลหน้าหลักสำเร็จ');
-    
-    // Find the new button and show completion state if needed
-    const newBtn = document.getElementById('refreshDashboardBtn');
-    if (newBtn) {
-      newBtn.classList.add('refresh-btn-spinning');
-      setTimeout(() => {
-        newBtn.classList.remove('refresh-btn-spinning');
-      }, 200);
-    }
-  });
 }
 
 function startDashboardTicker(activeDebts, initialAccrued) {

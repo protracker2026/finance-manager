@@ -30,9 +30,6 @@ export async function renderDebtsPage(container) {
         </div>
       </div>
       <div style="display:flex; gap:var(--space-sm);">
-        <button class="btn" id="refreshDebtsBtn" title="รีเฟรชข้อมูล" style="padding: 8px; min-width: 38px; display:flex; align-items:center; justify-content:center;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-        </button>
         <button class="btn" id="exportDebtPdfBtn">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           PDF Report
@@ -396,22 +393,6 @@ function setupDebtEvents() {
   document.getElementById('exportDebtPdfBtn').addEventListener('click', async () => {
     const summary = await DebtModule.getDebtSummary();
     await Utils.exportDebtsToPDF(summary);
-  });
-
-  // Refresh button
-  document.getElementById('refreshDebtsBtn').addEventListener('click', async (e) => {
-    const btn = e.currentTarget;
-    btn.classList.add('refresh-btn-spinning');
-
-    stopInterestTicker();
-    await refreshDebts();
-    startInterestTicker();
-
-    setTimeout(() => {
-      btn.classList.remove('refresh-btn-spinning');
-    }, 800);
-
-    Utils.showToast('รีเฟรชข้อมูลสำเร็จ', 'success');
   });
 }
 
