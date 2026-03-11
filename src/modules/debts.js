@@ -175,26 +175,34 @@ export const DebtModule = {
             let interestPortion = 0;
             let principalPortion = 0;
 
-            if (debt.interestType === 'daily_accrual') {
-                const daysDiff = InterestEngine.daysBetween(lastInterestDate, p.date);
-                const accruedNew = InterestEngine.dailyAccrual(currentBalance, debt.annualRate, daysDiff);
+            const daysSinceLast = InterestEngine.daysBetween(lastInterestDate, p.date);
+
+            if (debt.interestType === 'fixed_rate') {
+                // Flat Rate: Interest based on ORIGINAL principal per day
+                // (Rate/100 * OriginalPrincipal / 365) * days
+                const dailyFixed = (debt.annualRate / 100 * debt.principal) / 365;
+                const accruedNew = dailyFixed * daysSinceLast;
                 const totalAccruedAtPayment = accruedInterest + accruedNew;
 
                 interestPortion = Math.min(paymentAmount, totalAccruedAtPayment);
                 principalPortion = paymentAmount - interestPortion;
-
                 accruedInterest = Math.max(0, totalAccruedAtPayment - interestPortion);
-                lastInterestDate = p.date;
             } else {
-                // Reducing Balance (Monthly)
-                const monthlyInterest = InterestEngine.reducingBalanceMonthly(currentBalance, debt.annualRate);
-                interestPortion = Math.min(paymentAmount, monthlyInterest);
+                // Reducing Balance OR Daily Accrual: Interest based on CURRENT balance per day
+                // BOT Standard for Personal Loans and Credit Cards
+                const dailyRate = debt.annualRate / 100 / 365;
+                const accruedNew = currentBalance * dailyRate * daysSinceLast;
+                const totalAccruedAtPayment = accruedInterest + accruedNew;
+
+                interestPortion = Math.min(paymentAmount, totalAccruedAtPayment);
                 principalPortion = paymentAmount - interestPortion;
+                accruedInterest = Math.max(0, totalAccruedAtPayment - interestPortion);
             }
 
             currentBalance = Math.max(0, currentBalance - principalPortion);
             totalInterestPaid += interestPortion;
             totalPaid += paymentAmount;
+            lastInterestDate = p.date;
 
             // Update payment record with calculated values
             await db.debtPayments.update(p.id, {

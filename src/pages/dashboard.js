@@ -12,24 +12,43 @@ export async function renderDashboard(container) {
   const summary = await TransactionModule.getSummary(start, end);
   const debtSummary = await DebtModule.getDebtSummary();
 
-  // Pre-calculate today's live interest for all active debts
   const activeDebts = (debtSummary.debts || []).filter(d => d.status === 'active' && parseFloat(d.annualRate) > 0 && d.interestType !== 'fixed_rate');
   let totalDailyInterest = 0;
   let totalAccruedNow = 0;
   
+  // Calculate elapsed seconds since midnight
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const elapsedSeconds = (Date.now() - midnight.getTime()) / 1000;
+  
   activeDebts.forEach(d => {
-    const daysSince = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
-    const newInterest = InterestEngine.dailyAccrual(d.currentBalance, d.annualRate, daysSince);
-    const accrued = (d.accruedInterest || 0) + newInterest;
-    totalAccruedNow += accrued;
-    totalDailyInterest += InterestEngine.dailyInterest(d.currentBalance, d.annualRate);
+    const rawDaysSince = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
+    const fullDaysUpToMidnight = Math.max(0, rawDaysSince - 1);
+    
+    let dailyInterest = 0;
+    let ratePerSecond = 0;
+    
+    if (d.interestType === 'fixed_rate') {
+      dailyInterest = (parseFloat(d.annualRate) / 100 * parseFloat(d.principal)) / 365;
+    } else {
+      dailyInterest = (parseFloat(d.currentBalance) * parseFloat(d.annualRate) / 100) / 365;
+    }
+    ratePerSecond = dailyInterest / 86400;
+    
+    const newInterestBase = dailyInterest * fullDaysUpToMidnight;
+    const midnightBase = (d.accruedInterest || 0) + newInterestBase;
+    const currentAccrued = midnightBase + (ratePerSecond * elapsedSeconds);
+    
+    d.interestMidnightBase = midnightBase; // Store for ticker
+    totalAccruedNow += currentAccrued;
+    totalDailyInterest += dailyInterest;
   });
 
   container.innerHTML = `
-    <div class="page-header" style="margin-bottom: var(--space-md);">
+    <div class="page-header" style="margin-bottom: 0;">
       <div>
         <h1 class="page-title" style="margin: 0; display: none;">Dashboard</h1>
-        <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0 0 4px 0; font-weight: 500; line-height: 1.5;">
+        <p class="subtitle" style="font-size: var(--font-size-base); color: var(--text-secondary); margin: 0 0 2px 0; font-weight: 500; line-height: 1.5;">
           สรุปภาพรวมการเงินประจำเดือน ${Utils.getFullMonthName(month)} ${year + 543}
         </p>
       </div>
@@ -231,25 +250,35 @@ function startDashboardTicker(activeDebts, initialAccrued) {
   stopDashboardTicker();
   if (activeDebts.length === 0) return;
   
-  dashboardTickerStartTime = Date.now();
+  // Get midnight of current day
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  // Pre-calculate total per-second rate
-  let totalPerSecond = 0;
-  activeDebts.forEach(d => {
-    totalPerSecond += parseFloat(d.currentBalance) * (parseFloat(d.annualRate) / 100 / 365 / 86400);
-  });
-
   dashboardTickerInterval = setInterval(() => {
     const el = document.getElementById('dashLiveInterest');
     if (!el) {
       stopDashboardTicker();
       return;
     }
-    const elapsed = (Date.now() - dashboardTickerStartTime) / 1000;
-    const total = initialAccrued + (totalPerSecond * elapsed);
-    el.textContent = `+${total.toFixed(2)} ฿`;
-  }, 60000);
+    
+    const elapsedSeconds = (Date.now() - midnight.getTime()) / 1000;
+    let totalLive = 0;
+
+    activeDebts.forEach(d => {
+      let dailyInterest;
+      if (d.interestType === 'fixed_rate') {
+        dailyInterest = (parseFloat(d.annualRate) / 100 * parseFloat(d.principal)) / 365;
+      } else {
+        dailyInterest = (parseFloat(d.currentBalance) * parseFloat(d.annualRate) / 100) / 365;
+      }
+      const perSec = dailyInterest / 86400;
+      totalLive += (d.interestMidnightBase || 0) + (perSec * elapsedSeconds);
+    });
+    
+    el.textContent = `+${totalLive.toFixed(2)} ฿`;
+  }, 1000); // Tick every second for true real-time feel
 }
+
 
 function stopDashboardTicker() {
   if (dashboardTickerInterval) {

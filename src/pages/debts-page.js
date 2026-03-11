@@ -80,24 +80,38 @@ export async function renderDebtsPage(container) {
     </div>
 
     <!-- Sort & Filter Bar -->
-    <div class="debt-sort-bar">
-      <div class="debt-sort-controls">
-        <span class="label">เรียงตาม:</span>
-        <button class="sort-btn ${activeSortOrder === 'avalanche' ? 'active' : ''}" data-sort="avalanche">ดอกเบี้ยสูง</button>
-        <button class="sort-btn ${activeSortOrder === 'snowball' ? 'active' : ''}" data-sort="snowball">ยอดน้อย</button>
-        <button class="sort-btn ${activeSortOrder === 'smart' ? 'active' : ''}" data-sort="smart">⚡ คุ้มค่าสุด</button>
-        <button class="sort-btn ${activeGrouping === 'payoffable' ? 'active' : ''}" data-sort="payoffable">โปะได้</button>
-        <button class="sort-btn ${activeGrouping === 'installment' ? 'active' : ''}" data-sort="installment">ดอกเบี้ยแบ่งชำระ</button>
+    <details class="debt-sort-details" style="margin-bottom: 20px; background: var(--bg-card); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color);">
+      <summary style="padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; color: var(--text-secondary); list-style: none; outline: none; user-select: none;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          <span>ลำดับการเรียงและตัวกรอง</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </summary>
+      <div style="padding: 0 15px 15px 15px;">
+        <div style="height: 1px; background: var(--border-color); margin: 0 -15px 15px -15px;"></div>
+        <div class="debt-sort-bar" style="border: none; padding: 0; background: transparent; display: flex; flex-direction: column; gap: 12px;">
+          <div class="debt-sort-controls" style="width: 100%;">
+            <span class="label" style="display: block; margin-bottom: 8px;">เรียงตาม:</span>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button class="sort-btn ${activeSortOrder === 'avalanche' ? 'active' : ''}" data-sort="avalanche">ดอกเบี้ยสูง</button>
+              <button class="sort-btn ${activeSortOrder === 'snowball' ? 'active' : ''}" data-sort="snowball">ยอดน้อย</button>
+              <button class="sort-btn ${activeSortOrder === 'smart' ? 'active' : ''}" data-sort="smart">⚡ คุ้มค่าสุด</button>
+              <button class="sort-btn ${activeGrouping === 'payoffable' ? 'active' : ''}" data-sort="payoffable">โปะได้</button>
+              <button class="sort-btn ${activeGrouping === 'installment' ? 'active' : ''}" data-sort="installment">ดอกเบี้ยคงที่</button>
+            </div>
+          </div>
+          <div class="debt-sort-controls" style="width: 100%;">
+            <span class="label" style="display: block; margin-bottom: 8px;">ฟิลเตอร์ประเภท:</span>
+            <select class="form-select" id="debtFilter" style="width: 100%; padding: 8px;">
+                <option value="all">ทั้งหมด</option>
+                <option value="credit_card">💳 บัตรเครดิต</option>
+                <option value="personal_loan">🏦 สินเชื่อ</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div style="margin-left:auto;" class="debt-sort-controls">
-         <span class="label">ฟิลเตอร์:</span>
-         <select class="form-select" id="debtFilter" style="padding:4px 8px; font-size:var(--font-size-xs);">
-            <option value="all">ทั้งหมด</option>
-            <option value="credit_card">บัตรเครดิต</option>
-            <option value="personal_loan">สินเชื่อ</option>
-         </select>
-      </div>
-    </div>
+    </details>
 
     <!-- Debt List Container -->
     <div id="debtsContainer"></div>
@@ -1091,11 +1105,40 @@ async function refreshDebts() {
     d.paymentAmountForCalc = paymentForCalc;
 
     // 3. Real-world Reality (Today's Interest & Min)
-    const daysSinceLast = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
-    const newInterest = InterestEngine.dailyAccrual(balance, rate, daysSinceLast);
-    const accruedSinceLast = (d.accruedInterest || 0) + newInterest;
-    d.realTimeMin = InterestEngine.calculateMinPayment(balance + accruedSinceLast, d.type);
-    d.todayInterest = accruedSinceLast;
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const elapsedSeconds = (Date.now() - midnight.getTime()) / 1000;
+    
+    // daysBetween includes today as a full day. To get the true midnight baseline,
+    // we must subtract 1 day (if it's > 0) so we only count full days up to yesterday.
+    const rawDaysSince = InterestEngine.daysBetween(d.lastInterestDate, Utils.today());
+    const fullDaysUpToMidnight = Math.max(0, rawDaysSince - 1);
+    
+    let dailyInterest = 0;
+    let ratePerSecond = 0;
+    
+    if (d.interestType === 'fixed_rate') {
+      dailyInterest = (rate / 100 * d.principal) / 365;
+      ratePerSecond = dailyInterest / 86400;
+    } else {
+      dailyInterest = (balance * rate / 100) / 365;
+      ratePerSecond = dailyInterest / 86400;
+    }
+    
+    const dailyInterestVal = dailyInterest;
+    const ratePerSecondVal = ratePerSecond;
+    
+    const newInterestBase = dailyInterestVal * fullDaysUpToMidnight;
+    
+    // Base accrued exactly at midnight
+    const midnightBase = (d.accruedInterest || 0) + newInterestBase;
+    
+    // Total including seconds since midnight for initial render
+    const currentAccrued = midnightBase + (ratePerSecondVal * elapsedSeconds);
+    
+    d.interestMidnightBase = midnightBase;
+    d.todayInterest = currentAccrued;
+    d.realTimeMin = InterestEngine.calculateMinPayment(balance + currentAccrued, d.type);
 
     if (paymentForCalc > 0) {
       let result;
@@ -1292,8 +1335,9 @@ async function refreshDebts() {
                       data-debt-id="${d.id}"
                       data-rate="${d.annualRate}"
                       data-balance="${d.currentBalance}"
-                      data-accrued="${d.todayInterest || 0}"
-                      data-last-date="${d.lastInterestDate}"
+                      data-accrued-base="${d.interestMidnightBase || 0}"
+                      data-type="${d.interestType}"
+                      data-principal="${d.principal}"
                       style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(251, 146, 60, 0.12); border: 1px solid rgba(251, 146, 60, 0.25); border-radius: 20px; font-size: 11px; white-space: nowrap; flex-shrink: 0;">
                   <span style="font-size: 10px;">🔥</span>
                   <span class="live-interest-value" data-ticker-id="${d.id}" style="font-family: var(--font-mono, monospace); font-weight: 700; color: #fb923c; font-size: 11px; letter-spacing: -0.3px;">+${(d.todayInterest || 0).toFixed(2)}</span>
@@ -1406,46 +1450,51 @@ async function refreshDebts() {
     const totalYearlyInterest = totalDailyRate * 365;
 
     html += `
-    <div style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(251, 146, 60, 0.06) 0%, rgba(239, 68, 68, 0.03) 100%); border: 1px solid rgba(251, 146, 60, 0.15); border-radius: 12px; padding: 16px; position: relative; overflow: hidden;">
-      <div style="position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(251, 146, 60, 0.04), transparent); animation: interestSweep 4s ease-in-out infinite;"></div>
-      
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <span style="font-size: 20px;">🔥</span>
-        <div>
-          <div style="font-size: 14px; font-weight: 700; color: #fb923c;">ดอกเบี้ยกำลังวิ่ง (ทุกหนี้รวม)</div>
-          <div style="font-size: 11px; color: var(--text-tertiary); opacity: 0.7;">จาก ${activeForInterest.length} รายการที่มีดอกเบี้ย</div>
+    <details class="interest-summary-details" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(251, 146, 60, 0.06) 0%, rgba(239, 68, 68, 0.03) 100%); border: 1px solid rgba(251, 146, 60, 0.15); border-radius: 12px; overflow: hidden;">
+      <summary style="padding: 16px; cursor: pointer; list-style: none; display: block; outline: none; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">🔥</span>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 700; color: #fb923c; display: flex; align-items: center; gap: 6px;">
+              ดอกเบี้ยกำลังวิ่ง (ทุกหนี้รวม)
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5; transition: transform 0.3s ease;" class="details-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div style="font-size: 11px; color: var(--text-tertiary); opacity: 0.7;">จาก ${activeForInterest.length} รายการที่มีดอกเบี้ย</div>
+          </div>
+          <div style="text-align: right;">
+            <div id="totalLiveInterest" style="font-size: 20px; font-weight: 800; color: #fb923c; font-family: var(--font-mono, monospace); text-shadow: 0 0 12px rgba(251, 146, 60, 0.3); letter-spacing: -0.5px;">+${totalAccruedNow.toFixed(2)} ฿</div>
+            <div style="font-size: 10px; color: var(--text-tertiary); opacity: 0.6;">สะสม ณ ขณะนี้</div>
+          </div>
         </div>
-        <div style="margin-left: auto; text-align: right;">
-          <div id="totalLiveInterest" style="font-size: 20px; font-weight: 800; color: #fb923c; font-family: var(--font-mono, monospace); text-shadow: 0 0 12px rgba(251, 146, 60, 0.3); letter-spacing: -0.5px;">+${totalAccruedNow.toFixed(2)} ฿</div>
-          <div style="font-size: 10px; color: var(--text-tertiary); opacity: 0.6;">สะสม ณ ขณะนี้</div>
-        </div>
-      </div>
+      </summary>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px;">
-        <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อวัน</div>
-          <div style="font-size: 14px; font-weight: 700; color: #fb923c; font-family: var(--font-mono, monospace);">+${totalDailyRate.toFixed(2)} ฿</div>
+      <div style="padding: 0 16px 16px 16px; border-top: 1px dashed rgba(251, 146, 60, 0.1);">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; margin-bottom: 14px;">
+          <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อวัน</div>
+            <div style="font-size: 14px; font-weight: 700; color: #fb923c; font-family: var(--font-mono, monospace);">+${totalDailyRate.toFixed(2)} ฿</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อเดือน</div>
+            <div style="font-size: 14px; font-weight: 700; color: #f87171; font-family: var(--font-mono, monospace);">+${totalMonthlyInterest.toFixed(0)} ฿</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อปี</div>
+            <div style="font-size: 14px; font-weight: 700; color: #ef4444; font-family: var(--font-mono, monospace);">+${Utils.formatNumber(totalYearlyInterest)} ฿</div>
+          </div>
         </div>
-        <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อเดือน</div>
-          <div style="font-size: 14px; font-weight: 700; color: #f87171; font-family: var(--font-mono, monospace);">+${totalMonthlyInterest.toFixed(0)} ฿</div>
-        </div>
-        <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 10px; text-align: center;">
-          <div style="font-size: 10px; color: var(--text-tertiary); margin-bottom: 4px;">ต่อปี</div>
-          <div style="font-size: 14px; font-weight: 700; color: #ef4444; font-family: var(--font-mono, monospace);">+${Utils.formatNumber(totalYearlyInterest)} ฿</div>
-        </div>
-      </div>
 
-      <details style="border-top: 1px dashed rgba(251, 146, 60, 0.15); padding-top: 10px;">
-        <summary style="cursor: pointer; font-size: 11px; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 4px; list-style: none;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          รายละเอียดแยกตามหนี้
-        </summary>
-        <div style="margin-top: 8px;">
-          ${perDebtRows}
-        </div>
-      </details>
-    </div>`;
+        <details style="border-top: 1px dashed rgba(251, 146, 60, 0.15); padding-top: 10px;">
+          <summary style="cursor: pointer; font-size: 11px; color: var(--text-tertiary); font-weight: 600; display: flex; align-items: center; gap: 4px; list-style: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            รายละเอียดแยกตามหนี้
+          </summary>
+          <div style="margin-top: 8px;">
+            ${perDebtRows}
+          </div>
+        </details>
+      </div>
+    </details>`;
   }
 
   html += renderGroup('priority', groups.priority);
@@ -1539,7 +1588,10 @@ async function refreshDebts() {
 // === Live Interest Ticker ===
 function startInterestTicker() {
   stopInterestTicker();
-  tickerStartTime = Date.now();
+  
+  // Get midnight of current day
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   interestTickerInterval = setInterval(() => {
     const chips = document.querySelectorAll('.live-interest-chip');
@@ -1548,18 +1600,28 @@ function startInterestTicker() {
       return;
     }
 
-    const elapsedSeconds = (Date.now() - tickerStartTime) / 1000;
+    // Calculate elapsed seconds since midnight
+    const elapsedSeconds = (Date.now() - midnight.getTime()) / 1000;
     let totalLiveInterest = 0;
 
     chips.forEach(chip => {
       const debtId = chip.dataset.debtId;
       const rate = parseFloat(chip.dataset.rate) || 0;
       const balance = parseFloat(chip.dataset.balance) || 0;
-      const accrued = parseFloat(chip.dataset.accrued) || 0;
+      const principal = parseFloat(chip.dataset.principal) || balance;
+      const accruedBase = parseFloat(chip.dataset.accruedBase) || 0; // Midnight baseline
+      const isFixed = chip.dataset.type === 'fixed_rate';
 
-      // Interest per second = balance × (rate / 100 / 365 / 86400)
-      const perSecond = balance * (rate / 100 / 365 / 86400);
-      const liveInterest = accrued + (perSecond * elapsedSeconds);
+      // Interest per second calculation matched with backend
+      let dailyInterest;
+      if (isFixed) {
+        dailyInterest = (rate / 100 * principal) / 365;
+      } else {
+        dailyInterest = (balance * rate / 100) / 365;
+      }
+      
+      const perSecond = dailyInterest / 86400;
+      const liveInterest = accruedBase + (perSecond * elapsedSeconds);
       totalLiveInterest += liveInterest;
 
       // Update the inline chip
@@ -1583,7 +1645,7 @@ function startInterestTicker() {
     if (totalEl) {
       totalEl.textContent = `+${totalLiveInterest.toFixed(2)} ฿`;
     }
-  }, 60000);
+  }, 1000); // Tick every second for true real-time feel
 }
 
 function stopInterestTicker() {
@@ -1622,7 +1684,12 @@ function setupModalWhatIfSimulation(debt, existingPayment) {
 
   // Use the same interest-adjusted balance logic for the simulator's mandatory minimum
   const daysSinceLast = InterestEngine.daysBetween(debt.lastInterestDate, Utils.today());
-  const newInterest = InterestEngine.dailyAccrual(debt.currentBalance, debt.annualRate, daysSinceLast);
+  let newInterest = 0;
+  if (debt.interestType === 'fixed_rate') {
+    newInterest = (debt.annualRate / 100 * debt.principal) / 365 * daysSinceLast;
+  } else {
+    newInterest = InterestEngine.dailyAccrual(debt.currentBalance, debt.annualRate, daysSinceLast);
+  }
   const totalBalanceForMin = debt.currentBalance + (debt.accruedInterest || 0) + newInterest;
 
   // Baseline for comparison (your established habit/goal)

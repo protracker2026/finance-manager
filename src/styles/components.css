@@ -16,365 +16,46 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.data-table thead th {
-    padding: var(--space-sm) var(--space-md);
-    text-align: left;
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap;
+/* === Digital POS Screen Style === */
+#transactionsTable {
+    width: 100%;
+    margin: 0 auto var(--space-lg);
+    position: relative;
+    overflow: hidden;
 }
 
-.data-table tbody td {
-    padding: var(--space-md);
-    font-size: var(--font-size-sm);
-    border-bottom: 1px solid rgba(42, 42, 68, 0.5);
-    vertical-align: middle;
+.pos-receipt-panel {
+    background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%);
+    padding: 12px 0;
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        inset 0 0 100px rgba(59, 130, 246, 0.05);
+    font-family: 'JetBrains Mono', 'Inconsolata', monospace;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-image: 
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+        linear-gradient(90deg, rgba(59, 130, 246, 0.03), rgba(0, 255, 0, 0.01), rgba(59, 130, 246, 0.03));
+    background-size: 100% 4px, 4px 100%;
 }
 
-.data-table tbody tr {
-    transition: background var(--transition-fast);
-    cursor: pointer;
+.pos-item {
+    transition: all 0.2s ease;
 }
 
-.data-table tbody tr:hover {
-    background: var(--bg-card-hover);
+.pos-item:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
-.data-table .amount {
-    font-family: var(--font-mono);
-    font-weight: var(--font-weight-semibold);
-}
-
-.data-table .amount.income {
-    color: var(--text-success);
-}
-
-.data-table .amount.expense {
-    color: var(--text-danger);
-}
-
-/* === Mobile Table Card View === */
-.mobile-edit-overlay {
-    display: none;
+.pos-item:active {
+    background: rgba(59, 130, 246, 0.1);
+    transform: scale(0.995);
 }
 
 @media (max-width: 1024px) {
-
-    .data-table,
-    .data-table tbody,
-    .data-table tr {
-        display: flex;
-        flex-wrap: wrap;
-        width: 100%;
-        position: relative;
-        /* For absolute positioning of edit overlay */
-    }
-
-    .data-table thead {
-        display: none;
-    }
-
-    /* Digital POS Screen Style */
-    .data-table {
-        background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%);
-        padding: 24px 20px;
-        box-shadow:
-            0 20px 50px rgba(0, 0, 0, 0.5),
-            inset 0 0 100px rgba(59, 130, 246, 0.05);
-        /* Subtle blue glow */
-        font-family: 'JetBrains Mono', 'Inconsolata', monospace;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-
-        /* Soft Digital Screen Scanlines & Flare */
-        background-image:
-            linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.03), rgba(0, 255, 0, 0.01), rgba(59, 130, 246, 0.03));
-        background-size: 100% 4px, 4px 100%;
-
-        /* Slightly wider for better balance */
-        width: 100%;
-        margin: 0 auto var(--space-lg);
-        position: relative;
-        overflow: hidden;
-
-        /* Remove paper mask */
-        -webkit-mask: none;
-        mask: none;
-    }
-
-    .data-table::before {
-        content: "SYS • READY";
-        display: block;
-        font-size: 10px;
-        font-weight: bold;
-        color: #4ade80;
-        /* Neon Green */
-        margin-bottom: 20px;
-        text-align: left;
-        letter-spacing: 2px;
-        text-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
-        max-width: 120px;
-        position: relative;
-        z-index: 5;
-    }
-
-    /* Green Status Dot - Positioned next to left-aligned text */
-    .data-table::after {
-        content: "";
-        position: absolute;
-        top: 31px; /* Aligned with text */
-        left: 105px;
-        width: 8px;
-        height: 8px;
-        background: #4ade80;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #4ade80;
-        display: block;
-        animation: pLight 2s infinite;
-        z-index: 5;
-    }
-
-    .data-table {
-        padding-top: 24px;
-        /* Reset padding because buttons moved to header */
-        margin-top: 5px;
-    }
-
-    .data-table::after {
-        top: 31px;
-    }
-
-    .print-group-tablet {
-        display: flex !important;
-        margin-left: auto;
-        margin-right: 10px;
-    }
-
-    .print-group-mobile {
-        display: none !important;
-    }
-
-    @media (max-width: 600px) {
-        .print-group-tablet {
-            display: flex !important;
-            margin-left: 0;
-            margin-right: 0;
-            width: 100%;
-            /* Full width on mobile to stack or sit nicely */
-            justify-content: center;
-            margin-bottom: 5px;
-            order: 3;
-            /* Push below the title and add button if wrapping */
-        }
-
-        .print-group-mobile {
-            display: none !important;
-        }
-
-        .data-table {
-            padding-top: 24px;
-            /* Same clean look as iPad */
-        }
-
-        .data-table::before {
-            content: "POS";
-            margin-bottom: 10px;
-        }
-
-        .data-table::after {
-            left: 55px;
-            top: 31px;
-            /* Align with POS text */
-        }
-    }
-
-    /* List Items */
-    .data-table tr {
-        background: rgba(255, 255, 255, 0.03);
-        color: #e2e8f0;
-        margin-bottom: 8px;
-        padding: 10px;
-        border-radius: 6px;
-        border-left: 2px solid transparent;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        font-size: 13px;
-        line-height: 1.3;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .data-table tbody tr:active {
-        background: rgba(59, 130, 246, 0.1);
-        transform: scale(0.98);
-        border-left-color: #3b82f6;
-    }
-
-    /* Layout: [1] [Item Name .........] [Price] */
-
-    /* Real 'Qty' column using data attribute */
-    .data-table tr::before {
-        content: attr(data-qty);
-        width: 25px;
-        color: #94a3b8;
-        /* Brighter gray */
-        flex-shrink: 0;
-        text-align: center;
-        margin-right: 5px;
-    }
-
-    .data-table td {
-        padding: 0 !important;
-        border: none !important;
-    }
-
-    .data-table td[data-label="หมวดหมู่"] {
-        order: 1;
-        flex-grow: 1;
-        font-weight: 600;
-        color: #ffffff;
-        /* Contrast! */
-        text-transform: none;
-        white-space: nowrap;
-        overflow: hidden;
-        margin-right: 5px;
-        display: flex;
-        align-items: baseline;
-    }
-
-    /* Leader Lines */
-    .data-table td[data-label="หมวดหมู่"]::after {
-        content: "";
-        flex-grow: 1;
-        margin-left: 8px;
-        border-bottom: 1px dotted rgba(255, 255, 255, 0.15);
-        height: 1px;
-    }
-
-    .data-table td[data-label="จำนวน"],
-    .data-table td.amount {
-        order: 2;
-        width: auto;
-        min-width: 80px;
-        text-align: right;
-        font-weight: 700;
-        color: #e2e8f0 !important;
-        /* Softened White */
-        font-family: 'Space Mono', monospace;
-    }
-
-    /* Hide other columns to keep it clean */
-    .data-table td[data-label="วันที่"],
-    .data-table td[data-label="ประเภท"],
-    .data-table td[data-label="หมายเหตุ"],
-    .data-table td[data-label="จัดการ"] {
-        display: none;
-    }
-
-    /* Edit Mode Active */
-    #transactionsTable.edit-mode .data-table td[data-label="จัดการ"] {
-        display: flex !important;
-        width: 100%;
-        justify-content: flex-end;
-        gap: 10px;
-        padding-top: 10px;
-        margin-top: 5px;
-        border-top: 1px dashed #ccc;
-    }
-
-    /* Invisible Edit Overlay at Top Right */
-    .mobile-edit-overlay {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 70px;
-        /* Wider hit area */
-        height: 100%;
-        /* Cover full row height */
-        z-index: 100;
-        /* Ensure on top */
-        cursor: pointer;
-        background: transparent;
-        /* Ensure touches register */
-        display: block;
-        touch-action: manipulation;
-    }
-
-    /* Footer Section */
-    .data-table tr.receipt-footer {
-        display: flex !important;
-        flex-direction: column;
-        margin-top: 20px;
-        padding: 15px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        align-items: stretch;
-    }
-
-    .data-table tr.receipt-footer td {
-        display: flex !important;
-        justify-content: space-between;
-        width: 100% !important;
-        font-weight: normal;
-        color: #94a3b8 !important;
-        padding: 4px 0 !important;
-        font-size: 13px;
-        border: none !important;
-    }
-
-    /* Bold Total */
-    .data-table tr.receipt-footer td:last-child {
-        font-weight: 900;
-        font-size: 18px;
-        margin-top: 8px;
-        color: #e2e8f0 !important;
-        /* Softened White */
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-        letter-spacing: 1px;
-        font-family: 'Space Mono', monospace;
-    }
-
-    /* Decoration Footer */
-    /* Decoration Footer - Removed per user request */
-    .data-table::after {
-        display: none;
-    }
-
-    /* Override normal tr styling for footer */
-    .data-table tr:last-child {
-        border-bottom: none;
-    }
-
-    .data-table td[data-label="จัดการ"] .btn-sm {
-        background: #eee;
-        color: #333;
-        border: 1px solid #ccc;
-    }
-
-    .data-table td[data-label="หมายเหตุ"] {
-        order: 5;
-        width: 100%;
-        font-size: 0.85em;
-        color: #555 !important;
-        font-style: italic;
-        text-align: center;
-        margin-top: 4px;
-    }
-
-    /* Hide labels on card view as we use specific layout */
-    .data-table td::before {
-        display: none;
-    }
-
-    /* Text color for receipt amounts is handled by .data-table td.amount above */
+    /* Existing mobile overrides if any */
 }
+
 
 /* === Badges === */
 .badge {

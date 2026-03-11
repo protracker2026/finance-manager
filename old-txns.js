@@ -62,9 +62,9 @@ export async function renderTransactionsPage(container) {
       <div style="display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 15px 15px 15px;">
         <div style="height: 1px; background: var(--border-color); margin: 0 -15px 5px -15px;"></div>
         <div class="date-range-group" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0;">
-          <input type="date" class="date-no-border" id="filterStartDate" value="${start}" style="text-align: center; flex: 1;" />
+          <input type="date" class="date-no-border" id="filterStartDate" value="${start}" style="text-align: center; flex: 1;">
           <span style="padding: 0 10px; color: var(--text-tertiary); font-weight: bold;">-</span>
-          <input type="date" class="date-no-border" id="filterEndDate" value="${end}" style="text-align: center; flex: 1;" />
+          <input type="date" class="date-no-border" id="filterEndDate" value="${end}" style="text-align: center; flex: 1;">
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <select class="form-select" id="filterType" style="width: 100%;">
@@ -79,18 +79,37 @@ export async function renderTransactionsPage(container) {
         </div>
         <div class="search-input" style="width: 100%;">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" class="form-input" id="filterSearch" placeholder="ค้นหา..." style="padding-left:36px; width: 100%;" />
+          <input type="text" class="form-input" id="filterSearch" placeholder="ค้นหา..." style="padding-left:36px; width: 100%;">
         </div>
       </div>
     </details>
 
-    <!-- POS Panel Wrapper -->
-    <div class="pos-receipt-panel-wrapper" style="margin-top: 20px;">
+    <!-- Table -->
+    <!-- Collapsible Transaction List -->
+    <details class="txn-list-details" id="txnListDetails" open>
+      <summary class="btn" style="width:100%; display:flex; flex-wrap: wrap; justify-content:space-between; align-items:center; margin-bottom:var(--space-md); padding: 14px 16px; background: rgba(255,255,255,0.03); border-radius: 16px; cursor: default; gap: 12px;">
+        <div style="display:flex; align-items:center; gap:8px; cursor: pointer;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6; color: var(--accent-primary);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <span style="font-weight:700; font-size: 15px; color: var(--text-primary); white-space: nowrap;">📋 รายการธุรกรรม</span>
+        </div>
+        <div class="print-group-tablet" style="display:none; align-items:center; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+          <button class="btn" id="printReceiptBtn" style="padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap; font-family: var(--font-family);" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            ใบเสร็จ
+          </button>
+          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 0 2px; height: 14px;"></div>
+          <button class="btn" id="printReceiptOverviewBtn" style="padding: 6px 10px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.12); border: none; color: #60a5fa; display: flex; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap; font-family: var(--font-family);" onmouseover="this.style.background='rgba(59, 130, 246, 0.22)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.12)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            ภาพรวม
+          </button>
+        </div>
+        <button class="btn btn-primary" id="addTransactionBtn" style="padding: 8px 20px; font-size: 13.5px; font-weight: 700; border-radius: 10px; background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(74, 222, 128, 0.15);" onmouseover="this.style.background='rgba(74, 222, 128, 0.25)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(74, 222, 128, 0.15)'; this.style.transform='translateY(0)'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          เพิ่มรายการ
+        </button>
+      </summary>
       <div id="transactionsTable"></div>
-    </div>
-    <div style="padding: 0 16px 20px; color: var(--text-tertiary); font-size: var(--font-size-xs); text-align: center; opacity: 0.7; font-family: var(--font-mono);">
-      TERMINAL READY • SESSION ACTIVE
-    </div>
+    </details>
 
     <!-- Modal -->
     <div class="modal-overlay" id="txnModal" style="z-index: 1100;">
@@ -102,7 +121,7 @@ export async function renderTransactionsPage(container) {
 
         <div class="modal-body" style="padding: 0 25px 30px;">
           <form id="txnForm">
-            <input type="hidden" id="txnId" />
+            <input type="hidden" id="txnId">
             <div class="tabs" id="txnTypeTabs" style="margin-bottom: 20px;">
               <button type="button" class="tab-btn active" data-type="expense">รายจ่าย</button>
               <button type="button" class="tab-btn" data-type="income">รายรับ</button>
@@ -129,7 +148,7 @@ export async function renderTransactionsPage(container) {
               <div class="smart-add-inner">
                 <div class="voice-typing-container">
                   <div class="magic-input-wrapper">
-                    <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." autocomplete="off" style="background: transparent !important; border: none !important; color: white !important;" />
+                    <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." autocomplete="off" style="background: transparent !important; border: none !important; color: white !important;">
                     <button type="button" id="aiQuickSendBtn" class="btn-ai-action btn-ai-check" title="Quick Save">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ai-sparkle-icon"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                     </button>
@@ -147,29 +166,29 @@ export async function renderTransactionsPage(container) {
 
             <div id="manualEntrySection" class="entry-section">
               <div class="manual-entry-card">
-                <input type="hidden" id="txnType" value="expense" />
+                <input type="hidden" id="txnType" value="expense">
                 <div class="form-group">
                     <label class="form-label">Description</label>
-                    <input type="text" class="form-input" id="txnNote" placeholder="Enter transaction note..." />
+                    <input type="text" class="form-input" id="txnNote" placeholder="Enter transaction note...">
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                       <label class="form-label">Quantity</label>
-                      <input type="text" class="form-input" id="txnQuantity" value="1" inputmode="decimal" />
+                      <input type="text" class="form-input" id="txnQuantity" value="1" inputmode="decimal">
                   </div>
                   <div class="form-group">
                       <label class="form-label">Unit Price</label>
-                      <input type="text" class="form-input" id="txnUnitPrice" placeholder="0.00" inputmode="decimal" />
+                      <input type="text" class="form-input" id="txnUnitPrice" placeholder="0.00" inputmode="decimal">
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Total Amount</label>
-                    <input type="text" class="form-input" id="txnAmount" required style="font-weight: 800; color: var(--text-primary);" inputmode="decimal" />
+                    <input type="text" class="form-input" id="txnAmount" required style="font-weight: 800; color: var(--text-primary);" inputmode="decimal">
                   </div>
                   <div class="form-group">
                     <label class="form-label">Date</label>
-                    <input type="text" class="form-input" id="txnDate" required />
+                    <input type="text" class="form-input" id="txnDate" required>
                   </div>
                 </div>
                 <div class="form-group">
@@ -243,8 +262,8 @@ export async function renderTransactionsPage(container) {
           </div>
           
           <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-             <input type="text" id="newCatIconi" class="form-input" placeholder="🍔" style="width: 50px; text-align: center;" />
-             <input type="text" id="newCatName" class="form-input" placeholder="ชื่อหมวดหมู่ใหม่..." style="flex: 1;" />
+             <input type="text" id="newCatIconi" class="form-input" placeholder="🍔" style="width: 50px; text-align: center;">
+             <input type="text" id="newCatName" class="form-input" placeholder="ชื่อหมวดหมู่ใหม่..." style="flex: 1;">
              <button class="btn btn-primary" id="addNewCatBtn">+</button>
           </div>
 
@@ -306,7 +325,7 @@ export async function renderTransactionsPage(container) {
         <div class="modal-body" style="flex:1; overflow-y:auto; padding:0; background: var(--bg-secondary);">
           <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; position: sticky; top: 0; background: var(--bg-secondary); z-index: 10;">
              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                 <input type="checkbox" id="bulkSelectAllCheckbox" style="width: 18px; height: 18px;" />
+                 <input type="checkbox" id="bulkSelectAllCheckbox" style="width: 18px; height: 18px;">
                  <span style="font-weight: 500;">เลือกทั้งหมด</span>
              </label>
              <span id="bulkSelectedCount" style="color: var(--text-tertiary);">เลือก 0 รายการ</span>
@@ -405,7 +424,7 @@ function setupTransactionEvents() {
   document.addEventListener('click', (e) => {
     const target = e.target;
 
-    if (target.id === 'addTransactionBtn' || target.closest('#addTransactionBtn') || target.id === 'posAddTxnBtn' || target.closest('#posAddTxnBtn')) {
+    if (target.id === 'addTransactionBtn' || target.closest('#addTransactionBtn')) {
       e.preventDefault();
       e.stopPropagation();
       openTxnModal();
@@ -416,7 +435,7 @@ function setupTransactionEvents() {
       e.stopPropagation();
       const btn = target.id === 'refreshTransactionsBtn' ? target : target.closest('#refreshTransactionsBtn');
       btn.classList.add('refresh-btn-spinning');
-
+      
       refreshTransactions().then(() => {
         setTimeout(() => btn.classList.remove('refresh-btn-spinning'), 800);
         Utils.showToast('รีเฟรชข้อมูลสำเร็จ');
@@ -632,7 +651,7 @@ function setupTransactionEvents() {
           qtyRow.style.display = 'none';
         }
       }
-
+      
       if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
 
       // Fill the form FIRST, then show receipt
@@ -2328,195 +2347,195 @@ window.showPrintReceiptModal = function (options = {}) {
 
   const startModalSequence = () => {
     requestAnimationFrame(() => {
-      overlay.classList.add('visible');
+    overlay.classList.add('visible');
 
-      // Auto-scroll overlay to show content
+    // Auto-scroll overlay to show content
+    if (skipAnimation) {
+      overlay.scrollTop = 100;
+    }
+
+    setTimeout(() => {
+      const paper = document.getElementById('receiptPaper');
+      if (!paper) return;
+
       if (skipAnimation) {
-        overlay.scrollTop = 100;
+        paper.style.transition = 'none';
+        paper.style.transform = 'translateY(40px)';
+        paper.classList.add('showcase');
+
+        const printer = document.querySelector('.printer-body');
+        if (printer) {
+          printer.style.display = 'none';
+        }
+
+        const wrapper = paper.parentElement;
+        if (wrapper) {
+          wrapper.style.overflow = 'visible';
+          wrapper.style.marginTop = '20px'; // Add some space since printer is gone
+        }
+
+        const light = document.getElementById('printerLight');
+        if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+
+        overlay.scrollTo({ top: 100, behavior: 'instant' });
+        return;
       }
 
-      setTimeout(() => {
-        const paper = document.getElementById('receiptPaper');
-        if (!paper) return;
+      let progress = 0;
+      let targetProgress = 0;
+      let stateVelocity = 0;
+      let timeUntilNextState = 0;
+      let lastTime = null;
+      let finished = false;
+      let isPaused = false;
+      window._isPrintCancelled = false;
+      let soundStarted = false;
 
-        if (skipAnimation) {
-          paper.style.transition = 'none';
-          paper.style.transform = 'translateY(40px)';
-          paper.classList.add('showcase');
+      const pauseBtn = document.getElementById('pausePrintBtn');
+      if (pauseBtn && !skipAnimation) {
+         pauseBtn.style.display = 'block';
+         pauseBtn.addEventListener('click', () => {
+             isPaused = !isPaused;
+             if (isPaused) {
+                 pauseBtn.innerHTML = '▶ พิมพ์ต่อ';
+                 PrinterSound.stopPrint();
+                 const light = document.getElementById('printerLight');
+                 if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; }
+             } else {
+                 pauseBtn.innerHTML = '⏸ พักการพิมพ์';
+                 lastTime = window.performance.now(); // reset timer
+                 PrinterSound.playPrint();
+                 const light = document.getElementById('printerLight');
+                 if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+             }
+         });
+      }
 
-          const printer = document.querySelector('.printer-body');
-          if (printer) {
-            printer.style.display = 'none';
-          }
+      paper.style.transition = 'none';
+      paper.style.transform = 'translateY(-100%)';
 
-          const wrapper = paper.parentElement;
-          if (wrapper) {
-            wrapper.style.overflow = 'visible';
-            wrapper.style.marginTop = '20px'; // Add some space since printer is gone
-          }
+      const totalItems = txns.length || 1;
+      const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
+      const avgStep = 100 / baseSteps;
+      const MIN_STEP = 0.5;
 
-          const light = document.getElementById('printerLight');
-          if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+      function printTick(timestamp) {
+        if (finished || window._isPrintCancelled) return; 
 
-          overlay.scrollTo({ top: 100, behavior: 'instant' });
-          return;
-        }
+        if (!lastTime) lastTime = timestamp;
+        const delta = timestamp - lastTime;
+        lastTime = timestamp;
 
-        let progress = 0;
-        let targetProgress = 0;
-        let stateVelocity = 0;
-        let timeUntilNextState = 0;
-        let lastTime = null;
-        let finished = false;
-        let isPaused = false;
-        window._isPrintCancelled = false;
-        let soundStarted = false;
-
-        const pauseBtn = document.getElementById('pausePrintBtn');
-        if (pauseBtn && !skipAnimation) {
-          pauseBtn.style.display = 'block';
-          pauseBtn.addEventListener('click', () => {
-            isPaused = !isPaused;
-            if (isPaused) {
-              pauseBtn.innerHTML = '▶ พิมพ์ต่อ';
-              PrinterSound.stopPrint();
-              const light = document.getElementById('printerLight');
-              if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; }
-            } else {
-              pauseBtn.innerHTML = '⏸ พักการพิมพ์';
-              lastTime = window.performance.now(); // reset timer
-              PrinterSound.playPrint();
-              const light = document.getElementById('printerLight');
-              if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
-            }
-          });
-        }
-
-        paper.style.transition = 'none';
-        paper.style.transform = 'translateY(-100%)';
-
-        const totalItems = txns.length || 1;
-        const baseSteps = Math.min(150, 40 + (totalItems * 2.2));
-        const avgStep = 100 / baseSteps;
-        const MIN_STEP = 0.5;
-
-        function printTick(timestamp) {
-          if (finished || window._isPrintCancelled) return;
-
-          if (!lastTime) lastTime = timestamp;
-          const delta = timestamp - lastTime;
-          lastTime = timestamp;
-
-          if (isPaused) {
+        if (isPaused) {
             requestAnimationFrame(printTick);
             return;
-          }
-
-          if (!soundStarted && timestamp > 0) {
-            soundStarted = true;
-            PrinterSound.playPrint();
-          }
-
-          if (progress >= 100) {
-            finished = true; // Mark as done so this block only runs once
-            PrinterSound.stopAll(); // Immediately kill print loop before tear
-            paper.style.transition = 'transform 0.2s ease-out';
-            paper.style.transform = 'translateY(0)';
-            const sb = document.getElementById('printerSoundBar');
-            const light = document.getElementById('printerLight');
-
-            if (sb) Array.from(sb.children).forEach(s => { s.style.animation = 'none'; s.style.height = '3px'; });
-            if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; light.style.animation = 'none'; }
-
-            // Show export actions
-            if (pauseBtn) pauseBtn.style.display = 'none';
-            document.getElementById('savePrintBtn').style.display = '';
-            document.getElementById('exportImageBtn').style.display = '';
-
-            // Trigger "Tear and Showcase"
-            window._pendingTearTimeout = setTimeout(() => {
-              if (window._isPrintCancelled) return; // Prevent tear sound if cancelled
-              PrinterSound.playTear();
-              if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
-              paper.style.transition = 'none';
-              paper.classList.add('tearing');
-
-              // Fade out the printer body during tear
-              const printer = document.querySelector('.printer-body');
-              if (printer) printer.classList.add('fade-out');
-
-              // Allow full visibility of the paper once it's independent
-              const wrapper = paper.parentElement;
-              if (wrapper) wrapper.style.overflow = 'visible';
-
-              window._pendingShowcaseTimeout = setTimeout(() => {
-                if (window._isPrintCancelled) return;
-                if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
-                paper.classList.add('showcase');
-
-                // Smoothly scroll up slightly to frame the independent receipt better
-                overlay.scrollTo({ top: 150, behavior: 'smooth' });
-
-                // Subtle "shake" or entry pop
-                if (navigator.vibrate) navigator.vibrate([20, 40]);
-              }, 400);
-            }, 800);
-            return; // Stop the rAF loop here
-          }
-
-          timeUntilNextState -= delta;
-          if (timeUntilNextState <= 0) {
-            const mood = Math.random();
-            let step, delay, isInstant = false;
-
-            if (progress > 85) {
-              // Fast finish near the end (Paper just rolls out smoothly)
-              step = Math.max(MIN_STEP * 3, avgStep * 2.5);
-              delay = 20 + Math.random() * 15;
-            } else if (mood < 0.65) {
-              // 65% Smooth printing
-              step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
-              delay = 50 + Math.random() * 45;
-            } else if (mood < 0.75) {
-              // 10% Dead Pause (Stuck for a moment)
-              step = 0;
-              delay = 180 + Math.random() * 120;
-            } else if (mood < 0.90) {
-              // 15% Heavy Jerky (Processing dense text - snaps mechanically)
-              step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
-              delay = 100 + Math.random() * 50;
-              isInstant = true; // Instantly jump paper down instead of sliding
-            } else {
-              // 10% Fast Stutter (Catching up)
-              step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
-              delay = 30 + Math.random() * 20;
-            }
-
-            timeUntilNextState = delay;
-            targetProgress = Math.min(100, targetProgress + step);
-
-            if (isInstant) {
-              progress = targetProgress;
-              stateVelocity = 0;
-            } else if (delay > 0) {
-              stateVelocity = step / delay;
-            } else {
-              stateVelocity = 0;
-            }
-          }
-
-          if (progress < targetProgress && stateVelocity > 0) {
-            progress += stateVelocity * delta;
-            if (progress > targetProgress) progress = targetProgress;
-          }
-
-          paper.style.transform = `translateY(${-(100 - progress)}%)`;
-          requestAnimationFrame(printTick);
         }
 
+        if (!soundStarted && timestamp > 0) {
+            soundStarted = true;
+            PrinterSound.playPrint();
+        }
+
+        if (progress >= 100) {
+          finished = true; // Mark as done so this block only runs once
+          PrinterSound.stopAll(); // Immediately kill print loop before tear
+          paper.style.transition = 'transform 0.2s ease-out';
+          paper.style.transform = 'translateY(0)';
+          const sb = document.getElementById('printerSoundBar');
+          const light = document.getElementById('printerLight');
+
+          if (sb) Array.from(sb.children).forEach(s => { s.style.animation = 'none'; s.style.height = '3px'; });
+          if (light) { light.style.background = '#f59e0b'; light.style.boxShadow = '0 0 7px #f59e0b'; light.style.animation = 'none'; }
+
+          // Show export actions
+          if (pauseBtn) pauseBtn.style.display = 'none';
+          document.getElementById('savePrintBtn').style.display = '';
+          document.getElementById('exportImageBtn').style.display = '';
+
+          // Trigger "Tear and Showcase"
+          window._pendingTearTimeout = setTimeout(() => {
+            if (window._isPrintCancelled) return; // Prevent tear sound if cancelled
+            PrinterSound.playTear();
+            if (light) { light.style.background = '#3b82f6'; light.style.boxShadow = '0 0 10px #3b82f6'; }
+            paper.style.transition = 'none';
+            paper.classList.add('tearing');
+
+            // Fade out the printer body during tear
+            const printer = document.querySelector('.printer-body');
+            if (printer) printer.classList.add('fade-out');
+
+            // Allow full visibility of the paper once it's independent
+            const wrapper = paper.parentElement;
+            if (wrapper) wrapper.style.overflow = 'visible';
+
+            window._pendingShowcaseTimeout = setTimeout(() => {
+              if (window._isPrintCancelled) return;
+              if (light) { light.style.background = '#22c55e'; light.style.boxShadow = '0 0 7px #22c55e'; }
+              paper.classList.add('showcase');
+
+              // Smoothly scroll up slightly to frame the independent receipt better
+              overlay.scrollTo({ top: 150, behavior: 'smooth' });
+
+              // Subtle "shake" or entry pop
+              if (navigator.vibrate) navigator.vibrate([20, 40]);
+            }, 400);
+          }, 800);
+          return; // Stop the rAF loop here
+        }
+
+        timeUntilNextState -= delta;
+        if (timeUntilNextState <= 0) {
+          const mood = Math.random();
+          let step, delay, isInstant = false;
+
+          if (progress > 85) {
+            // Fast finish near the end (Paper just rolls out smoothly)
+            step = Math.max(MIN_STEP * 3, avgStep * 2.5);
+            delay = 20 + Math.random() * 15;
+          } else if (mood < 0.65) {
+            // 65% Smooth printing
+            step = Math.max(MIN_STEP, avgStep * (0.9 + Math.random() * 0.3));
+            delay = 50 + Math.random() * 45;
+          } else if (mood < 0.75) {
+            // 10% Dead Pause (Stuck for a moment)
+            step = 0;
+            delay = 180 + Math.random() * 120;
+          } else if (mood < 0.90) {
+            // 15% Heavy Jerky (Processing dense text - snaps mechanically)
+            step = Math.max(MIN_STEP, avgStep * (0.4 + Math.random() * 0.3));
+            delay = 100 + Math.random() * 50;
+            isInstant = true; // Instantly jump paper down instead of sliding
+          } else {
+            // 10% Fast Stutter (Catching up)
+            step = Math.max(MIN_STEP, avgStep * (1.4 + Math.random() * 0.5));
+            delay = 30 + Math.random() * 20;
+          }
+
+          timeUntilNextState = delay;
+          targetProgress = Math.min(100, targetProgress + step);
+
+          if (isInstant) {
+            progress = targetProgress;
+            stateVelocity = 0;
+          } else if (delay > 0) {
+            stateVelocity = step / delay;
+          } else {
+            stateVelocity = 0;
+          }
+        }
+
+        if (progress < targetProgress && stateVelocity > 0) {
+          progress += stateVelocity * delta;
+          if (progress > targetProgress) progress = targetProgress;
+        }
+
+        paper.style.transform = `translateY(${-(100 - progress)}%)`;
         requestAnimationFrame(printTick);
-      }, 300);
-    });
+      }
+
+      requestAnimationFrame(printTick);
+    }, 300);
+  });
   };
 
   if (!skipAnimation) {
@@ -2529,7 +2548,7 @@ window.showPrintReceiptModal = function (options = {}) {
     // Kill ALL sounds immediately (print loop + tear)
     window._isPrintCancelled = true;
     PrinterSound.stopAll();
-
+    
     // Clear scheduled callbacks to prevent ghost sounds
     if (window._pendingTearTimeout) clearTimeout(window._pendingTearTimeout);
     if (window._pendingShowcaseTimeout) clearTimeout(window._pendingShowcaseTimeout);
@@ -2818,63 +2837,52 @@ async function refreshTransactions() {
       window._groupedTxnData = groupedArr;
 
       tableEl.innerHTML = `
-      <div class="pos-receipt-panel" style="display: flex; flex-direction: column; background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 var(--space-lg); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-         <!-- Digital POS Info Header -->
-        <div style="padding: 18px 20px 4px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-family: var(--font-mono); font-size: 10px; color: #4ade80; letter-spacing: 2px; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); display: flex; align-items: center; gap: 8px;">
-            <span>SYS • READY</span>
-            <div style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; animation: pLight 2s infinite;"></div>
-          </div>
-          
-          <div class="print-group-mobile" style="display:flex; flex: 1; margin-left: 10px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); align-items: stretch;">
-            <button class="btn" id="printReceiptOverviewBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-              ภาพรวม
-            </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="printReceiptBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              ใบเสร็จ
-            </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="posAddTxnBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(34, 197, 94, 0.15); border: none; color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(34, 197, 94, 0.25)'" onmouseout="this.style.background='rgba(34, 197, 94, 0.15)'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              เพิ่ม
-            </button>
-          </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: flex-end; padding: 12px 18px 0;">
+          <!-- Segmented Print Buttons Group -->
+          <div class="print-group-mobile" style="display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            ใบเสร็จ
+          </button>
+          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+          <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            ภาพรวม
+          </button>
         </div>
-
-        <div class="transaction-list pos-receipt-items" style="padding: 10px 18px 0; max-height: 50vh; overflow-y: auto;">
-          ${groupedArr.map((g, idx) => {
-            const isIncome = g.type === 'income';
-            const colorVar = isIncome ? 'var(--text-success)' : (g.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : '#e2e8f0');
-            const sign = isIncome ? '+' : '-';
-            return `
-            <div class="txn-row pos-item grouped-row" data-group-idx="${idx}" style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); cursor: pointer; font-family: var(--font-mono); font-size: 14px; transition: all 0.2s;">
-              <div style="width: 30px; color: var(--text-tertiary); font-size: 12px; flex-shrink: 0; text-align: center;">${g.count}</div>
-              <div style="flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 0 10px;">
-                <span style="font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${g.category}</span>
-                <div style="flex: 1; border-bottom: 1px dotted rgba(255,255,255,0.1); margin-bottom: 4px;"></div>
-              </div>
-              <div style="text-align: right; min-width: 90px; font-weight: 800; color: ${colorVar}; letter-spacing: -0.5px;">
-                ${sign}${Utils.formatCurrency(g.amount)}
-              </div>
-            </div>
-            `;
-          }).join('')}
         </div>
-
-        <div class="pos-receipt-footer" style="padding: 24px 20px; background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.05);">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono);">
-            <div style="font-size: 14px; color: var(--text-tertiary); letter-spacing: 1px;">ยอดรวมสุทธิ</div>
-            <div style="font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.2); letter-spacing: 1px;">
-              ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
-            </div>
-          </div>
-          <div style="margin-top: 10px; font-size: 11px; color: var(--text-tertiary); text-align: center; font-family: var(--font-mono); opacity: 0.5; letter-spacing: 1px;">
-            สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กดเพื่อดูรายย่อย)
-          </div>
-        </div>
+        <table class="data-table">
+        <thead>
+          <tr>
+            <th>ประเภท</th>
+            <th>หมวดหมู่</th>
+            <th style="text-align:right">จำนวน(ครั้ง)</th>
+            <th style="text-align:right">รวมเป็นเงิน</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${groupedArr.map((g, idx) => `
+            <tr data-qty="${g.count}" data-group-idx="${idx}" class="grouped-row" style="cursor:pointer;">
+              <td data-label="ประเภท"><span class="badge badge-${g.type}">${g.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
+              <td data-label="หมวดหมู่">${g.category} <span style="font-size:0.7em; opacity:0.5;">▸</span></td>
+              <td data-label="วันที่" style="text-align:right; color:var(--text-tertiary);">${g.count}</td>
+              <td data-label="จำนวน" class="amount ${g.type}" style="text-align:right; ${g.category === 'เงินกู้/เงินสดจากบัตร' ? 'color: #fbbf24 !important;' : ''}">
+                  ${g.type === 'income' ? '+' : '-'}${Utils.formatCurrency(g.amount)}
+              </td>
+            </tr>
+          `).join('')}
+          <tr class="receipt-footer">
+              <td colspan="3" style="text-align:center; font-weight:bold; padding-top:10px;">ยอดรวมสุทธิ</td>
+              <td colspan="1" style="text-align:center; font-weight:bold; font-size:1.2em; padding-top:10px;">
+                  ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+              </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
+        สรุปตามหมวดหมู่ จากทั้งหมด ${txns.length} รายการ (กดที่หมวดหมู่เพื่อดูรายย่อยและแก้ไข)
       </div>
       `;
 
@@ -2888,66 +2896,63 @@ async function refreshTransactions() {
       });
     } else {
       tableEl.innerHTML = `
-      <div class="pos-receipt-panel" style="display: flex; flex-direction: column; background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 var(--space-lg); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-        <!-- Digital POS Info Header -->
-        <div style="padding: 18px 20px 4px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-family: var(--font-mono); font-size: 10px; color: #4ade80; letter-spacing: 2px; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); display: flex; align-items: center; gap: 8px;">
-            <span>SYS • READY</span>
-            <div style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; animation: pLight 2s infinite;"></div>
-          </div>
-          
-          <div class="print-group-mobile" style="display:flex; flex: 1; margin-left: 10px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); align-items: stretch;">
-            <button class="btn" id="printReceiptOverviewBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-              ภาพรวม
-            </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="printReceiptBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              ใบเสร็จ
-            </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="posAddTxnBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(34, 197, 94, 0.15); border: none; color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(34, 197, 94, 0.25)'" onmouseout="this.style.background='rgba(34, 197, 94, 0.15)'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              เพิ่ม
-            </button>
-          </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: flex-end; padding: 12px 18px 0;">
+          <!-- Segmented Print Buttons Group -->
+          <div class="print-group-mobile" style="display:flex; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <button class="btn" id="printReceiptBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            ใบเสร็จ
+          </button>
+          <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 0;"></div>
+          <button class="btn" id="printReceiptOverviewBtn" style="padding: 5px 12px; font-size: 11.5px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+            ภาพรวม
+          </button>
         </div>
-
-        <div class="transaction-list pos-receipt-items" style="padding: 10px 18px 0; max-height: 50vh; overflow-y: auto;">
-          ${[...txns].sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => {
-            const isIncome = t.type === 'income';
-            const colorVar = isIncome ? 'var(--text-success)' : (t.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : '#e2e8f0');
-            const sign = isIncome ? '+' : '-';
-            const qtyStr = (t.quantity && t.quantity > 1) ? `${t.quantity}` : '1';
-            
-            return `
-            <div class="txn-row pos-item" data-id="${t.id}" style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); position: relative; cursor: pointer; font-family: var(--font-mono); font-size: 14px; transition: all 0.2s;">
-              <div style="width: 30px; color: var(--text-tertiary); font-size: 12px; flex-shrink: 0; text-align: center;">${qtyStr}</div>
-              <div style="flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 0 10px;">
-                <span style="font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.note || t.category}</span>
-                <div style="flex: 1; border-bottom: 1px dotted rgba(255,255,255,0.1); margin-bottom: 4px;"></div>
-              </div>
-              <div style="text-align: right; min-width: 90px; font-weight: 800; color: ${colorVar}; letter-spacing: -0.5px;">
-                ${sign}${Utils.formatCurrency(t.amount)}
-              </div>
-              <div class="mobile-edit-overlay" data-id="${t.id}" style="position: absolute; inset: 0; z-index: 1;"></div>
-            </div>
-            `;
-          }).join('')}
         </div>
-
-        <div class="pos-receipt-footer" style="padding: 24px 20px; background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.05);">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono);">
-            <div style="font-size: 14px; color: var(--text-tertiary); letter-spacing: 1px;">ยอดรวมสุทธิ</div>
-            <div style="font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.2); letter-spacing: 1px;">
-              ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
-            </div>
-          </div>
-          <div style="margin-top: 10px; font-size: 11px; color: var(--text-tertiary); text-align: center; font-family: var(--font-mono); opacity: 0.5; letter-spacing: 1px;">
-            แสดงทั้งหมด ${txns.length} รายการ
-          </div>
-        </div>
+        <table class="data-table">
+        <thead>
+          <tr>
+            <th>วันที่</th>
+            <th>ประเภท</th>
+            <th>หมวดหมู่</th>
+            <th>หมายเหตุ</th>
+            <th style="text-align:right">จำนวน</th>
+            <th style="text-align:center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[...txns].sort((a, b) => new Date(a.createdAt || a.date) - new Date(b.createdAt || b.date)).map(t => `
+            <tr class="txn-row" data-id="${t.id}" data-qty="${t.quantity || 1}">
+              <td data-label="วันที่">${Utils.formatDateTimeShort(t.date)}</td>
+              <td data-label="ประเภท"><span class="badge badge-${t.type}" style="${t.category === 'เงินกู้/เงินสดจากบัตร' ? 'background: rgba(251, 191, 36, 0.2); color: #fbbf24;' : ''}">${t.type === 'income' ? 'รายรับ' : 'รายจ่าย'}</span></td>
+              <td data-label="หมวดหมู่">
+                  ${t.note ? t.note : t.category}
+                  ${(t.quantity && t.quantity > 1 && t.unitPrice) ? `<span style="font-size:0.85em; opacity:0.7; margin-left:8px;">@${Utils.formatCurrency(t.unitPrice)}</span>` : ''}
+              </td>
+              <td data-label="หมายเหตุ">${t.note || '-'}</td>
+              <td data-label="จำนวน" class="amount ${t.type}" style="text-align:right; ${t.category === 'เงินกู้/เงินสดจากบัตร' ? 'color: #fbbf24 !important;' : ''}">
+                  ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
+                  <div class="mobile-edit-overlay" data-id="${t.id}" title="แก้ไข"></div>
+              </td>
+              <td data-label="จัดการ" style="text-align:center">
+                <button class="btn btn-sm btn-icon edit-txn" data-id="${t.id}" title="แก้ไข">✏️</button>
+                <button class="btn btn-sm btn-icon delete-txn" data-id="${t.id}" title="ลบ">🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+          <tr class="receipt-footer">
+              <td colspan="4" style="text-align:right; font-weight:bold; padding-top:15px; border-top: 2px dashed #000 !important;">ยอดรวมสุทธิ</td>
+              <td colspan="2" style="text-align:right; font-weight:bold; font-size:1.2em; padding-top:15px; border-top: 2px dashed #000 !important;">
+                  ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+              </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="padding: var(--space-md); color: var(--text-tertiary); font-size: var(--font-size-xs);">
+        แสดง ${txns.length} รายการ
       </div>
       `;
     }

@@ -305,9 +305,13 @@ export const InterestEngine = {
             );
         } else {
             const config = this.getBOTConfig(debtType);
-            genFn = config.method === 'daily_accrual'
-                ? (p) => this.generateDailyAccrualSchedule(principal, annualRatePercent, p, startDate || new Date().toISOString().split('T')[0])
-                : (p) => this.generateAmortizationSchedule(principal, annualRatePercent, p);
+            if (config.method === 'fixed_rate') {
+                genFn = (p) => this.generateFixedRateSchedule(principal, annualRatePercent, p);
+            } else if (config.method === 'daily_accrual') {
+                genFn = (p) => this.generateDailyAccrualSchedule(principal, annualRatePercent, p, startDate || new Date().toISOString().split('T')[0]);
+            } else {
+                genFn = (p) => this.generateAmortizationSchedule(principal, annualRatePercent, p);
+            }
         }
 
         const minResult = genFn(minPayment);
