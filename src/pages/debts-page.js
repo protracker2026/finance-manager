@@ -415,6 +415,7 @@ function validateRateInput() {
 
 function openDebtModal(debt = null) {
   const modal = document.getElementById('debtModal');
+  const startDateInput = document.getElementById('debtStartDate');
   if (debt) {
     document.getElementById('debtModalTitle').textContent = 'แก้ไขหนี้';
     document.getElementById('debtId').value = debt.id;
@@ -427,13 +428,22 @@ function openDebtModal(debt = null) {
     document.getElementById('debtTerm').value = debt.termMonths || '';
     document.getElementById('debtMonthlyPayment').value = debt.monthlyPayment || '';
     document.getElementById('debtMinPayment').value = debt.minPayment || '';
-    document.getElementById('debtStartDate').value = debt.startDate;
+    
+    // Set Date with Flatpickr support
+    const dateVal = debt.startDate || Utils.today().split('T')[0];
+    if (startDateInput._flatpickr) startDateInput._flatpickr.setDate(dateVal);
+    else startDateInput.value = dateVal;
+
     document.getElementById('debtNote').value = debt.note || '';
   } else {
     document.getElementById('debtModalTitle').textContent = 'เพิ่มหนี้';
     document.getElementById('debtId').value = '';
     document.getElementById('debtForm').reset();
-    document.getElementById('debtStartDate').value = Utils.today();
+    
+    const today = Utils.today().split('T')[0];
+    if (startDateInput._flatpickr) startDateInput._flatpickr.setDate(today);
+    else startDateInput.value = today;
+
     const addToIncomeCheck = document.getElementById('debtAddToIncome');
     if (addToIncomeCheck) addToIncomeCheck.checked = false;
   }
@@ -509,7 +519,12 @@ function openPaymentModal(debt, payment = null) {
     if (title) title.textContent = 'แก้ไขประวัติชำระ';
     paymentIdEl.value = payment.id;
     document.getElementById('paymentAmount').value = payment.amount;
-    document.getElementById('paymentDate').value = payment.date;
+    
+    // Set Date with Flatpickr support
+    const pDateInput = document.getElementById('paymentDate');
+    if (pDateInput._flatpickr) pDateInput._flatpickr.setDate(payment.date);
+    else pDateInput.value = payment.date;
+
     document.getElementById('paymentNote').value = payment.note || '';
     if (deleteBtn) deleteBtn.style.display = 'inline-block';
   } else {

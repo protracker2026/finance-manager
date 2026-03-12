@@ -1,71 +1,56 @@
 /* === Design System Variables (Minimal Dark Theme) === */
 :root {
-    /* Colors - Minimal "Dry" Theme (Zinc/Slate) */
-    --bg-primary: #18181b;
-    /* Zinc 950 */
-    --bg-secondary: #27272a;
-    /* Zinc 800 */
-    --bg-tertiary: #3f3f46;
-    /* Zinc 700 */
-    --bg-card: #27272a;
-    /* Zinc 800 */
-    --bg-card-hover: #3f3f46;
-    /* Zinc 700 */
-    --bg-input: #18181b;
-    /* Zinc 950 - Darker than modal for contrast */
-    --bg-modal: rgba(24, 24, 27, 0.95);
+    /* Colors - Deep Premium Dark Theme */
+    --bg-primary: #09090b;
+    --bg-secondary: #18181b;
+    --bg-tertiary: #27272a;
+    --bg-card: rgba(24, 24, 27, 0.6);
+    --bg-card-hover: rgba(39, 39, 42, 0.8);
+    --bg-input: #09090b;
+    --bg-modal: rgba(9, 9, 11, 0.9);
 
-    /* Accent Colors - Desaturated / Industrial */
-    --accent-primary: #52525b;
-    /* Zinc 600 (Neutral Gray) */
-    --accent-primary-hover: #71717a;
-    /* Zinc 500 */
-    --accent-secondary: #52525b;
-    /* Match primary for consistency */
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(12px);
 
-    /* Status - Earthy/Muted tones */
-    --accent-success: #15803d;
-    /* Green 700 */
-    --accent-warning: #b45309;
-    /* Amber 700 */
-    --accent-danger: #b91c1c;
-    /* Red 700 */
-    --accent-info: #1d4ed8;
-    /* Blue 700 */
+    /* Accent Colors - Premium Vibrant Blue/Indigo */
+    --accent-primary: #3b82f6;      /* Blue 500 */
+    --accent-primary-hover: #60a5fa; /* Blue 400 */
+    --accent-secondary: #8b5cf6;    /* Violet 500 */
 
-    /* Text Colors - High Visibility (White) */
-    --text-primary: #ffffff;
-    --text-secondary: #f4f4f5;
-    /* Zinc 100 */
-    --text-tertiary: #d4d4d8;
-    /* Zinc 300 */
+    /* Status - Rich Vibrant Tones */
+    --accent-success: #10b981; /* Emerald 500 */
+    --accent-warning: #f59e0b; /* Amber 500 */
+    --accent-danger: #ef4444;  /* Red 500 */
+    --accent-info: #0ea5e9;    /* Sky 500 */
 
-    /* Text Accents - Clear Colors for Income/Expense */
+    /* Text Colors */
+    --text-primary: #fafafa;
+    --text-secondary: #e4e4e7;
+    --text-tertiary: #a1a1aa;
+
+    /* Text Accents */
     --text-accent: #ffffff;
-    --text-success: #22c55e;
-    /* Clear Green */
-    --text-danger: #ef4444;
-    /* Clear Red */
-    --text-danger-soft: #f43f5e;
-    /* More vibrant Rose/Red */
-    --text-warning: #f59e0b;
-    /* Clear Amber */
+    --text-success: #34d399; /* Emerald 400 */
+    --text-danger: #fb7185;  /* Rose 400 */
+    --text-warning: #fbbf24; /* Amber 400 */
 
-    /* Border - Subtle & Clean */
-    --border-color: #27272a;
-    /* Dark gray border */
-    --border-color-hover: #3f3f46;
-    --border-radius-sm: 6px;
-    --border-radius: 8px;
-    --border-radius-lg: 12px;
-    --border-radius-xl: 16px;
+    /* Border */
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-color-hover: rgba(255, 255, 255, 0.15);
+    --border-radius-sm: 8px;
+    --border-radius: 12px;
+    --border-radius-lg: 16px;
+    --border-radius-xl: 24px;
     --border-radius-full: 50%;
 
-    /* Shadows - Minimal, No Colored Glows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-    --shadow-glow: none;
+    /* Shadows - Deep & Glowy */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 16px -4px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+    --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     /* Removed neon glow */
 
     /* Spacing */

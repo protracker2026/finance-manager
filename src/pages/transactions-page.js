@@ -21,65 +21,61 @@ export async function renderTransactionsPage(container) {
         <h2>รายรับ - รายจ่าย</h2>
         <p class="subtitle">บันทึกและติดตามรายรับ-รายจ่ายของคุณ</p>
       </div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn btn-secondary" id="refreshTransactionsBtn" title="รีเฟรชข้อมูล" style="padding: 8px; min-width: 38px; display:flex; align-items:center; justify-content:center;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+      <div class="txn-page-header-actions">
+        <button class="btn txn-header-btn" id="openBulkDeleteBtn" title="เลือกลบหลายรายการ">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.3));"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6L18 20a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+            <span style="color: var(--accent-danger); font-weight: 700;">เลือกลบ</span>
         </button>
-        <button class="btn btn-secondary" id="openBulkDeleteBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6L18 20a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
-            <span style="color: var(--accent-danger);">เลือกลบ</span>
-        </button>
-        <button class="btn btn-secondary" id="exportReceiptBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            Export PDF
+        <button class="btn txn-header-btn" id="exportReceiptBtn" title="ส่งออกเป็น PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span style="color: var(--text-accent); font-weight: 700;">PDF</span>
         </button>
       </div>
     </div>
 
     <!-- Summary Cards -->
-    <div id="txnSummaryCards"></div>
+    <div id="txnSummaryCards" style="margin-bottom: 25px;"></div>
 
-    <!-- Filters -->
     <!-- Period Selector -->
-    <div style="display:flex; gap:6px; margin-bottom:10px; padding-bottom:5px;">
-        <button class="btn btn-primary period-btn active" data-period="today" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">วันนี้</button>
-        <button class="btn btn-outline period-btn" data-period="week" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">สัปดาห์นี้</button>
-        <button class="btn btn-outline period-btn" data-period="month" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">เดือนนี้</button>
-        <button class="btn btn-outline period-btn" data-period="year" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">ปีนี้</button>
-        <button class="btn btn-outline period-btn" data-period="all" style="flex:1; padding:6px 2px; font-size:12px; border-radius:16px; justify-content:center;">ทั้งหมด</button>
+    <div class="period-selector-premium">
+        <button class="btn period-btn period-btn-premium active" data-period="today">วันนี้</button>
+        <button class="btn period-btn period-btn-premium" data-period="week">สัปดาห์</button>
+        <button class="btn period-btn period-btn-premium" data-period="month">เดือน</button>
+        <button class="btn period-btn period-btn-premium" data-period="year">ปีนี้</button>
+        <button class="btn period-btn period-btn-premium" data-period="all">ทั้งหมด</button>
     </div>
 
-
     <!-- Filters -->
-    <details style="margin-bottom: 20px; background: var(--bg-card); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color);">
-      <summary style="padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 500; color: var(--text-secondary); list-style: none; outline: none; user-select: none;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-          <span>ตัวกรอง และค้นหา...</span>
+    <details style="margin-bottom: 25px; border: none; outline: none;">
+      <summary class="modern-filter-summary">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          </div>
+          <span style="font-weight: 600; font-size: 14px; color: var(--text-secondary);">ตัวกรอง และการค้นหาแบบละเอียด</span>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </summary>
-      <div style="display: grid; grid-template-columns: 1fr; gap: 10px; padding: 0 15px 15px 15px;">
-        <div style="height: 1px; background: var(--border-color); margin: 0 -15px 5px -15px;"></div>
-        <div class="date-range-group" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0;">
-          <input type="date" class="date-no-border" id="filterStartDate" value="${start}" style="text-align: center; flex: 1;" />
-          <span style="padding: 0 10px; color: var(--text-tertiary); font-weight: bold;">-</span>
-          <input type="date" class="date-no-border" id="filterEndDate" value="${end}" style="text-align: center; flex: 1;" />
+      <div class="modern-filter-content">
+        <div class="filter-date-range">
+          <input type="date" class="date-no-border" id="filterStartDate" value="${start}" style="text-align: center; flex: 1; font-weight: 600;" />
+          <span style="padding: 0 10px; color: var(--text-tertiary); font-weight: bold; opacity: 0.5;">to</span>
+          <input type="date" class="date-no-border" id="filterEndDate" value="${end}" style="text-align: center; flex: 1; font-weight: 600;" />
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <select class="form-select" id="filterType" style="width: 100%;">
+        <div class="filter-grid-2">
+          <select class="form-select" id="filterType">
             <option value="">ทุกประเภท</option>
-            <option value="income">รายรับ</option>
-            <option value="expense">รายจ่าย</option>
+            <option value="income">รายรับ (Income)</option>
+            <option value="expense">รายจ่าย (Expense)</option>
           </select>
-          <select class="form-select" id="filterCategory" style="width: 100%;">
+          <select class="form-select" id="filterCategory">
             <option value="">ทุกหมวดหมู่</option>
             ${categories.map(c => `<option value="${c.name}">${c.icon || ''} ${c.name}</option>`).join('')}
           </select>
         </div>
-        <div class="search-input" style="width: 100%;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" class="form-input" id="filterSearch" placeholder="ค้นหา..." style="padding-left:36px; width: 100%;" />
+        <div class="search-input">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:var(--text-tertiary); opacity:0.6; pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="form-input" id="filterSearch" placeholder="พิมพ์ชื่อรายการ หรือบันทึกเพื่อค้นหา..." />
         </div>
       </div>
     </details>
@@ -95,20 +91,20 @@ export async function renderTransactionsPage(container) {
     <!-- Modal -->
     <div class="modal-overlay" id="txnModal" style="z-index: 1100;">
       <div class="modal">
-        <div class="modal-header" style="justify-content: flex-start; padding: 30px 25px 15px;">
-          <h3 id="txnModalTitle" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 0;">เพิ่มรายการ</h3>
+        <div class="modal-header modal-header-premium">
+          <h3 id="txnModalTitle" style="margin: 0;">เพิ่มรายการ</h3>
           <button class="modal-close" id="txnModalClose" style="position: absolute; top: 22px; right: 20px; font-size: 18px; opacity: 0.5;">&times;</button>
         </div>
 
-        <div class="modal-body" style="padding: 0 25px 30px;">
+        <div class="modal-body modal-body-premium">
           <form id="txnForm">
             <input type="hidden" id="txnId" />
-            <div class="tabs" id="txnTypeTabs" style="margin-bottom: 20px;">
+            <div class="tabs" id="txnTypeTabs">
               <button type="button" class="tab-btn active" data-type="expense">รายจ่าย</button>
               <button type="button" class="tab-btn" data-type="income">รายรับ</button>
             </div>
 
-            <div class="add-method-tabs" id="addMethodTabs">
+            <div class="add-method-tabs ai-section-card" id="addMethodTabs">
               <button type="button" class="method-tab-btn active" data-method="smart">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                 AI Smart Add
@@ -126,10 +122,10 @@ export async function renderTransactionsPage(container) {
               </div>
               <p class="ai-instruction">พิมพ์หรือพูดรายการ แล้วกด + เพื่อรวมชุด</p>
 
-              <div class="smart-add-inner">
+              <div class="smart-add-inner ai-section-card">
                 <div class="voice-typing-container">
                   <div class="magic-input-wrapper">
-                    <input type="text" id="aiVoiceInput" class="form-input" placeholder="เช่น ซื้อกาแฟ 60 บาท..." autocomplete="off" style="background: transparent !important; border: none !important; color: white !important;" />
+                    <input type="text" id="aiVoiceInput" class="form-input ai-input-refined" placeholder="เช่น ซื้อกาแฟ 60 บาท..." autocomplete="off" />
                     <button type="button" id="aiQuickSendBtn" class="btn-ai-action btn-ai-check" title="Quick Save">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ai-sparkle-icon"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                     </button>
@@ -137,8 +133,8 @@ export async function renderTransactionsPage(container) {
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
                   </div>
-                  <div id="aiDraftQueue" class="ai-draft-queue" style="display: none; margin-top: 15px;"></div>
-                  <button type="button" id="aiVoiceSubmitBtn" class="btn-ai-submit" style="display: none; width: 100%; justify-content: center; margin-top: 20px; height: 50px; border-radius: 12px; background: var(--accent-primary); color: #fff; font-weight: 700; border: none; font-size: 15px;">
+                  <div id="aiDraftQueue" class="ai-draft-queue" style="display: none;"></div>
+                  <button type="button" id="aiVoiceSubmitBtn" class="btn-ai-submit" style="display: none; width: 100%; margin-top: 20px; height: 50px;">
                      Process <span id="aiQueueCount">0</span> Items with AI
                   </button>
                 </div>
@@ -187,7 +183,7 @@ export async function renderTransactionsPage(container) {
             </div>
           </form>
         </div>
-        <div class="modal-footer" style="padding: 0 25px 25px;">
+        <div class="modal-footer modal-footer-premium">
           <button class="btn btn-danger" id="txnDeleteBtn" style="display:none;">ลบ</button>
           <div style="display: flex; gap: 10px; width: 100%; justify-content: flex-end;">
             <button class="btn" id="txnCancelBtn" style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">ปิด</button>
@@ -411,17 +407,6 @@ function setupTransactionEvents() {
       openTxnModal();
     }
 
-    if (target.id === 'refreshTransactionsBtn' || target.closest('#refreshTransactionsBtn')) {
-      e.preventDefault();
-      e.stopPropagation();
-      const btn = target.id === 'refreshTransactionsBtn' ? target : target.closest('#refreshTransactionsBtn');
-      btn.classList.add('refresh-btn-spinning');
-
-      refreshTransactions().then(() => {
-        setTimeout(() => btn.classList.remove('refresh-btn-spinning'), 800);
-        Utils.showToast('รีเฟรชข้อมูลสำเร็จ');
-      });
-    }
 
     // Toggle Entry Methods (Smart vs Manual)
     const methodBtn = target.closest('.method-tab-btn');
@@ -2093,162 +2078,25 @@ window.showPrintReceiptModal = function (options = {}) {
   }
 
   if (!document.getElementById('printReceiptStyles')) {
+    // Basic dynamic styles can stay here if absolutely necessary, 
+    // but most are now in components.css
     const style = document.createElement('style');
     style.id = 'printReceiptStyles';
     style.textContent = `
-      #printReceiptOverlay {
-        position:fixed;inset:0;z-index:9999;
-        background:rgba(0,0,0,0.8);
-        display:flex;align-items:flex-start;justify-content:center;
-        padding-top:40px;overflow-y:auto;
-        opacity:0;transition:opacity 0.3s ease;
-      }
-      #printReceiptOverlay.visible { opacity:1; }
-      .printer-body {
-        width:270px;
-        background:linear-gradient(160deg,#4a4a4a,#262626);
-        border-radius:14px 14px 6px 6px;
-        padding:16px 20px 14px;
-        box-shadow:0 8px 32px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.12);
-        position:relative;
-        transition: opacity 0.4s ease, transform 0.4s ease;
-      }
-      .printer-body.fade-out {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.9);
-        pointer-events: none;
-      }
-      .printer-light {
-        width:9px;height:9px;border-radius:50%;
-        background:#22c55e;box-shadow:0 0 7px #22c55e;
-        position:absolute;top:15px;right:18px;
-        animation:pLight 1.6s ease-in-out infinite;
-      }
-      @keyframes pLight {
-        0%,100%{opacity:1;box-shadow:0 0 7px #22c55e;}
-        50%{opacity:0.3;box-shadow:0 0 2px #22c55e;}
-      }
-      .printer-slot {
-        height:7px;background:#111;border-radius:3px;
-        margin-top:10px;box-shadow:inset 0 2px 5px rgba(0,0,0,0.9);
-        position: relative; z-index: 2;
-      }
-      .receipt-wrapper {
-        width: 270px;
-        overflow: hidden;
-        margin-top: -8px; /* Pull it up under the slot */
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      .printer-body {
-        opacity: 1; transform: scale(1); transition: all 0.5s ease;
-      }
-      .receipt-paper {
-        width:100%;background:#f4e6cc;color:#111;
-        font-family:'Courier Prime','Courier New',monospace;
-        border-radius:0 0 8px 8px;
-        transform:translateY(-100%);
-        text-shadow: 0.1px 0.1px 0.2px rgba(0,0,0,0.05);
-        letter-spacing: -0.2px;
-        font-variant-numeric: slashed-zero;
-        font-feature-settings: "zero";
-        will-change: transform;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Much lighter shadow during the print */
-      }
-      .receipt-paper.printing {
-        animation:paperFeed 10s steps(60, end) forwards;
-      }
-      .receipt-paper.tearing {
-        animation:paperTear 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-      }
-      .receipt-paper.showcase {
-        transform: translateY(40px) scale(1) rotate(0deg) !important;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.6); /* Full heavy shadow ONLY when finished */
-        filter: contrast(1.01) brightness(1.01);
-        background-image: 
-          radial-gradient(circle at 70% 30%, rgba(0,0,0,0.01) 0%, transparent 40%),
-          linear-gradient(135deg, rgba(0,0,0,0.01) 0%, transparent 20%, rgba(0,0,0,0.01) 40%, transparent 60%, rgba(0,0,0,0.01) 80%);
-        transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s ease;
-      }
-      @keyframes paperTear {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(40px); }
-      }
-      @keyframes paperFeed {
-        0%   {transform:translateY(-100%);}
-        2%   {transform:translateY(-98%);}
-        4%   {transform:translateY(-96%);}
-        6%   {transform:translateY(-93.5%);}
-        8%   {transform:translateY(-91%);}
-        10%  {transform:translateY(-88%);}
-        12%  {transform:translateY(-85.5%);}
-        14%  {transform:translateY(-83%);}
-        16%  {transform:translateY(-80.5%);}
-        18%  {transform:translateY(-78%);}
-        20%  {transform:translateY(-75.5%);}
-        22%  {transform:translateY(-73%);}
-        24%  {transform:translateY(-70.5%);}
-        26%  {transform:translateY(-68%);}
-        28%  {transform:translateY(-65.5%);}
-        30%  {transform:translateY(-63%);}
-        32%  {transform:translateY(-60.5%);}
-        34%  {transform:translateY(-58%);}
-        36%  {transform:translateY(-55.5%);}
-        38%  {transform:translateY(-53%);}
-        40%  {transform:translateY(-50.5%);}
-        42%  {transform:translateY(-48%);}
-        44%  {transform:translateY(-45.5%);}
-        46%  {transform:translateY(-43%);}
-        48%  {transform:translateY(-40.5%);}
-        50%  {transform:translateY(-38%);}
-        52%  {transform:translateY(-35.5%);}
-        54%  {transform:translateY(-33%);}
-        56%  {transform:translateY(-30.5%);}
-        58%  {transform:translateY(-28%);}
-        60%  {transform:translateY(-25.5%);}
-        62%  {transform:translateY(-23%);}
-        64%  {transform:translateY(-20.5%);}
-        66%  {transform:translateY(-18%);}
-        68%  {transform:translateY(-15.5%);}
-        70%  {transform:translateY(-13%);}
-        72%  {transform:translateY(-10.5%);}
-        74%  {transform:translateY(-8%);}
-        76%  {transform:translateY(-6%);}
-        78%  {transform:translateY(-4%);}
-        80%  {transform:translateY(-2.5%);}
-        82%  {transform:translateY(-1.2%);}
-        84%  {transform:translateY(-0.3%);}
-        100% {transform:translateY(0);}
-      }
-      .receipt-inner { padding:20px 16px 20px; }
-      .receipt-tear {
-        height:14px;
-        background:repeating-linear-gradient(90deg,#f4e6cc 0,#f4e6cc 5px,transparent 5px,transparent 9px);
-        border-top:1px dashed #bbb;
-      }
-      .sound-bar {
-        display:flex;gap:2px;align-items:flex-end;height:18px;margin-top:8px;
-      }
-      .sound-bar span {
-        width:3px;background:rgba(255,255,255,0.2);border-radius:2px;
-        animation:sBar 0.35s ease-in-out infinite alternate;
-      }
-      .sound-bar span:nth-child(2){animation-delay:0.08s;}
-      .sound-bar span:nth-child(3){animation-delay:0.18s;}
-      .sound-bar span:nth-child(4){animation-delay:0.04s;}
-      .sound-bar span:nth-child(5){animation-delay:0.14s;}
-      @keyframes sBar {
-        from{height:3px;}
-        to{height:14px;}
-      }
-      @keyframes pulseGlow {
-        0% { opacity: 0.85; box-shadow: 0 0 5px rgba(74, 222, 128, 0.2); }
-        50% { opacity: 1; box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); }
-        100% { opacity: 0.85; box-shadow: 0 0 5px rgba(74, 222, 128, 0.2); }
-      }
+       .receipt-paper.printing {
+         animation:paperFeed 10s steps(60, end) forwards;
+       }
+       .receipt-paper.tearing {
+         animation:paperTear 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+       }
+       @keyframes paperTear {
+         0% { transform: translateY(0); }
+         100% { transform: translateY(40px); }
+       }
+       @keyframes paperFeed {
+         0%   {transform:translateY(-100%);}
+         100% {transform:translateY(0);}
+       }
     `;
     document.head.appendChild(style);
   }
@@ -2258,18 +2106,16 @@ window.showPrintReceiptModal = function (options = {}) {
   overlay = document.createElement('div');
   overlay.id = 'printReceiptOverlay';
   overlay.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;padding-bottom:60px;">
-
-
+    <div style="display:flex; flex-direction:column; align-items:center; padding-bottom:60px;">
       <div class="printer-body">
         <div class="printer-light" id="printerLight"></div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:2px;margin-bottom:10px;">FINANCE MANAGER</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:11px; color:rgba(255,255,255,0.45); letter-spacing:2px; margin-bottom:10px;">FINANCE MANAGER</div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
           <div class="sound-bar" id="printerSoundBar">
             <span></span><span></span><span></span><span></span><span></span>
           </div>
-          <div style="width:40px;height:14px;background:#1a1a1a;border-radius:3px;border:1px solid #555;display:flex;align-items:center;justify-content:center;">
-            <div style="width:9px;height:9px;border-radius:50%;background:#3b82f6;box-shadow:0 0 5px #3b82f6;"></div>
+          <div style="width:40px; height:14px; background:#1a1a1a; border-radius:3px; border:1px solid #555; display:flex; align-items:center; justify-content:center;">
+            <div style="width:9px; height:9px; border-radius:50%; background:#3b82f6; box-shadow:0 0 5px #3b82f6;"></div>
           </div>
         </div>
         <div class="printer-slot"></div>
@@ -2278,9 +2124,9 @@ window.showPrintReceiptModal = function (options = {}) {
       <div class="receipt-wrapper">
         <div class="receipt-paper" id="receiptPaper">
           <div class="receipt-inner">
-            <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:10px;">
-              <div style="font-size:20px;font-weight:900;letter-spacing:2px;margin-bottom:4px; color:#222;">💳 FINANCE MGR</div>
-              <div style="font-size:10px;color:#555;line-height:1.3;">
+            <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:8px; margin-bottom:10px;">
+              <div style="font-size:20px; font-weight:900; letter-spacing:2px; margin-bottom:4px; color:#222;">💳 FINANCE MGR</div>
+              <div style="font-size:10px; color:#555; line-height:1.3;">
                 ใบสรุปรายรับ-รายจ่าย<br>
                 ${periodLabel}<br>
                 พิมพ์: ${new Date().toLocaleString('th-TH')}
@@ -2288,25 +2134,25 @@ window.showPrintReceiptModal = function (options = {}) {
             </div>
 
             <div style="margin-bottom:8px;">
-              ${txns.length > 0 ? itemsHtml : '<div style="text-align:center;color:#999;font-size:12px;padding:12px;">ไม่มีรายการ</div>'}
+              ${txns.length > 0 ? itemsHtml : '<div style="text-align:center; color:#999; font-size:12px; padding:12px;">ไม่มีรายการ</div>'}
             </div>
 
-            <div style="border-top:2px solid #333;padding-top:6px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0;">
+            <div style="border-top:2px solid #333; padding-top:6px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:1px 0;">
                 <span>รายรับรวม</span>
-                <span style="color:#333;font-weight:700;">+${Utils.formatCurrency(income)}</span>
+                <span style="color:#333; font-weight:700;">+${Utils.formatCurrency(income)}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;padding:1px 0;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; padding:1px 0;">
                 <span>รายจ่ายรวม</span>
-                <span style="color:#333;font-weight:700;">-${Utils.formatCurrency(expense)}</span>
+                <span style="color:#333; font-weight:700;">-${Utils.formatCurrency(expense)}</span>
               </div>
-              <div style="display:flex;justify-content:space-between;border-top:1px dashed #ccc;margin-top:4px;padding-top:6px;">
-                <span style="font-weight:900;font-size:14px;">ยอดสุทธิ</span>
-                <span style="font-weight:900;font-size:16px;color:#333;">${balance >= 0 ? '+' : ''}${Utils.formatCurrency(balance)}</span>
+              <div style="display:flex; justify-content:space-between; border-top:1px dashed #ccc; margin-top:4px; padding-top:6px;">
+                <span style="font-weight:900; font-size:14px;">ยอดสุทธิ</span>
+                <span style="font-weight:900; font-size:16px; color:#333;">${balance >= 0 ? '+' : ''}${Utils.formatCurrency(balance)}</span>
               </div>
             </div>
 
-            <div style="text-align:center;margin-top:14px;font-size:10px;color:#999;border-top:1px dashed #ccc;padding-top:10px;line-height:1.4;">
+            <div style="text-align:center; margin-top:14px; font-size:10px; color:#999; border-top:1px dashed #ccc; padding-top:10px; line-height:1.4;">
               *** ขอบคุณที่ใช้บริการ ***<br>
               Finance Manager · ${new Date().getFullYear()}
             </div>
@@ -2315,11 +2161,11 @@ window.showPrintReceiptModal = function (options = {}) {
         </div>
       </div>
 
-      <div style="display:flex;gap:12px;margin-top:80px;position:relative;z-index:10;flex-wrap:wrap;justify-content:center;">
-        <button id="pausePrintBtn" style="display:none;background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">⏸ พักการพิมพ์</button>
-        <button id="closePrintBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;">✕ ปิด</button>
-        <button id="savePrintBtn" style="${skipAnimation ? '' : 'display:none;'}background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid #3b82f6;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📄 บันทึก PDF</button>
-        <button id="exportImageBtn" style="${skipAnimation ? '' : 'display:none;'}background:#3b82f6;color:#fff;border:none;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;">📸 บันทึกรูปภาพ</button>
+      <div class="printer-controls-group">
+        <button id="pausePrintBtn" class="printer-btn printer-btn-pause" style="display:none;">⏸ พักการพิมพ์</button>
+        <button id="closePrintBtn" class="printer-btn printer-btn-close">✕ ปิด</button>
+        <button id="savePrintBtn" class="printer-btn printer-btn-save" style="${skipAnimation ? '' : 'display:none;'}">📄 บันทึก PDF</button>
+        <button id="exportImageBtn" class="printer-btn printer-btn-export" style="${skipAnimation ? '' : 'display:none;'}">📸 บันทึกรูปภาพ</button>
       </div>
     </div>
   `;
@@ -2760,27 +2606,27 @@ async function refreshTransactions() {
     const summaryEl = document.getElementById('txnSummaryCards');
     if (summaryEl) {
       summaryEl.innerHTML = `
-        <div class="debt-summary-compact">
-          <div class="summary-main">
-            <div class="label">คงเหลือ (ตามช่วงเวลา)</div>
-            <div class="value-huge ${summary.balance >= 0 ? 'success' : 'danger'}" style="color: var(--text-${summary.balance >= 0 ? 'success' : 'danger'})">${Utils.formatCurrency(summary.balance)}</div>
-            <div class="sub-label">รายรับ - รายจ่าย</div>
+        <div class="summary-card-premium">
+          <div class="summary-balance-hero">
+            <div class="label">คงเหลือสุทธิ (สุทธิ)</div>
+            <div class="value ${summary.balance >= 0 ? 'success' : 'danger'} summary-balance-glow" style="color: var(--text-${summary.balance >= 0 ? 'success' : 'danger'})">
+               ${Utils.formatCurrency(summary.balance)}
+               <span style="font-size: 0.4em; opacity: 0.5; margin-left: -5px;">฿</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-tertiary); opacity: 0.6; margin-top: 5px;">* คำนวณจากช่วงเวลาที่เลือก</div>
           </div>
           
-          <div class="summary-divider"></div>
- 
-          <div class="summary-metrics">
-            <div class="metric-item">
-              <span class="metric-label">รายรับทั้งหมด</span>
-              <span class="metric-value success" style="color:var(--text-success)">${Utils.formatCurrency(summary.income)}</span>
+          <div class="summary-grid-refined">
+            <div class="summary-item-refined">
+              <div class="label">รายรับทั้งหมด (Income)</div>
+              <div class="value" style="color: var(--text-success)">+${Utils.formatCurrency(summary.income).replace(' ฿', '')}</div>
             </div>
-            <div class="metric-item">
-              <span class="metric-label">รายจ่ายทั้งหมด</span>
-              <span class="metric-value danger" style="color:var(--text-danger)">${Utils.formatCurrency(summary.expense)}</span>
+            <div class="summary-item-refined">
+              <div class="label">รายจ่ายทั้งหมด (Expense)</div>
+              <div class="value" style="color: var(--text-danger)">-${Utils.formatCurrency(summary.expense).replace(' ฿', '')}</div>
             </div>
-            <div class="metric-item">
-              <span class="metric-label">จำนวนรายการ</span>
-              <span class="metric-value">${txns.length} รายการ</span>
+            <div class="count-badge-refined">
+                   DATABASE: ${txns.length} TRANSACTIONS FOUND
             </div>
           </div>
         </div>
@@ -2789,10 +2635,6 @@ async function refreshTransactions() {
 
     // Update table
     const tableEl = document.getElementById('transactionsTable');
-    if (txns.length === 0) {
-      tableEl.innerHTML = `<div class="empty-state"><p>ไม่พบรายการ</p></div>`;
-      return;
-    }
 
     const activePeriodBtn = document.querySelector('.period-btn.active');
     const isGroupedView = activePeriodBtn && activePeriodBtn.dataset.period !== 'today';
@@ -2826,18 +2668,18 @@ async function refreshTransactions() {
             <div style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; animation: pLight 2s infinite;"></div>
           </div>
           
-          <div class="print-group-mobile" style="display:flex; flex: 1; margin-left: 10px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); align-items: stretch;">
-            <button class="btn" id="printReceiptOverviewBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+          <div class="print-group-mobile" style="display:flex; flex: 1; margin-left: 10px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); align-items: stretch; backdrop-filter: blur(5px);">
+            <button class="btn" id="printReceiptOverviewBtn" style="flex: 1; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 8px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.1); color: #60a5fa; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;" title="พิมพ์ภาพรวมกลุ่ม">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
               ภาพรวม
             </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="printReceiptBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              ใบเสร็จ
+            <div style="width: 1px; background: rgba(255,255,255,0.08); margin: 4px 2px;"></div>
+            <button class="btn" id="printReceiptBtn" style="flex: 1; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 8px; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.1); color: #fbbf24; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;" title="พิมพ์รายการละเอียด">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              พิมพ์
             </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="posAddTxnBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(34, 197, 94, 0.15); border: none; color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(34, 197, 94, 0.25)'" onmouseout="this.style.background='rgba(34, 197, 94, 0.15)'">
+            <div style="width: 1px; background: rgba(255,255,255,0.08); margin: 4px 2px;"></div>
+            <button class="btn" id="posAddTxnBtn" style="flex: 1; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 8px; background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.1); color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               เพิ่ม
             </button>
@@ -2845,11 +2687,11 @@ async function refreshTransactions() {
         </div>
 
         <div class="transaction-list pos-receipt-items" style="padding: 10px 18px 0; max-height: 50vh; overflow-y: auto;">
-          ${groupedArr.map((g, idx) => {
-            const isIncome = g.type === 'income';
-            const colorVar = isIncome ? 'var(--text-success)' : (g.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : '#e2e8f0');
-            const sign = isIncome ? '+' : '-';
-            return `
+          ${groupedArr.length > 0 ? groupedArr.map((g, idx) => {
+        const isIncome = g.type === 'income';
+        const colorVar = isIncome ? 'var(--text-success)' : (g.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : '#e2e8f0');
+        const sign = isIncome ? '+' : '-';
+        return `
             <div class="txn-row pos-item grouped-row" data-group-idx="${idx}" style="display: flex; align-items: center; padding: 12px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); cursor: pointer; font-family: var(--font-mono); font-size: 14px; transition: all 0.2s;">
               <div style="width: 30px; color: var(--text-tertiary); font-size: 12px; flex-shrink: 0; text-align: center;">${g.count}</div>
               <div style="flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 0 10px;">
@@ -2861,7 +2703,7 @@ async function refreshTransactions() {
               </div>
             </div>
             `;
-          }).join('')}
+      }).join('') : '<div style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); font-family: var(--font-mono); font-size: 13px; opacity: 0.3; letter-spacing: 2px;">- NO TRANSACTIONS -</div>'}
         </div>
 
         <div class="pos-receipt-footer" style="padding: 24px 20px; background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.05);">
@@ -2888,63 +2730,59 @@ async function refreshTransactions() {
       });
     } else {
       tableEl.innerHTML = `
-      <div class="pos-receipt-panel" style="display: flex; flex-direction: column; background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 var(--space-lg); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+      <div class="pos-receipt-panel" style="display: flex; flex-direction: column; background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; margin: 0 0 var(--space-lg); box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative;">
         <!-- Digital POS Info Header -->
-        <div style="padding: 18px 20px 4px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="font-family: var(--font-mono); font-size: 10px; color: #4ade80; letter-spacing: 2px; text-shadow: 0 0 8px rgba(74, 222, 128, 0.4); display: flex; align-items: center; gap: 8px;">
-            <span>SYS • READY</span>
-            <div style="width: 6px; height: 6px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 8px #4ade80; animation: pLight 2s infinite;"></div>
-          </div>
-          
-          <div class="print-group-mobile" style="display:flex; flex: 1; margin-left: 10px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); align-items: stretch;">
-            <button class="btn" id="printReceiptOverviewBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(59, 130, 246, 0.15); border: none; color: #60a5fa; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(59, 130, 246, 0.25)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'">
+        <div style="padding: 12px 20px 4px; display: flex; justify-content: flex-end; align-items: center;">
+          <div class="print-group-mobile" style="display:flex; flex: 1; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); align-items: stretch; backdrop-filter: blur(5px);">
+            <button class="btn" id="printReceiptOverviewBtn" style="flex: 1; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 8px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.1); color: #60a5fa; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;" title="พิมพ์ภาพรวมกลุ่ม">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
               ภาพรวม
             </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="printReceiptBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 600; border-radius: 7px; background: transparent; border: none; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-              ใบเสร็จ
+            <div style="width: 1px; background: rgba(255,255,255,0.08); margin: 4px 2px;"></div>
+            <button class="btn" id="printReceiptBtn" style="flex: 1; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 8px; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.1); color: #fbbf24; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;" title="พิมพ์รายการละเอียด">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              พิมพ์
             </button>
-            <div style="width: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px;"></div>
-            <button class="btn" id="posAddTxnBtn" style="flex: 1; padding: 6px 4px; font-size: 11px; font-weight: 700; border-radius: 7px; background: rgba(34, 197, 94, 0.15); border: none; color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap;" onmouseover="this.style.background='rgba(34, 197, 94, 0.25)'" onmouseout="this.style.background='rgba(34, 197, 94, 0.15)'">
+            <div style="width: 1px; background: rgba(255,255,255,0.08); margin: 4px 2px;"></div>
+            <button class="btn" id="posAddTxnBtn" style="flex: 1; padding: 6px 4px; font-size: 10px; font-weight: 800; border-radius: 8px; background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.1); color: #4ade80; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; white-space: nowrap; text-transform: uppercase;">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
               เพิ่ม
             </button>
           </div>
         </div>
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, #4ade80, transparent); opacity: 0.1;"></div>
 
-        <div class="transaction-list pos-receipt-items" style="padding: 10px 18px 0; max-height: 50vh; overflow-y: auto;">
-          ${[...txns].sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => {
-            const isIncome = t.type === 'income';
-            const colorVar = isIncome ? 'var(--text-success)' : (t.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : '#e2e8f0');
-            const sign = isIncome ? '+' : '-';
-            const qtyStr = (t.quantity && t.quantity > 1) ? `${t.quantity}` : '1';
-            
-            return `
-            <div class="txn-row pos-item" data-id="${t.id}" style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.05); position: relative; cursor: pointer; font-family: var(--font-mono); font-size: 14px; transition: all 0.2s;">
-              <div style="width: 30px; color: var(--text-tertiary); font-size: 12px; flex-shrink: 0; text-align: center;">${qtyStr}</div>
-              <div style="flex: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 0 10px;">
-                <span style="font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.note || t.category}</span>
-                <div style="flex: 1; border-bottom: 1px dotted rgba(255,255,255,0.1); margin-bottom: 4px;"></div>
+        <div class="transaction-list pos-list-container">
+          ${txns.length > 0 ? [...txns].sort((a, b) => new Date(b.date) - new Date(a.date)).map(t => {
+        const isIncome = t.type === 'income';
+        const colorVar = isIncome ? 'var(--text-success)' : (t.category === 'เงินกู้/เงินสดจากบัตร' ? '#fbbf24' : '#e2e8f0');
+        const sign = isIncome ? '+' : '-';
+        const qtyStr = (t.quantity && t.quantity > 1) ? `${t.quantity}` : '1';
+
+        return `
+            <div class="txn-row pos-list-row" data-id="${t.id}">
+              <div class="pos-list-qty">${qtyStr}</div>
+              <div class="pos-list-main">
+                <span class="pos-list-note">${t.note || t.category}</span>
+                <div class="pos-list-dots"></div>
               </div>
-              <div style="text-align: right; min-width: 90px; font-weight: 800; color: ${colorVar}; letter-spacing: -0.5px;">
+              <div class="pos-list-amount" style="color: ${colorVar};">
                 ${sign}${Utils.formatCurrency(t.amount)}
               </div>
-              <div class="mobile-edit-overlay" data-id="${t.id}" style="position: absolute; inset: 0; z-index: 1;"></div>
+              <div class="mobile-edit-overlay" data-id="${t.id}"></div>
             </div>
             `;
-          }).join('')}
+      }).join('') : '<div style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); font-family: var(--font-mono); font-size: 13px; opacity: 0.3; letter-spacing: 2px;">- NO TRANSACTIONS -</div>'}
         </div>
 
-        <div class="pos-receipt-footer" style="padding: 24px 20px; background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255,255,255,0.05);">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono);">
-            <div style="font-size: 14px; color: var(--text-tertiary); letter-spacing: 1px;">ยอดรวมสุทธิ</div>
-            <div style="font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.2); letter-spacing: 1px;">
+        <div class="pos-list-footer">
+          <div class="pos-list-footer-top">
+            <div class="pos-list-total-label">ยอดรวมสุทธิ</div>
+            <div class="pos-list-total-value">
               ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
             </div>
           </div>
-          <div style="margin-top: 10px; font-size: 11px; color: var(--text-tertiary); text-align: center; font-family: var(--font-mono); opacity: 0.5; letter-spacing: 1px;">
+          <div class="pos-list-footer-bottom">
             แสดงทั้งหมด ${txns.length} รายการ
           </div>
         </div>
