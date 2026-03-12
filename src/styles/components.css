@@ -33,13 +33,13 @@
 .pos-receipt-panel {
     background: linear-gradient(180deg, #1a1a24 0%, #0d0d12 100%);
     padding: 12px 0;
-    box-shadow: 
+    box-shadow:
         0 20px 50px rgba(0, 0, 0, 0.5),
         inset 0 0 100px rgba(59, 130, 246, 0.05);
     font-family: 'JetBrains Mono', 'Inconsolata', monospace;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background-image: 
+    background-image:
         linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
         linear-gradient(90deg, rgba(59, 130, 246, 0.03), rgba(0, 255, 0, 0.01), rgba(59, 130, 246, 0.03));
     background-size: 100% 4px, 4px 100%;
@@ -626,15 +626,30 @@ details[open].txn-list-details summary svg {
 /* === Dashboard Premium Summary (Dedicated for Dashboard Only) === */
 .dashboard-summary-premium {
     display: flex;
-    background: linear-gradient(135deg, rgba(39, 39, 42, 0.9), rgba(24, 24, 27, 0.9));
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
-    padding: var(--space-xl);
-    margin-bottom: var(--space-xl);
+    padding: 30px;
+    margin-bottom: 25px;
     align-items: center;
     gap: var(--space-2xl);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 15px 35px -10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-summary-premium::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.02) 0%, transparent 60%);
+    pointer-events: none;
 }
 
 .dashboard-summary-premium .summary-main {
@@ -656,7 +671,6 @@ details[open].txn-list-details summary svg {
     font-family: var(--font-mono);
     margin-bottom: 4px;
     letter-spacing: -1px;
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
 }
 
 .dashboard-summary-premium .summary-main .value-huge.success {
@@ -690,16 +704,63 @@ details[open].txn-list-details summary svg {
     flex-shrink: 1;
 }
 
+.dash-summary-add-btn {
+    padding: 6px 16px; 
+    font-size: 11px; 
+    font-weight: 700; 
+    background: rgba(74, 222, 128, 0.08); 
+    color: #4ade80; 
+    border: 1px solid rgba(74, 222, 128, 0.2); 
+    border-radius: 12px; 
+    cursor: pointer; 
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1); 
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dash-summary-add-btn:hover {
+    background: rgba(74, 222, 128, 0.15); 
+    border-color: rgba(74, 222, 128, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.2);
+}
+
+.dash-summary-add-btn:active {
+    transform: translateY(0);
+}
+
 /* === Original Debt Summary (Restored for Debt Page) === */
 .debt-summary-compact {
     display: flex;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    padding: var(--space-lg);
-    margin-bottom: var(--space-xl);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 30px;
+    margin-bottom: 25px;
     align-items: center;
     gap: var(--space-xl);
+    box-shadow: 
+        0 15px 35px -10px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    position: relative;
+    overflow: hidden;
+}
+
+.debt-summary-compact::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(251, 146, 60, 0.03) 0%, transparent 60%);
+    pointer-events: none;
 }
 
 .debt-summary-compact .summary-main {
@@ -760,11 +821,11 @@ details[open].txn-list-details summary svg {
 
 /* === Common Metrics Elements === */
 .metric-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
     padding: 18px 20px;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: transform 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
 }
 
 .metric-card:hover {
@@ -1066,8 +1127,13 @@ details[open].txn-list-details summary svg {
     flex-shrink: 0;
 }
 
-.transaction-icon.income { background: rgba(34, 197, 94, 0.1); }
-.transaction-icon.expense { background: rgba(239, 68, 68, 0.1); }
+.transaction-icon.income {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.transaction-icon.expense {
+    background: rgba(239, 68, 68, 0.1);
+}
 
 .transaction-item .details {
     flex: 1;
@@ -1114,7 +1180,8 @@ details[open].txn-list-details summary svg {
     display: flex;
     gap: 8px;
     position: relative;
-    z-index: 2; /* Above mobile overlay */
+    z-index: 2;
+    /* Above mobile overlay */
 }
 
 @media (max-width: 600px) {
@@ -1986,31 +2053,56 @@ button.ai-analyzing {
 
 /* === Live Interest Ticker === */
 @keyframes interestPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 @keyframes interestGlow {
-    0%, 100% { box-shadow: 0 0 8px rgba(251, 146, 60, 0.2); }
-    50% { box-shadow: 0 0 16px rgba(251, 146, 60, 0.4); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px rgba(251, 146, 60, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 16px rgba(251, 146, 60, 0.4);
+    }
 }
 
 .live-interest-badge {
+    position: relative;
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(0, 0, 0, 0.2) 100%);
+    border: 1px solid rgba(251, 146, 60, 0.2);
+    border-radius: 16px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    padding: 8px 12px;
-    background: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(239, 68, 68, 0.05) 100%);
-    border: 1px solid rgba(251, 146, 60, 0.2);
-    border-radius: 8px;
+    gap: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    margin-top: 15px;
     animation: interestGlow 3s ease-in-out infinite;
     cursor: pointer;
+    transition: all 0.3s;
+}
+
+.live-interest-badge:hover {
+    transform: translateY(-2px);
+    border-color: rgba(251, 146, 60, 0.4);
+    box-shadow: 0 12px 40px rgba(251, 146, 60, 0.1);
 }
 
 .live-interest-badge .interest-icon {
     font-size: 16px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     flex-shrink: 0;
 }
 
@@ -2057,14 +2149,24 @@ button.ai-analyzing {
 }
 
 @keyframes interestSweep {
-    0% { left: -50%; }
-    100% { left: 150%; }
+    0% {
+        left: -50%;
+    }
+
+    100% {
+        left: 150%;
+    }
 }
 
 /* Refresh button spin */
 @keyframes refreshSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .refresh-btn-spinning svg {
@@ -2078,7 +2180,7 @@ button.ai-analyzing {
     align-items: center;
 }
 
-.txn-header-btn {
+.txn-header-btn, .header-btn {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 8px 14px;
@@ -2089,33 +2191,45 @@ button.ai-analyzing {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-size: 13px;
     cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.txn-header-btn:hover {
+.txn-header-btn:hover, .header-btn:hover {
     background: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.txn-header-btn:active {
+.txn-header-btn:active, .header-btn:active {
     transform: translateY(0);
+}
+
+.header-btn.primary {
+    color: #3b82f6;
+}
+
+.header-btn.danger {
+    color: #ef4444;
 }
 
 /* Summary Card Premium */
 .summary-card-premium {
-    background: linear-gradient(145deg, #1e1e26 0%, #121218 100%);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     padding: 25px;
     box-shadow: 
-        0 20px 40px -10px rgba(0, 0, 0, 0.5),
+        0 15px 35px -10px rgba(0, 0, 0, 0.4),
         inset 0 1px 1px rgba(255, 255, 255, 0.05);
     position: relative;
     overflow: hidden;
     margin-bottom: 25px;
+    backdrop-filter: blur(15px);
 }
 
+/* Removed extra glow to reduce 'floating' feel */
 .summary-card-premium::before {
     content: '';
     position: absolute;
@@ -2123,7 +2237,7 @@ button.ai-analyzing {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+    background: radial-gradient(circle at center, rgba(59, 130, 246, 0.02) 0%, transparent 60%);
     pointer-events: none;
 }
 
@@ -2251,11 +2365,11 @@ details[open] .modern-filter-summary svg:last-child {
     .summary-balance-hero .value {
         font-size: 2.5rem;
     }
-    
+
     .summary-grid-refined {
         grid-template-columns: 1fr;
     }
-    
+
     .count-badge-refined {
         grid-column: span 1;
     }
@@ -2425,8 +2539,17 @@ details[open] .modern-filter-summary svg:last-child {
 }
 
 @keyframes pLight {
-    0%, 100% { opacity: 1; box-shadow: 0 0 7px #22c55e; }
-    50% { opacity: 0.3; box-shadow: 0 0 2px #22c55e; }
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 7px #22c55e;
+    }
+
+    50% {
+        opacity: 0.3;
+        box-shadow: 0 0 2px #22c55e;
+    }
 }
 
 .printer-slot {
@@ -2498,8 +2621,13 @@ details[open] .modern-filter-summary svg:last-child {
 }
 
 @keyframes sBar {
-    from { height: 3px; }
-    to { height: 14px; }
+    from {
+        height: 3px;
+    }
+
+    to {
+        height: 14px;
+    }
 }
 
 .printer-controls-group {
@@ -2538,6 +2666,7 @@ details[open] .modern-filter-summary svg:last-child {
     background: #3b82f6;
     color: #fff;
 }
+
 .printer-btn-pause {
     background: rgba(245, 158, 11, 0.2);
     color: #f59e0b;

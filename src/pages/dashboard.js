@@ -61,26 +61,10 @@ export async function renderDashboard(container) {
              สภาพคล่องเดือนนี้
           </div>
           <div style="display: flex; gap: 8px; align-items: center;">
-          <button id="dashAddTxnBtn" style="
-            padding: 5px 14px; 
-            font-size: 11px; 
-            font-weight: 600; 
-            background: rgba(74, 222, 128, 0.1); 
-            color: #4ade80; 
-            border: 1px solid rgba(74, 222, 128, 0.4); 
-            border-radius: 6px; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            box-shadow: 0 0 15px rgba(74, 222, 128, 0.4); 
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-            flex-shrink: 0;
-          " onmouseover="this.style.background='rgba(74, 222, 128, 0.2)'; this.style.borderColor='rgba(74, 222, 128, 0.6)';" onmouseout="this.style.background='rgba(74, 222, 128, 0.1)'; this.style.borderColor='rgba(74, 222, 128, 0.4)';">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            เพิ่มรายการ
-          </button>
+            <button id="dashAddTxnBtn" class="dash-summary-add-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              เพิ่มรายการ
+            </button>
           </div>
         </div>
       </div>
