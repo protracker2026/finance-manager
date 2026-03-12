@@ -2603,6 +2603,7 @@ async function refreshTransactions() {
     const summary = await TransactionModule.getSummary(currentFilters.startDate, currentFilters.endDate);
 
     // Update summary cards
+    // Update summary cards
     const summaryEl = document.getElementById('txnSummaryCards');
     if (summaryEl) {
       summaryEl.innerHTML = `
