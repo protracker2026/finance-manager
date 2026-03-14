@@ -110,12 +110,17 @@ export const Utils = {
     },
 
     debtTypeName(type) {
-        const map = { credit_card: 'บัตรเครดิต', personal_loan: 'สินเชื่อส่วนบุคคล', personal_loan_vehicle: 'สินเชื่อ (ทะเบียนรถค้ำ)' };
+        const map = { 
+            credit_card: 'บัตรเครดิต', 
+            cash_card: 'บัตรกดเงินสด',
+            personal_loan: 'สินเชื่อส่วนบุคคล', 
+            personal_loan_vehicle: 'สินเชื่อ (ทะเบียนรถค้ำ)' 
+        };
         return map[type] || type;
     },
 
     interestTypeName(type) {
-        const map = { reducing_balance: 'ลดต้นลดดอก', daily_accrual: 'เดินรายวัน', fixed_rate: 'ดอกเบี้ยคงที่ (Flat Rate)' };
+        const map = { reducing_balance: 'ลดต้นลดดอก', daily_accrual: 'ลดต้นลดดอก (เดินรายวัน)', fixed_rate: 'ดอกเบี้ยคงที่ (Flat Rate)' };
         return map[type] || type;
     },
 

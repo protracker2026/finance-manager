@@ -20,24 +20,31 @@ export const DebtModule = {
         const interestType = debt.interestType || botConfig.method;
 
         const principal = parseFloat(debt.principal);
-        const currentBalance = parseFloat(debt.currentBalance || debt.principal);
+        // If it's a card, we don't default currentBalance to principal because limit != debt
+        const isCard = (debt.type === 'credit_card' || debt.type === 'cash_card');
+        const currentBalance = (debt.currentBalance !== undefined && debt.currentBalance !== '')
+            ? parseFloat(debt.currentBalance)
+            : (isCard ? 0 : principal);
 
-        // Auto-calculate minPayment สำหรับบัตรเครดิต
+        // Auto-calculate minPayment สำหรับบัตรเครดิตและบัตรกดเงินสด
         let minPayment = parseFloat(debt.minPayment || 0);
-        if (debt.type === 'credit_card' && minPayment === 0) {
-            minPayment = InterestEngine.calculateMinPayment(currentBalance, 'credit_card');
+        if (isCard && minPayment === 0) {
+            minPayment = InterestEngine.calculateMinPayment(currentBalance, debt.type);
         }
 
         const data = {
             name: debt.name,
             type: debt.type, // 'credit_card' | 'personal_loan' | 'personal_loan_vehicle'
             interestType: interestType, // 'reducing_balance' | 'daily_accrual'
-            principal: principal,
+            principal: principal, // For credit cards, this is the credit limit. For loans, the original loan amount.
             currentBalance: currentBalance,
+            startingBalance: currentBalance, // Baseline for payoff progress, especially for revolving debt
             annualRate: parseFloat(debt.annualRate),
             monthlyPayment: parseFloat(debt.monthlyPayment || 0),
             minPayment: Math.round(minPayment * 100) / 100,
             termMonths: parseInt(debt.termMonths) || 0,
+            isInstallment: !!debt.isInstallment,
+            allowOverpayment: debt.allowOverpayment !== false,
             startDate: debt.startDate,
             note: debt.note || '',
             status: 'active', // 'active' | 'paid'
@@ -50,10 +57,10 @@ export const DebtModule = {
         const id = await db.debts.add(data);
 
         // Optional: Add to income transactions if requested
-        if (debt.addToIncome) {
+        if (debt.addToIncome && currentBalance > 0) {
             const txnId = await TransactionModule.add({
                 type: 'income',
-                amount: principal,
+                amount: currentBalance, // Use actually borrowed amount, NOT the credit limit!
                 date: debt.startDate,
                 category: 'เงินกู้/เงินสดจากบัตร',
                 note: `รับเงินสดจาก: ${debt.name}`
@@ -63,6 +70,7 @@ export const DebtModule = {
         }
 
         SyncModule.notifyDataChange();
+        window.dispatchEvent(new Event('refresh-transactions')); // Ensure other pages refresh immediately
         return id;
     },
 
@@ -74,13 +82,14 @@ export const DebtModule = {
         if (data.minPayment) data.minPayment = parseFloat(data.minPayment);
         data.updatedAt = new Date().toISOString();
         const result = await db.debts.update(id, data);
+        await this.recalculateDebt(id);
         SyncModule.notifyDataChange();
         return result;
     },
 
     async delete(id) {
         const debt = await db.debts.get(id);
-        
+
         // Find and delete related payments
         const payments = await db.debtPayments.toArray();
         const related = payments.filter(p => p.debtId === id);
@@ -157,6 +166,56 @@ export const DebtModule = {
         SyncModule.notifyDataChange();
     },
 
+    async addSpending(data) {
+        const debtId = data.debtId;
+        const debt = await db.debts.get(debtId);
+        if (!debt) return;
+
+        const amount = parseFloat(data.amount);
+        const fee = parseFloat(data.fee || 0);
+        const totalAmount = amount + fee;
+
+        // Create a linked expense transaction
+        const txnId = await TransactionModule.add({
+            type: 'expense',
+            amount: totalAmount,
+            date: data.date,
+            category: 'ใช้จ่ายผ่านบัตร',
+            note: `${debt.name}: ${data.note || 'รูดบัตร/กดเงินสด'}${fee > 0 ? ` (รวมค่าธรรมเนียม ${fee})` : ''}`
+        });
+
+        const activity = {
+            debtId: debtId,
+            type: 'spend',
+            amount: amount,
+            fee: fee,
+            date: data.date,
+            note: data.note || '',
+            isCashAdvance: !!data.isCashAdvance,
+            transactionId: txnId, // Link to the expense transaction
+            createdAt: new Date().toISOString()
+        };
+
+        const activityId = await db.debtPayments.add(activity);
+
+        // [FIX] Restore Income tracking: If checked, add this amount to Income too
+        if (data.addToIncome) {
+            const incomeTxnId = await TransactionModule.add({
+                type: 'income',
+                amount: amount, // The actual cash received
+                date: data.date,
+                category: 'เงินกู้/เงินสดจากบัตร',
+                note: `รับเงินสดจาก: ${debt.name} (${data.note || 'กดเงินสด'})`
+            });
+            // Update the activity with the income transaction link
+            await db.debtPayments.update(activityId, { incomeTransactionId: incomeTxnId });
+        }
+        await this.recalculateDebt(debtId);
+        SyncModule.notifyDataChange();
+        window.dispatchEvent(new Event('refresh-transactions')); // Ensure other pages refresh immediately
+        return activityId;
+    },
+
     async recalculateDebt(debtId) {
         const debt = await db.debts.get(debtId);
         if (!debt) return;
@@ -164,57 +223,65 @@ export const DebtModule = {
         const payments = await this.getPayments(debtId);
 
         // Reset debt state to start
-        let currentBalance = debt.principal;
+        const isCard = (debt.type === 'credit_card' || debt.type === 'cash_card');
+        // REVOLVING DEBT FIX: Start from startingBalance, not principal (which is the limit)
+        let currentBalance = debt.startingBalance !== undefined ? debt.startingBalance : (isCard ? 0 : debt.principal);
         let totalInterestPaid = 0;
         let totalPaid = 0;
         let accruedInterest = 0;
         let lastInterestDate = debt.startDate;
 
-        for (let p of payments) {
-            const paymentAmount = parseFloat(p.amount);
-            let interestPortion = 0;
-            let principalPortion = 0;
+        for (let act of payments) {
+            const amount = parseFloat(act.amount);
+            const fee = parseFloat(act.fee || 0);
+            const isSpend = act.type === 'spend';
 
-            const daysSinceLast = InterestEngine.daysBetween(lastInterestDate, p.date);
+            const daysSinceLast = InterestEngine.daysBetween(lastInterestDate, act.date);
+            let interestAccruedInPeriod = 0;
 
             if (debt.interestType === 'fixed_rate') {
-                // Flat Rate: Interest based on ORIGINAL principal per day
-                // (Rate/100 * OriginalPrincipal / 365) * days
                 const dailyFixed = (debt.annualRate / 100 * debt.principal) / 365;
-                const accruedNew = dailyFixed * daysSinceLast;
-                const totalAccruedAtPayment = accruedInterest + accruedNew;
-
-                interestPortion = Math.min(paymentAmount, totalAccruedAtPayment);
-                principalPortion = paymentAmount - interestPortion;
-                accruedInterest = Math.max(0, totalAccruedAtPayment - interestPortion);
+                interestAccruedInPeriod = dailyFixed * daysSinceLast;
             } else {
-                // Reducing Balance OR Daily Accrual: Interest based on CURRENT balance per day
-                // BOT Standard for Personal Loans and Credit Cards
                 const dailyRate = debt.annualRate / 100 / 365;
-                const accruedNew = currentBalance * dailyRate * daysSinceLast;
-                const totalAccruedAtPayment = accruedInterest + accruedNew;
-
-                interestPortion = Math.min(paymentAmount, totalAccruedAtPayment);
-                principalPortion = paymentAmount - interestPortion;
-                accruedInterest = Math.max(0, totalAccruedAtPayment - interestPortion);
+                interestAccruedInPeriod = currentBalance * dailyRate * daysSinceLast;
             }
 
-            currentBalance = Math.max(0, currentBalance - principalPortion);
-            totalInterestPaid += interestPortion;
-            totalPaid += paymentAmount;
-            lastInterestDate = p.date;
+            accruedInterest += interestAccruedInPeriod;
 
-            // Update payment record with calculated values
-            await db.debtPayments.update(p.id, {
-                interestPortion: Math.round(interestPortion * 100) / 100,
-                principalPortion: Math.round(principalPortion * 100) / 100,
-                balanceAfter: Math.round(currentBalance * 100) / 100
-            });
+            if (isSpend) {
+                // Spending increases balance
+                currentBalance += amount + fee;
+                // Spending activity doesn't "pay" interest, it just adds to principal
+                await db.debtPayments.update(act.id, {
+                    balanceAfter: Math.round(currentBalance * 100) / 100
+                });
+            } else {
+                // Payment pays interest first, then principal
+                const paymentAmount = amount;
+                const interestPortion = Math.min(paymentAmount, accruedInterest);
+                const principalPortion = paymentAmount - interestPortion;
+
+                accruedInterest = Math.max(0, accruedInterest - interestPortion);
+                currentBalance = Math.max(0, currentBalance - principalPortion);
+
+                totalInterestPaid += interestPortion;
+                totalPaid += paymentAmount;
+
+                // Update payment record with calculated values
+                await db.debtPayments.update(act.id, {
+                    interestPortion: Math.round(interestPortion * 100) / 100,
+                    principalPortion: Math.round(principalPortion * 100) / 100,
+                    balanceAfter: Math.round(currentBalance * 100) / 100
+                });
+            }
+
+            lastInterestDate = act.date;
         }
 
-        // Final debt status & min payment for credit cards
-        const newMinPayment = debt.type === 'credit_card'
-            ? InterestEngine.calculateMinPayment(currentBalance, 'credit_card')
+        // Final debt status & min payment for revolving debts
+        const newMinPayment = isCard
+            ? InterestEngine.calculateMinPayment(currentBalance, debt.type)
             : debt.minPayment;
 
         await db.debts.update(debtId, {
@@ -234,6 +301,10 @@ export const DebtModule = {
         return all
             .filter(p => p.debtId === debtId)
             .sort((a, b) => new Date(a.date) - new Date(b.date));
+    },
+
+    async getHistory(debtId) {
+        return this.getPayments(debtId);
     },
 
     async getAllPayments() {
@@ -258,7 +329,11 @@ export const DebtModule = {
 
         return {
             totalDebt: active.reduce((s, d) => s + d.currentBalance, 0),
-            totalOriginal: debts.reduce((s, d) => s + d.principal, 0),
+            totalOriginal: debts.reduce((s, d) => {
+                const isCard = (d.type === 'credit_card' || d.type === 'cash_card');
+                const baseline = isCard ? Math.max(d.startingBalance || 0, d.currentBalance) : d.principal;
+                return s + baseline;
+            }, 0),
             totalInterestPaid: debts.reduce((s, d) => s + (d.totalInterestPaid || 0), 0),
             totalPaid: debts.reduce((s, d) => s + (d.totalPaid || 0), 0),
             activeCount: active.length,
@@ -272,17 +347,17 @@ export const DebtModule = {
 window.addEventListener('transaction-deleted', async (e) => {
     const txnId = e.detail.id;
     const allPayments = await db.debtPayments.toArray();
-    const linkedPayment = allPayments.find(p => String(p.transactionId) === String(txnId));
-    
-    if (linkedPayment) {
-        console.log(`[DebtModule] Linked transaction ${txnId} deleted. Reverting payment ${linkedPayment.id}...`);
-        
-        // Delete the debt payment record
-        await db.debtPayments.delete(linkedPayment.id);
-        
+    const linkedRecord = allPayments.find(p => String(p.transactionId) === String(txnId));
+
+    if (linkedRecord) {
+        console.log(`[DebtModule] Linked transaction ${txnId} deleted. Reverting debt record ${linkedRecord.id}...`);
+
+        // Delete the debt record (can be payment or spend)
+        await db.debtPayments.delete(linkedRecord.id);
+
         // Recalculate the debt to restore the balance
-        await DebtModule.recalculateDebt(linkedPayment.debtId);
-        
+        await DebtModule.recalculateDebt(linkedRecord.debtId);
+
         // Notify UI to refresh
         SyncModule.notifyDataChange();
         window.dispatchEvent(new Event('refresh-transactions'));
@@ -294,20 +369,20 @@ window.addEventListener('transaction-updated', async (e) => {
     const { id, data } = e.detail;
     const allPayments = await db.debtPayments.toArray();
     const linkedPayment = allPayments.find(p => String(p.transactionId) === String(id));
-    
+
     if (linkedPayment) {
         console.log(`[DebtModule] Linked transaction ${id} updated. Syncing debt payment...`);
-        
+
         // Sync the amount and date (recalculation will handle the rest)
         await db.debtPayments.update(linkedPayment.id, {
             amount: parseFloat(data.amount),
             date: data.date,
             note: data.note || linkedPayment.note
         });
-        
+
         // Recalculate everything for this debt
         await DebtModule.recalculateDebt(linkedPayment.debtId);
-        
+
         // Notify UI
         SyncModule.notifyDataChange();
         window.dispatchEvent(new Event('refresh-transactions'));

@@ -75,15 +75,19 @@ export const TransactionModule = {
             txns = txns.filter(t => t.date <= end);
         }
 
-        const income = txns.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-        const expense = txns.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const income = txns.filter(t => t.type?.toLowerCase() === 'income').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+        const expense = txns.filter(t => t.type?.toLowerCase() === 'expense').reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
 
         const byCategory = {};
         txns.forEach(t => {
+            if (!t.category) return;
             if (!byCategory[t.category]) {
                 byCategory[t.category] = { income: 0, expense: 0 };
             }
-            byCategory[t.category][t.type] += t.amount;
+            const typeKey = t.type?.toLowerCase();
+            if (typeKey === 'income' || typeKey === 'expense') {
+                byCategory[t.category][typeKey] += (parseFloat(t.amount) || 0);
+            }
         });
 
         return { income, expense, balance: income - expense, byCategory, count: txns.length };

@@ -159,8 +159,9 @@ export async function renderDashboard(container) {
       <div class="txn-list" style="display: flex; flex-direction: column;">
         ${recentSlice.map(t => {
           const isDebtIncome = t.category === 'เงินกู้/เงินสดจากบัตร';
-          const mainColor = isDebtIncome ? '#fbbf24' : (t.type === 'income' ? 'var(--text-success)' : '');
-          const badgeIcon = isDebtIncome ? '⚠️' : (t.type === 'income' ? '💰' : '💸');
+          // Fix: Show debt-related income as green/income icon to avoid user confusion
+          const mainColor = (isDebtIncome || t.type === 'income') ? 'var(--text-success)' : '';
+          const badgeIcon = (isDebtIncome || t.type === 'income') ? '💰' : '💸';
           
           return `
           <div style="display: flex; align-items: center; padding: 10px var(--space-lg); border-bottom: 1px solid rgba(255,255,255,0.02);">
@@ -173,7 +174,7 @@ export async function renderDashboard(container) {
               </div>
             </div>
             <div style="text-align: right; flex-shrink: 0; margin-left: 12px;">
-              <div class="amount ${t.type}" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px; ${isDebtIncome ? 'color: #fbbf24 !important;' : ''}">
+              <div class="amount ${t.type}" style="font-weight: 700; font-family: var(--font-mono); font-size: 13px;">
                 ${t.type === 'income' ? '+' : '-'}${Utils.formatCurrency(t.amount)}
               </div>
               <div style="font-size: 9px; color: var(--text-tertiary); opacity: 0.4;">${Utils.formatDateShort(t.date)}</div>

@@ -2711,7 +2711,11 @@ async function refreshTransactions() {
           <div style="display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono);">
             <div style="font-size: 14px; color: var(--text-tertiary); letter-spacing: 1px;">ยอดรวมสุทธิ</div>
             <div style="font-size: 28px; font-weight: 900; color: #fff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.2); letter-spacing: 1px;">
-              ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+              ${Utils.formatCurrency(txns.reduce((sum, t) => {
+                const isInc = t.type?.toLowerCase() === 'income';
+                const amt = parseFloat(t.amount) || 0;
+                return sum + (isInc ? amt : -amt);
+              }, 0))}
             </div>
           </div>
           <div style="margin-top: 10px; font-size: 11px; color: var(--text-tertiary); text-align: center; font-family: var(--font-mono); opacity: 0.5; letter-spacing: 1px;">
@@ -2780,7 +2784,11 @@ async function refreshTransactions() {
           <div class="pos-list-footer-top">
             <div class="pos-list-total-label">ยอดรวมสุทธิ</div>
             <div class="pos-list-total-value">
-              ${Utils.formatCurrency(txns.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0))}
+              ${Utils.formatCurrency(txns.reduce((sum, t) => {
+                const isInc = t.type?.toLowerCase() === 'income';
+                const amt = parseFloat(t.amount) || 0;
+                return sum + (isInc ? amt : -amt);
+              }, 0))}
             </div>
           </div>
           <div class="pos-list-footer-bottom">
