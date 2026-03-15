@@ -27,7 +27,7 @@ export async function renderTransactionsPage(container) {
   }
 
   container.innerHTML = `
-    <div class="page-header">
+    <div class="page-header" id="txn-top-anchor">
       <div>
         <h2>รายรับ - รายจ่าย</h2>
         <p class="subtitle">บันทึกและติดตามรายรับ-รายจ่ายของคุณ</p>
@@ -332,14 +332,6 @@ export async function renderTransactionsPage(container) {
   setupTransactionEvents();
   currentFilters = { startDate: start, endDate: end };
 
-  // If we came from drill-down, sync UI and clear period active states
-  if (drillStart && drillEnd) {
-      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-      // Open the filter details if it's a custom range
-      const details = container.querySelector('details');
-      if (details) details.open = true;
-  }
-
   // Remove old refresh handler if exists, then add new one
   if (refreshHandler) {
     window.removeEventListener('refresh-transactions', refreshHandler);
@@ -348,6 +340,21 @@ export async function renderTransactionsPage(container) {
   window.addEventListener('refresh-transactions', refreshHandler);
 
   await refreshTransactions();
+
+  // If we came from drill-down, sync UI and clear period active states
+  if (drillStart && drillEnd) {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      
+      // Force scroll to the transaction list (POS panel) for better focus
+      setTimeout(() => {
+        const tableEl = document.getElementById('transactionsTable');
+        if (tableEl) {
+          const yOffset = -80; // Leave a bit of space for context
+          const y = tableEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 350);
+  }
 
   // Check if we should auto-open the Add Transaction modal (triggered from Dashboard FAB)
   if (sessionStorage.getItem('triggerAddTxn') === 'true') {
