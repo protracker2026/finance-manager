@@ -13,7 +13,18 @@ let refreshHandler = null; // To avoid stacking event listeners
 // Voice typing uses native keyboard, no browser mic APIs needed.
 export async function renderTransactionsPage(container) {
   const categories = await TransactionModule.getCategories();
-  const { start, end } = Utils.getTodayRange();
+  let { start, end } = Utils.getTodayRange();
+
+  // Check for drill-down filters from Analytics
+  const drillStart = sessionStorage.getItem('analytics_filter_start');
+  const drillEnd = sessionStorage.getItem('analytics_filter_end');
+  
+  if (drillStart && drillEnd) {
+    start = drillStart;
+    end = drillEnd;
+    sessionStorage.removeItem('analytics_filter_start');
+    sessionStorage.removeItem('analytics_filter_end');
+  }
 
   container.innerHTML = `
     <div class="page-header">
@@ -320,6 +331,14 @@ export async function renderTransactionsPage(container) {
   `;
   setupTransactionEvents();
   currentFilters = { startDate: start, endDate: end };
+
+  // If we came from drill-down, sync UI and clear period active states
+  if (drillStart && drillEnd) {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      // Open the filter details if it's a custom range
+      const details = container.querySelector('details');
+      if (details) details.open = true;
+  }
 
   // Remove old refresh handler if exists, then add new one
   if (refreshHandler) {

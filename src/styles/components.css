@@ -561,7 +561,7 @@
 .loading-spinner-tiny {
     width: 14px;
     height: 14px;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: #fff;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
@@ -655,7 +655,7 @@ details[open].txn-list-details summary svg {
     margin-bottom: 25px;
     align-items: center;
     gap: var(--space-2xl);
-    box-shadow: 
+    box-shadow:
         0 15px 35px -10px rgba(0, 0, 0, 0.4),
         inset 0 1px 1px rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(15px);
@@ -727,16 +727,16 @@ details[open].txn-list-details summary svg {
 }
 
 .dash-summary-add-btn {
-    padding: 6px 16px; 
-    font-size: 11px; 
-    font-weight: 700; 
-    background: rgba(74, 222, 128, 0.08); 
-    color: #4ade80; 
-    border: 1px solid rgba(74, 222, 128, 0.2); 
-    border-radius: 12px; 
-    cursor: pointer; 
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1); 
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(74, 222, 128, 0.08);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -746,7 +746,7 @@ details[open].txn-list-details summary svg {
 }
 
 .dash-summary-add-btn:hover {
-    background: rgba(74, 222, 128, 0.15); 
+    background: rgba(74, 222, 128, 0.15);
     border-color: rgba(74, 222, 128, 0.4);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(34, 197, 94, 0.2);
@@ -766,7 +766,7 @@ details[open].txn-list-details summary svg {
     margin-bottom: 25px;
     align-items: center;
     gap: var(--space-xl);
-    box-shadow: 
+    box-shadow:
         0 15px 35px -10px rgba(0, 0, 0, 0.4),
         inset 0 1px 1px rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(15px);
@@ -2393,7 +2393,8 @@ button.ai-analyzing {
     align-items: center;
 }
 
-.txn-header-btn, .header-btn {
+.txn-header-btn,
+.header-btn {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 8px 14px;
@@ -2408,14 +2409,16 @@ button.ai-analyzing {
     color: var(--text-primary);
 }
 
-.txn-header-btn:hover, .header-btn:hover {
+.txn-header-btn:hover,
+.header-btn:hover {
     background: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.txn-header-btn:active, .header-btn:active {
+.txn-header-btn:active,
+.header-btn:active {
     transform: translateY(0);
 }
 
@@ -2433,7 +2436,7 @@ button.ai-analyzing {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     padding: 25px;
-    box-shadow: 
+    box-shadow:
         0 15px 35px -10px rgba(0, 0, 0, 0.4),
         inset 0 1px 1px rgba(255, 255, 255, 0.05);
     position: relative;
@@ -2992,7 +2995,7 @@ details[open] .modern-filter-summary svg:last-child {
     border-radius: 5px;
     position: relative;
     padding: 3px;
-    box-shadow: 
+    box-shadow:
         inset 0 1px 1px rgba(255, 255, 255, 0.5),
         0 2px 4px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
@@ -3127,16 +3130,23 @@ details[open] .modern-filter-summary svg:last-child {
 }
 
 @keyframes badgeGlowPulse {
-    0%, 100% { box-shadow: 0 0 10px rgba(251, 146, 60, 0.1); }
-    50% { box-shadow: 0 0 15px rgba(251, 146, 60, 0.2); }
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px rgba(251, 146, 60, 0.1);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(251, 146, 60, 0.2);
+    }
 }
 
 /* === Analytics Page === */
 .analytics-mode-bar {
     display: flex;
     gap: 4px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 14px;
     padding: 4px;
     margin-bottom: 24px;
@@ -3164,7 +3174,7 @@ details[open] .modern-filter-summary svg:last-child {
 
 .analytics-stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 24px;
 }
@@ -3173,13 +3183,29 @@ details[open] .modern-filter-summary svg:last-child {
     .analytics-stats-row {
         grid-template-columns: repeat(2, 1fr);
     }
+    
+    .analytics-stat-card.highlight {
+        grid-column: span 2;
+        text-align: center;
+    }
 }
 
 .analytics-stat-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 14px;
     padding: 16px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.analytics-stat-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+}
+
+.analytics-stat-card.highlight {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .analytics-stat-label {
@@ -3216,8 +3242,8 @@ details[open] .modern-filter-summary svg:last-child {
 }
 
 .analytics-bucket-row {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     border-radius: 10px;
     padding: 10px 14px;
 }
@@ -3248,7 +3274,7 @@ details[open] .modern-filter-summary svg:last-child {
 
 .analytics-bar-track {
     height: 4px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -3268,7 +3294,7 @@ details[open] .modern-filter-summary svg:last-child {
 
 .analytics-count-btn {
     padding: 6px 14px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     background: transparent;
     color: var(--text-tertiary);
     font-size: 12px;
@@ -3280,14 +3306,14 @@ details[open] .modern-filter-summary svg:last-child {
 }
 
 .analytics-count-btn.active {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
-    border-color: rgba(255,255,255,0.15);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 .analytics-quick-btn {
     padding: 5px 12px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     background: transparent;
     color: var(--text-secondary);
     font-size: 12px;
@@ -3300,9 +3326,9 @@ details[open] .modern-filter-summary svg:last-child {
 }
 
 .analytics-quick-btn:hover {
-    background: rgba(255,255,255,0.07);
+    background: rgba(255, 255, 255, 0.07);
     color: var(--text-primary);
-    border-color: rgba(255,255,255,0.2);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .analytics-quick-btn.active {
@@ -3311,3 +3337,123 @@ details[open] .modern-filter-summary svg:last-child {
     border-color: rgba(59, 130, 246, 0.4);
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.1);
 }
+
+/* Response Fix for Analytics Bucket List (No Slide) */
+.analytics-bucket-container {
+    width: 100%;
+    overflow: hidden;
+}
+
+.analytics-bucket-header-grid,
+.analytics-bucket-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.analytics-bucket-values-header,
+.analytics-bucket-values {
+    display: grid;
+    grid-template-columns: 100px 100px 110px;
+    gap: 8px;
+    align-items: center;
+}
+
+.analytics-bucket-header-grid {
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 4px;
+}
+
+.analytics-bucket-header-grid span {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.analytics-bucket-header-grid .col-income,
+.analytics-bucket-header-grid .col-expense,
+.analytics-bucket-header-grid .col-net {
+    text-align: right;
+}
+
+.analytics-bucket-row {
+    padding: 8px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.analytics-bucket-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.val-income { font-size: 11px; font-weight: 700; font-family: var(--font-mono); color: #4ade80; text-align: right; }
+.val-expense { font-size: 11px; font-weight: 700; font-family: var(--font-mono); color: #f87171; text-align: right; }
+.val-net-wrapper { text-align: right; background: rgba(255, 255, 255, 0.02); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05); }
+.val-net { font-size: 12px; font-weight: 800; font-family: var(--font-mono); }
+.val-net.pos { color: #4ade80; }
+.val-net.neg { color: #f87171; }
+
+@media (max-width: 600px) {
+    .analytics-bucket-header-grid {
+        display: none;
+    }
+
+    .analytics-bucket-meta-grid {
+        align-items: center; 
+        padding: 4px 20px; /* strictly compact padding */
+    }
+
+    .analytics-bucket-label {
+        font-size: 13px;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin: 0;
+        flex: 1;
+    }
+
+    .analytics-bucket-values {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0px; /* Zero gap for maximum compactness */
+        min-width: 100px;
+        line-height: 1.1; /* Tight line height */
+    }
+
+    .val-income, 
+    .val-expense {
+        font-size: 9px; /* Very small secondary info */
+        opacity: 0.7;
+        font-weight: 500;
+    }
+
+    .val-net-wrapper {
+        margin-top: 1px;
+        padding-top: 0;
+        border: none;
+        width: auto;
+    }
+
+    .val-net {
+        font-size: 13px; /* Core info tetapชัด */
+        font-weight: 800;
+    }
+
+    .analytics-bar-track {
+        margin: 0 20px 2px;
+        height: 2px !important; /* Minimalist bars */
+        opacity: 0.5;
+    }
+}
+
+
+
+
