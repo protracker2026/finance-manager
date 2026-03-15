@@ -125,6 +125,17 @@ export async function renderDebtsPage(container) {
     <!-- Debt List Container -->
     <div id="debtsContainer"></div>
 
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+      <div class="modal" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column;">
+        <div class="modal-header">
+          <h3 id="detailTitle">รายละเอียดหนี้</h3>
+          <button class="modal-close" id="detailModalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="detailBody" style="flex:1; overflow-y:auto; padding:var(--space-md); position:relative;"></div>
+      </div>
+    </div>
+
     <!-- Prediction Analysis Modal -->
     <div class="modal-overlay" id="predictionModal">
       <div class="modal" style="max-width: 450px;">
@@ -298,17 +309,6 @@ export async function renderDebtsPage(container) {
       </div>
     </div>
 
-    <!-- Detail Modal -->
-    <div class="modal-overlay" id="detailModal">
-      <div class="modal" style="width:100%; height:100%; max-width:100%; max-height:100%; border-radius:0; display:flex; flex-direction:column;">
-        <div class="modal-header">
-          <h3 id="detailTitle">รายละเอียดหนี้</h3>
-          <button class="modal-close" id="detailModalClose">&times;</button>
-        </div>
-        <div class="modal-body" id="detailBody" style="flex:1; overflow-y:auto; padding:var(--space-md); position:relative;"></div>
-      </div>
-    </div>
-
     <!-- Spend Modal (รูดเพิ่ม/กดเงินสดเพิ่ม) -->
     <div class="modal-overlay" id="spendModal">
       <div class="modal">
@@ -320,16 +320,17 @@ export async function renderDebtsPage(container) {
           <p id="spendDebtName" style="color:var(--text-warning);margin-bottom:var(--space-md);font-weight:600;"></p>
           <input type="hidden" id="spendDebtId">
           
-          <div class="form-row" style="margin-bottom: 12px;">
+          <div class="form-row" style="margin-bottom: 12px; align-items: flex-end;">
              <div class="form-group" style="flex: 2;">
                 <label class="form-label">ยอดที่ใช้เพิ่ม (บาท)</label>
                 <input type="number" class="form-input" id="spendAmount" inputmode="decimal" style="font-size: 20px; font-weight: bold; color: #fb923c;" required>
              </div>
              <div class="form-group" style="flex: 1;" id="cashFeeGroup">
                 <label class="form-label">ค่าธรรมเนียม (บาท)</label>
-                <input type="number" class="form-input" id="spendFee" value="0" inputmode="decimal">
+                <input type="number" class="form-input" id="spendFee" value="0" inputmode="decimal" style="font-size: 20px; font-weight: bold;">
              </div>
           </div>
+
 
           <div class="form-group" id="cashAdvanceOption" style="margin-bottom: 16px; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px;">
              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-secondary); font-size: 13px;">
@@ -522,9 +523,21 @@ function setupDebtEvents() {
   document.getElementById('spendCancelBtn').addEventListener('click', closeSpendModal);
   document.getElementById('spendSaveBtn').addEventListener('click', saveSpend);
 
-  document.getElementById('exportDebtPdfBtn').addEventListener('click', async () => {
-    const summary = await DebtModule.getDebtSummary();
-    await Utils.exportDebtsToPDF(summary);
+  document.getElementById('exportDebtPdfBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const origText = btn.innerHTML;
+    btn.innerHTML = '⏳ กำลังสร้าง...';
+    btn.disabled = true;
+    try {
+      const summary = await DebtModule.getDebtSummary();
+      await Utils.exportDebtsToPDF(summary);
+    } catch(err) {
+      console.error('[DebtPage] Export all debts PDF error:', err);
+      Utils.showToast('Export ไม่สำเร็จ: ' + err.message, 'error');
+    } finally {
+      btn.innerHTML = origText;
+      btn.disabled = false;
+    }
   });
 }
 
@@ -614,10 +627,14 @@ function closeDebtModal() {
 function closePaymentModal() { 
   const modal = document.getElementById('paymentModal');
   if (modal) {
-    modal.classList.add('closing'); // Add closing state
+    modal.classList.add('closing');
     setTimeout(() => {
       modal.classList.remove('active');
       modal.classList.remove('closing');
+      // If we came from details, ensure detail modal is still active or refresh it
+      if (lastViewedDebt) {
+        document.getElementById('detailModal')?.classList.add('active');
+      }
     }, 150);
   }
 }
@@ -629,6 +646,10 @@ function closeSpendModal() {
     setTimeout(() => {
       modal.classList.remove('active');
       modal.classList.remove('closing');
+      // If we came from details, ensure detail modal is still active
+      if (lastViewedDebt) {
+        document.getElementById('detailModal')?.classList.add('active');
+      }
     }, 150);
   }
 }
@@ -827,10 +848,28 @@ function openSpendModal(debt) {
   document.getElementById('spendNote').value = '';
   if (document.getElementById('spendAddToIncome')) document.getElementById('spendAddToIncome').checked = false;
 
+  const isRevolving = debt.type === 'credit_card' || debt.type === 'cash_card';
   const isCashCard = debt.type === 'cash_card';
+  const isCreditCard = debt.type === 'credit_card';
+  
+  const titleEl = modal.querySelector('h3');
+  if (titleEl) {
+    if (isCashCard) titleEl.textContent = 'กดเงินสดเพิ่ม 💸';
+    else if (isCreditCard) titleEl.textContent = 'ยอดรูดบัตรเพิ่ม 💳';
+    else titleEl.textContent = 'บันทึกยอดหนี้เพิ่ม ➕';
+  }
+
   const cashOption = document.getElementById('cashAdvanceOption');
   const feeGroup = document.getElementById('cashFeeGroup');
   const amountLabel = modal.querySelector('label[for="spendAmount"]') || modal.querySelectorAll('.form-label')[0];
+
+  if (isCashCard || isCreditCard) {
+    if (cashOption) cashOption.style.display = 'block';
+    if (feeGroup) feeGroup.style.display = 'block';
+  } else {
+    if (cashOption) cashOption.style.display = 'none';
+    if (feeGroup) feeGroup.style.display = 'none';
+  }
 
   if (isCashCard) {
     // Cash cards are designed for withdrawal, usually no 3% fee
@@ -1022,11 +1061,6 @@ async function savePayment() {
     // Immediate closure of all possible modals
     closePaymentModal();
     closeSpendModal();
-    
-    // Also force hide any element with active class that looks like an overlay
-    document.querySelectorAll('.modal-overlay.active').forEach(el => {
-      if (el.id !== 'hurtfulSummaryModal') el.classList.remove('active');
-    });
 
     try {
       await refreshDebts();
@@ -1355,32 +1389,31 @@ async function showDebtDetail(debtOrId, scrollToHistory = false) {
 
     <!-- 3. ประวัติการชำระ -->
     ${historyHtml}
-    <!-- Action Bar: Minimalist Symmetrical Metric-style (Slimmer) -->
+    <!-- Action Bar: Redesigned for Symmetry and Completeness -->
     <div style="margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <!-- Primary: Pay -->
-        <button class="btn pay-debt-modal" style="height: 48px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: rgba(59, 130, 246, 0.05); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
-          <span style="font-size: 15px;">💰</span> บันทึกจ่าย
+        <!-- Primary Actions -->
+        <button class="btn pay-debt-modal" style="height: 52px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: rgba(59, 130, 246, 0.05); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+          <span style="font-size: 16px;">💰</span> บันทึกจ่าย
         </button>
         
-        <!-- Contextual: Spend or PDF -->
-        ${isRevolving ? `
-        <button class="btn spend-debt-modal" style="height: 48px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: rgba(249, 115, 22, 0.05); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
-          <span style="font-size: 15px;">💳</span> ${debt.type === 'cash_card' ? 'กดเงินสด' : 'รูดเพิ่ม'}
-        </button>
-        ` : `
-        <button class="btn export-pdf-modal" style="height: 48px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: rgba(255,255,255,0.02); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
-          <span style="font-size: 15px;">📄</span> Export PDF
-        </button>
-        `}
-
-        <!-- Edit -->
-        <button class="btn edit-debt-modal" style="height: 48px; font-size: 13.5px; font-weight: 600; border-radius: 12px; background: rgba(255,255,255,0.02); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
-          <span style="font-size: 15px; opacity: 0.8;">⚙️</span> ตั้งค่า
+        <button class="btn spend-debt-modal" style="height: 52px; font-size: 13.5px; font-weight: 700; border-radius: 12px; background: rgba(249, 115, 22, 0.05); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+          <span style="font-size: 16px;">💳</span> ${isRevolving ? (debt.type === 'cash_card' ? 'กดเงินสด' : 'รูดเพิ่ม') : 'กู้เพิ่ม'}
         </button>
 
-        <!-- Delete -->
-        <button class="btn delete-debt-modal" style="height: 48px; font-size: 13.5px; font-weight: 600; border-radius: 12px; background: rgba(239, 68, 68, 0.05); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
-          <span style="font-size: 15px; opacity: 0.8;">🗑️</span> ลบรายการ
+        <!-- Tool Actions -->
+        <button class="btn edit-debt-modal" style="height: 52px; font-size: 13.5px; font-weight: 600; border-radius: 12px; background: rgba(255,255,255,0.02); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+          <span style="font-size: 16px; opacity: 0.8;">⚙️</span> ตั้งค่า
+        </button>
+
+        <button class="btn export-pdf-modal" style="height: 52px; font-size: 13.5px; font-weight: 600; border-radius: 12px; background: rgba(255,255,255,0.02); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease;">
+          <span style="font-size: 16px;">📄</span> Export PDF
+        </button>
+    </div>
+
+    <!-- Danger Zone at the bottom -->
+    <div style="margin-top: 16px; text-align: center; border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px;">
+        <button class="btn delete-debt-modal" style="background: transparent; color: #f87171; border: none; font-size: 12px; font-weight: 500; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; cursor: pointer;">
+          <span style="font-size: 14px;">🗑️</span> ลบรายการหนี้สินนี้
         </button>
     </div>
   `;
@@ -1393,36 +1426,81 @@ async function showDebtDetail(debtOrId, scrollToHistory = false) {
   const dModal = document.getElementById('detailModal');
   
   const switchModal = (openFunc) => {
-    // Instantly hide the detail modal to eliminate perceived lag
-    dModal.classList.remove('active');
-    dModal.classList.remove('closing');
-    
-    // Slight delay to allow DOM to clear before opening the new one
-    setTimeout(() => {
-        openFunc();
-    }, 10);
+    // Keep the detail modal in the background instead of hiding it
+    // to allow a seamless return experience
+    openFunc();
   };
 
   body.querySelector('.pay-debt-modal').onclick = () => switchModal(() => openPaymentModal(debt));
-  
-  if (isRevolving) {
-    body.querySelector('.spend-debt-modal').onclick = () => switchModal(() => openSpendModal(debt));
-  } else {
-    body.querySelector('.export-pdf-modal').onclick = async () => {
-      const payments = await DebtModule.getPayments(debt.id);
-      Utils.exportSingleDebtToPDF({ ...debt, payments }, result.schedule);
-    };
-  }
-  
+  body.querySelector('.spend-debt-modal').onclick = () => switchModal(() => openSpendModal(debt));
   body.querySelector('.edit-debt-modal').onclick = () => switchModal(() => openDebtModal(debt));
   
-  body.querySelector('.delete-debt-modal').onclick = async () => {
-    if (confirm('ยืนยันการลบหนี้นี้และประวัติทั้งหมด?')) {
-      await DebtModule.delete(debt.id);
-      dModal.classList.remove('active');
-      refreshDebts();
-      Utils.showToast('ลบรายการสำเร็จ', 'success');
+  body.querySelector('.export-pdf-modal').onclick = async (e) => {
+    const btn = e.currentTarget;
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...';
+    btn.disabled = true;
+    try {
+      const payments = await DebtModule.getPayments(debt.id);
+      const result = await InterestEngine.generateFullSchedule(debt);
+      await Utils.exportSingleDebtToPDF({ ...debt, payments }, result);
+    } catch(err) {
+      console.error('[DebtPage] Export PDF error:', err);
+      Utils.showToast('Export ไม่สำเร็จ: ' + err.message, 'error');
+    } finally {
+      btn.innerHTML = origText;
+      btn.disabled = false;
     }
+  };
+  
+  body.querySelector('.delete-debt-modal').onclick = () => {
+    // Instead of window.confirm (may be blocked), show an inline confirmation UI
+    const existingConfirm = body.querySelector('.delete-confirm-box');
+    if (existingConfirm) { existingConfirm.remove(); return; }
+
+    const confirmBox = document.createElement('div');
+    confirmBox.className = 'delete-confirm-box';
+    confirmBox.style.cssText = `
+      margin-top: 12px; padding: 16px; border-radius: 12px;
+      background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3);
+      animation: fadeIn 0.2s ease;
+    `;
+    confirmBox.innerHTML = `
+      <div style="font-size:13px; color:#f87171; font-weight:600; margin-bottom:10px;">
+        ⚠️ ยืนยันการลบหนี้ "${debt.name}" และประวัติทั้งหมด?
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button id="confirmDeleteYes" style="flex:1; padding:10px; border-radius:8px; background:#ef4444; color:white; border:none; font-weight:700; cursor:pointer; font-size:13px;">
+          🗑️ ลบเลย
+        </button>
+        <button id="confirmDeleteNo" style="flex:1; padding:10px; border-radius:8px; background:rgba(255,255,255,0.05); color:var(--text-secondary); border:1px solid rgba(255,255,255,0.1); font-weight:600; cursor:pointer; font-size:13px;">
+          ยกเลิก
+        </button>
+      </div>
+    `;
+
+    // Insert after the delete button's parent div
+    const dangerZone = body.querySelector('.delete-debt-modal').closest('div');
+    dangerZone.after(confirmBox);
+
+    confirmBox.querySelector('#confirmDeleteNo').onclick = () => confirmBox.remove();
+
+    confirmBox.querySelector('#confirmDeleteYes').onclick = async () => {
+      confirmBox.querySelector('#confirmDeleteYes').innerHTML = '⏳ กำลังลบ...';
+      confirmBox.querySelector('#confirmDeleteYes').disabled = true;
+      try {
+        await DebtModule.delete(debt.id);
+        lastViewedDebt = null;
+        dModal.classList.remove('active');
+        body.innerHTML = '';
+        await refreshDebts();
+        Utils.showToast('ลบรายการสำเร็จ', 'success');
+      } catch(e) {
+        console.error('[DebtPage] Error deleting debt:', e);
+        Utils.showToast('เกิดข้อผิดพลาดในการลบ: ' + e.message, 'error');
+        confirmBox.remove();
+      }
+    };
   };
 
   if (scrollToHistory) {
@@ -1641,6 +1719,9 @@ async function refreshDebts() {
               <span style="opacity:0.5; font-weight:normal; margin-left: 2px;">• ${group.items.length}</span>
            </div>
            <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.05);"></div>
+           <div style="font-size: 12px; font-weight: 700; color: var(--text-primary); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 3px 8px; font-family: var(--font-mono, monospace); letter-spacing: -0.3px;">
+             ${Utils.formatCurrency(group.sum)}
+           </div>
         </div>
     `;
 

@@ -342,5 +342,24 @@ export const InterestEngine = {
                 total: Math.round((minResult.totalPaid - extraResult.totalPaid) * 100) / 100
             }
         };
+    },
+
+    // === ผสานการคำนวณทั้งหมดเพื่อดึงตารางที่เหมาะสมที่สุด ===
+    generateFullSchedule(debt) {
+        const balance = parseFloat(debt.currentBalance) || 0;
+        const rate = parseFloat(debt.annualRate) || 0;
+        // ค่างวด: ใช้ค่างวดรายเดือนที่ตั้งไว้ หรือขั้นต่ำ หรือ 0
+        const payment = parseFloat(debt.monthlyPayment) || parseFloat(debt.minPayment) || 0;
+        const startDate = debt.startDate || new Date().toISOString().split('T')[0];
+
+        if (debt.type === 'credit_card') {
+            return this.generateCreditCardSchedule(balance, rate, payment, startDate);
+        } else if (debt.interestType === 'daily_accrual') {
+            return this.generateDailyAccrualSchedule(balance, rate, payment, startDate);
+        } else if (debt.interestType === 'fixed_rate') {
+            return this.generateFixedRateSchedule(parseFloat(debt.principal), rate, payment);
+        } else {
+            return this.generateAmortizationSchedule(balance, rate, payment);
+        }
     }
 };

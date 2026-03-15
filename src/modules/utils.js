@@ -125,8 +125,63 @@ export const Utils = {
     },
 
     showToast(message, type = 'info') {
-        console.log(`[Toast Disabled] ${type}: ${message}`);
-        // Removed UI toast as per user request
+        const container = document.getElementById('toast-container');
+        if (!container) {
+            console.log(`[Toast] ${type}: ${message}`);
+            return;
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        const iconMap = {
+            success: '✅',
+            error: '❌',
+            danger: '⚠️',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+        const icon = iconMap[type] || 'ℹ️';
+
+        toast.innerHTML = `
+            <span class="toast-icon">${icon}</span>
+            <span class="toast-message">${message}</span>
+        `;
+
+        toast.style.cssText = `
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-secondary, #1e1e2e);
+            border: 1px solid var(--border-color, rgba(255,255,255,0.1));
+            border-left: 3px solid ${type === 'success' ? '#22c55e' : type === 'error' || type === 'danger' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#6c5ce7'};
+            border-radius: 8px;
+            color: var(--text-primary, #fff);
+            font-size: 13px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            max-width: 340px;
+            word-break: break-word;
+            cursor: pointer;
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+
+        const dismiss = () => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => toast.remove(), 300);
+        };
+
+        toast.onclick = dismiss;
+        setTimeout(dismiss, type === 'error' || type === 'danger' ? 5000 : 3000);
     },
 
     percentage(part, total) {
@@ -286,7 +341,7 @@ export const Utils = {
 
     async exportDebtsToPDF(summary) {
         const { jsPDF } = window.jspdf;
-        const fmt = (v) => this.formatCurrency(v).replace(' \u0e3f', '');
+        const fmt = (v) => this.formatCurrency(v).replace(/\s*฿/, '');
         const dash = '--------------------------------------';
         const dblDash = '======================================';
         const now = new Date();
@@ -381,9 +436,13 @@ export const Utils = {
         document.body.appendChild(receiptEl);
 
         try {
-            const canvas = await html2canvas(receiptEl, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = 210; // A4 Width
+            const canvas = await html2canvas(receiptEl, { 
+                scale: 1.0, 
+                useCORS: true,
+                logging: false
+            });
+            const imgData = canvas.toDataURL('image/jpeg', 0.7); 
+            const imgWidth = 210; 
             const pageHeight = (canvas.height * imgWidth) / canvas.width;
 
             const doc = new jsPDF({
@@ -392,9 +451,9 @@ export const Utils = {
                 format: [210, pageHeight]
             });
 
-            doc.addImage(imgData, 'PNG', 0, 0, imgWidth, pageHeight);
-            doc.save('debt_summary_' + new Date().toISOString().slice(0, 10) + '.pdf');
-            this.showToast('Debt report exported', 'success');
+            doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
+            doc.save(`Summary_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            this.showToast('Summary report downloaded (.pdf)', 'success');
         } catch (err) {
             console.error('PDF Export Error:', err);
             this.showToast('PDF export failed', 'error');
@@ -404,7 +463,7 @@ export const Utils = {
     },
     async exportSingleDebtToPDF(debt, schedule = null) {
         const { jsPDF } = window.jspdf;
-        const fmt = (v) => this.formatCurrency(v).replace(' \u0e3f', '');
+        const fmt = (v) => this.formatCurrency(v).replace(/\s*฿/, '');
         const dash = '--------------------------------------';
         const dblDash = '======================================';
         const now = new Date();
@@ -436,11 +495,11 @@ export const Utils = {
                     <tbody>
                         ${debt.payments.map(p => `
                             <tr>
-                                <td style="padding:8px; border-bottom:1px solid #eee;">${this.formatDateShort(p.date)}</td>
+                                <td style="padding:8px; border-bottom:1px solid #eee;">${this.formatDate(p.date)}</td>
                                 <td style="text-align:right; padding:8px; border-bottom:1px solid #eee;">${fmt(p.amount)}</td>
-                                <td style="text-align:right; padding:8px; color:#c62828; border-bottom:1px solid #eee;">${fmt(p.interestPortion)}</td>
-                                <td style="text-align:right; padding:8px; color:#2e7d32; border-bottom:1px solid #eee;">${fmt(p.principalPortion)}</td>
-                                <td style="text-align:right; padding:8px; border-bottom:1px solid #eee;">${fmt(p.balanceAfter)}</td>
+                                <td style="text-align:right; padding:8px; color:#c62828; border-bottom:1px solid #eee;">${fmt(p.interestPortion || 0)}</td>
+                                <td style="text-align:right; padding:8px; color:#2e7d32; border-bottom:1px solid #eee;">${fmt(p.principalPortion || 0)}</td>
+                                <td style="text-align:right; padding:8px; border-bottom:1px solid #eee;">${fmt(p.balanceAfter || 0)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -450,8 +509,9 @@ export const Utils = {
         }
 
         let scheduleTable = '';
+        // schedule is the full result object from InterestEngine.generateFullSchedule
         if (schedule && schedule.schedule && schedule.schedule.length > 0) {
-            const rows = schedule.schedule.slice(0, 48); // Slightly more for A4
+            const rows = schedule.schedule.slice(0, 48);
             scheduleTable = `
             <div style="margin: 30px 0; background:rgba(0,0,0,0.02); padding:20px; border-radius:8px; border:1px solid #eee;">
                 <div style="text-align:center; font-weight:bold; font-size:18px; margin-bottom: 12px; border-bottom:2px solid #ddd; padding-bottom:8px;">ตารางผ่อนชำระ (คาดการณ์)</div>
@@ -517,9 +577,13 @@ export const Utils = {
         document.body.appendChild(receiptEl);
 
         try {
-            const canvas = await html2canvas(receiptEl, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = 210; // A4 Width
+            const canvas = await html2canvas(receiptEl, { 
+                scale: 1.0, 
+                useCORS: true,
+                logging: false
+             });
+            const imgData = canvas.toDataURL('image/jpeg', 0.7); 
+            const imgWidth = 210; 
             const pageHeight = (canvas.height * imgWidth) / canvas.width;
 
             const doc = new jsPDF({
@@ -528,9 +592,9 @@ export const Utils = {
                 format: [210, pageHeight]
             });
 
-            doc.addImage(imgData, 'PNG', 0, 0, imgWidth, pageHeight);
-            doc.save(`debt_report_${debt.name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
-            this.showToast('Account report exported', 'success');
+            doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
+            doc.save(`Account_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            this.showToast('Account report downloaded (.pdf)', 'success');
         } catch (err) {
             console.error('PDF Export Error:', err);
             this.showToast('PDF export failed', 'error');

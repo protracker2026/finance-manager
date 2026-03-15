@@ -3130,3 +3130,184 @@ details[open] .modern-filter-summary svg:last-child {
     0%, 100% { box-shadow: 0 0 10px rgba(251, 146, 60, 0.1); }
     50% { box-shadow: 0 0 15px rgba(251, 146, 60, 0.2); }
 }
+
+/* === Analytics Page === */
+.analytics-mode-bar {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 24px;
+    width: fit-content;
+}
+
+.analytics-mode-btn {
+    padding: 8px 22px;
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-family);
+}
+
+.analytics-mode-btn.active {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+}
+
+.analytics-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .analytics-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.analytics-stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.analytics-stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.analytics-stat-value {
+    font-size: 18px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.analytics-stat-value.expense {
+    color: #f87171;
+}
+
+.analytics-bucket-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.analytics-bucket-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.analytics-bucket-row {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 10px 14px;
+}
+
+.analytics-bucket-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.analytics-bucket-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.analytics-bucket-amount {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-tertiary);
+}
+
+.analytics-bucket-amount.expense {
+    color: #f87171;
+}
+
+.analytics-bar-track {
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.analytics-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #ef4444, #f97316);
+    transition: width 0.4s ease;
+}
+
+.analytics-count-bar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.analytics-count-btn {
+    padding: 6px 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-family);
+}
+
+.analytics-count-btn.active {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.analytics-quick-btn {
+    padding: 5px 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-family);
+    white-space: nowrap;
+}
+
+.analytics-quick-btn:hover {
+    background: rgba(255,255,255,0.07);
+    color: var(--text-primary);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.analytics-quick-btn.active {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.1);
+}

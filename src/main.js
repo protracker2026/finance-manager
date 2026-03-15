@@ -6,6 +6,7 @@ import { renderDashboard } from './pages/dashboard.js';
 import { renderTransactionsPage } from './pages/transactions-page.js';
 import { renderDebtsPage } from './pages/debts-page.js';
 import { renderSettingsPage } from './pages/settings-page.js';
+import { renderAnalyticsPage } from './pages/analytics-page.js';
 import { renderLoginPage } from './pages/login-page.js';
 
 let router;
@@ -30,7 +31,8 @@ async function init(user) {
                 'dashboard': renderDashboard,
                 'transactions': renderTransactionsPage,
                 'debts': renderDebtsPage,
-                'settings': renderSettingsPage
+                'settings': renderSettingsPage,
+                'analytics': renderAnalyticsPage
             });
 
             // Nav click handlers
