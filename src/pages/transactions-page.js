@@ -585,6 +585,18 @@ function setupTransactionEvents() {
     } else {
       document.getElementById('txnCategory').value = ''; // Clear if no category
     }
+
+    // Handle Date from AI
+    if (parsed.date) {
+      const fp = document.getElementById('txnDate')._flatpickr;
+      if (fp) {
+        // Keep current time if present, only update year/month/day
+        const d = new Date(parsed.date);
+        const now = new Date();
+        d.setHours(now.getHours(), now.getMinutes(), 0);
+        fp.setDate(d);
+      }
+    }
   }
 
   // Process a single item (used for both single and batch)
@@ -604,9 +616,20 @@ function setupTransactionEvents() {
         document.getElementById('aiReceiptAmount').textContent = Utils.formatNumber(parsed.amount);
         document.getElementById('aiReceiptCategory').textContent = parsed.category || 'อื่นๆ';
 
-        // Add current date/time to receipt preview
+        // Add current date/time to receipt preview (use parsed date if available)
+        const displayDate = parsed.date ? new Date(parsed.date) : new Date();
         const now = new Date();
-        const formattedDate = now.toLocaleDateString('th-TH', { year: '2-digit', month: '2-digit', day: '2-digit' }) + ' ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        // Set time to current time for display if it's just a date from AI
+        if (parsed.date) {
+            displayDate.setHours(now.getHours(), now.getMinutes());
+        }
+        
+        const formattedDate = displayDate.toLocaleDateString('th-TH', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        }) + ' ' + displayDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        
         document.getElementById('aiReceiptDateTime').textContent = formattedDate;
 
         const qtyRow = document.getElementById('aiReceiptQtyRow');
@@ -1435,6 +1458,8 @@ async function openTxnModal(txn = null) {
       if (dStr && dStr.length === 10) dStr += 'T12:00:00';
       // Normalize any stray space separated dates to ISO 8601
       if (dStr) dStr = dStr.replace(' ', 'T');
+      // Fix for Safari which rejects YYYY-MM-DDTHH:mm without seconds
+      if (dStr && dStr.length === 16) dStr += ':00';
 
       const parsedDate = new Date(dStr);
       if (!isNaN(parsedDate.getTime())) {
@@ -2456,15 +2481,28 @@ async function updateCategoryOptions(type) {
 
 async function saveTxn(closeModal = true) {
   const id = document.getElementById('txnId').value;
-  // Parse date from Flatpickr format (DD/MM/YYYY HH:mm) to ISO
-  let dateStr = document.getElementById('txnDate').value;
-  const fp = document.getElementById('txnDate')._flatpickr;
-  if (fp && fp.selectedDates[0]) {
-    // Use the Date object directly from flatpickr
-    const d = fp.selectedDates[0];
-    // Adjust timezone offset to store local time as ISO
-    const offset = d.getTimezoneOffset() * 60000;
-    dateStr = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+  let rawDateStr = document.getElementById('txnDate').value || '';
+  let dateStr = rawDateStr;
+  
+  // Custom manual parsing for DD/MM/YYYY HH:mm to guarantee whatever user sees is saved
+  const dmYMatch = rawDateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2}))?/);
+  if (dmYMatch) {
+    const dd = dmYMatch[1].padStart(2, '0');
+    const mm = dmYMatch[2].padStart(2, '0');
+    const yyyy = dmYMatch[3];
+    const hh = (dmYMatch[4] || '12').padStart(2, '0');
+    const min = (dmYMatch[5] || '00').padStart(2, '0');
+    dateStr = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  } else {
+    // Fallback if it's already ISO or try to use Flatpickr's property
+    const fp = document.getElementById('txnDate')._flatpickr;
+    if (fp && fp.selectedDates && fp.selectedDates[0]) {
+      const d = fp.selectedDates[0];
+      const offset = d.getTimezoneOffset() * 60000;
+      dateStr = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+    } else if (rawDateStr.includes('T')) {
+      dateStr = rawDateStr.slice(0, 16);
+    }
   }
 
   const data = {

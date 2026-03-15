@@ -205,49 +205,52 @@ export async function renderAnalyticsPage(container) {
         </div>
       </div>
 
-      <!-- Column Headers -->
-      <div style="display:grid; grid-template-columns: 1fr 120px 120px 120px; gap: 8px; padding: 0 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 4px;">
-        <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase;">ช่วงเวลา</span>
-        <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:right;">รายรับ (+)</span>
-        <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:right;">รายจ่าย (-)</span>
-        <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:right;">สุทธิ (=)</span>
-      </div>
+      <!-- Bucket List Wrapper for Mobile -->
+      <div style="width: 100%; overflow-x: auto; padding-bottom: 8px;">
+        <div style="min-width: 480px;">
+          <!-- Column Headers -->
+          <div style="display:grid; grid-template-columns: 1fr 100px 100px 110px; gap: 8px; padding: 0 16px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 4px;">
+            <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase;">ช่วงเวลา</span>
+            <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:right;">รายรับ (+)</span>
+            <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:right;">รายจ่าย (-)</span>
+            <span style="font-size:11px; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:right;">สุทธิ (=)</span>
+          </div>
 
-      <!-- Bucket Rows -->
-      <div class="analytics-bucket-list">
-        ${buckets.length === 0
-            ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary);">ไม่มีรายการในช่วงเวลานี้</div>`
-            : buckets.map(b => {
-                const expPct = (b.expense / maxBar * 100).toFixed(1);
-                const incPct = (b.income / maxBar * 100).toFixed(1);
-                const net = b.income - b.expense;
-                const hasAny = b.expense > 0 || b.income > 0;
-                return `
-            <div class="analytics-bucket-row" style="padding: 12px 16px;">
-              <div class="analytics-bucket-meta" style="display:grid; grid-template-columns: 1fr 120px 120px 120px; gap: 8px; align-items: center; margin-bottom: 8px;">
-                <span class="analytics-bucket-label" style="font-weight:700; font-size:14px;">${b.label}</span>
-                
-                <!-- Income -->
-                <span style="font-size:13px; font-weight:700; font-family:var(--font-mono); color:#4ade80; text-align:right;">
-                  ${b.income > 0 ? '+' + Utils.formatCurrency(b.income) : '—'}
-                </span>
-                
-                <!-- Expense -->
-                <span style="font-size:13px; font-weight:700; font-family:var(--font-mono); color:#f87171; text-align:right;">
-                  ${b.expense > 0 ? '-' + Utils.formatCurrency(b.expense) : '—'}
-                </span>
-                
-                <!-- Net Result -->
-                <div style="text-align:right; background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
-                  <span style="font-size:13px; font-weight:800; font-family:var(--font-mono); color:${net >= 0 ? '#4ade80' : '#f87171'};">
-                    ${net >= 0 ? '+' : ''}${Utils.formatCurrency(net)}
-                  </span>
-                </div>
-              </div>
-              
-              <div style="display:flex; flex-direction:column; gap:3px;">
-                <div class="analytics-bar-track" style="height:4px;">
-                  <div style="height:100%; border-radius:2px; background:linear-gradient(90deg,#ef4444,#f97316); width:${expPct}%; transition:width 0.4s ease;"></div>
+          <!-- Bucket Rows -->
+          <div class="analytics-bucket-list">
+            ${buckets.length === 0
+                ? `<div style="text-align:center;padding:40px;color:var(--text-tertiary);">ไม่มีรายการในช่วงเวลานี้</div>`
+                : buckets.map(b => {
+                    const expPct = (b.expense / maxBar * 100).toFixed(1);
+                    const incPct = (b.income / maxBar * 100).toFixed(1);
+                    const net = b.income - b.expense;
+                    const hasAny = b.expense > 0 || b.income > 0;
+                    return `
+                <div class="analytics-bucket-row" style="padding: 12px 16px;">
+                  <div class="analytics-bucket-meta" style="display:grid; grid-template-columns: 1fr 100px 100px 110px; gap: 8px; align-items: center; margin-bottom: 8px;">
+                    <span class="analytics-bucket-label" style="font-weight:700; font-size:14px;">${b.label}</span>
+                    
+                    <!-- Income -->
+                    <span style="font-size:13px; font-weight:700; font-family:var(--font-mono); color:#4ade80; text-align:right;">
+                      ${b.income > 0 ? '+' + Utils.formatCurrency(b.income) : '—'}
+                    </span>
+                    
+                    <!-- Expense -->
+                    <span style="font-size:13px; font-weight:700; font-family:var(--font-mono); color:#f87171; text-align:right;">
+                      ${b.expense > 0 ? '-' + Utils.formatCurrency(b.expense) : '—'}
+                    </span>
+                    
+                    <!-- Net Result -->
+                    <div style="text-align:right; background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                      <span style="font-size:13px; font-weight:800; font-family:var(--font-mono); color:${net >= 0 ? '#4ade80' : '#f87171'};">
+                        ${net >= 0 ? '+' : ''}${Utils.formatCurrency(net)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div class="analytics-bar-track" style="height:4px;">
+                      <div style="height:100%; border-radius:2px; background:linear-gradient(90deg,#ef4444,#f97316); width:${expPct}%; transition:width 0.4s ease;"></div>
                 </div>
                 <div class="analytics-bar-track" style="height:4px;">
                   <div style="height:100%; border-radius:2px; background:linear-gradient(90deg,#22c55e,#4ade80); width:${incPct}%; transition:width 0.4s ease;"></div>
@@ -258,7 +261,8 @@ export async function renderAnalyticsPage(container) {
             }).join('')
         }
       </div>
-    `;
+    </div>
+  </div>`;
     }
 }
 

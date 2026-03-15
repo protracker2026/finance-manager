@@ -5,6 +5,10 @@ import { SyncModule } from './sync.js';
 export const TransactionModule = {
     async getAll(filters = {}) {
         let results = await db.transactions.toArray();
+        // Safari compatibility: append seconds if missing
+        results.forEach(t => {
+            if (t.date && t.date.length === 16) t.date += ':00';
+        });
         results.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (filters.type) {
@@ -32,6 +36,7 @@ export const TransactionModule = {
     },
 
     async add(transaction) {
+        if (transaction.date && transaction.date.length === 16) transaction.date += ':00';
         const id = await db.transactions.add({
             ...transaction,
             amount: parseFloat(transaction.amount),
@@ -42,6 +47,7 @@ export const TransactionModule = {
     },
 
     async update(id, data) {
+        if (data.date && data.date.length === 16) data.date += ':00';
         const result = await db.transactions.update(id, {
             ...data,
             amount: parseFloat(data.amount),
