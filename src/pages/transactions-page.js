@@ -2568,9 +2568,8 @@ async function saveTxn(closeModal = true) {
 
   try {
     if (id) {
-      const numericId = parseInt(id, 10);
-      console.log('[DEBUG] Updating txn, id:', numericId, 'data:', data);
-      const result = await TransactionModule.update(numericId, data);
+      console.log('[DEBUG] Updating txn, id:', id, 'data:', data);
+      const result = await TransactionModule.update(id, data);
       console.log('[DEBUG] Update result:', result);
       Utils.showToast('แก้ไขรายการสำเร็จ', 'success');
       if (closeModal) {
