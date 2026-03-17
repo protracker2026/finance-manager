@@ -801,10 +801,10 @@ function openPaymentModal(debt, payment = null) {
     const accruedSinceLast = (debt.accruedInterest || 0) + newInterest;
     const realLifeBalance = debt.currentBalance + accruedSinceLast;
 
-    const expected = parseFloat(debt.monthlyPayment) || 0;
+    // Strictly use the bank's minimum rule for minPay
     const minPay = debt.type === 'credit_card'
       ? InterestEngine.calculateMinPayment(realLifeBalance, 'credit_card')
-      : (parseFloat(debt.minPayment) || InterestEngine.calculateMinPayment(debt.currentBalance, debt.type));
+      : (debt.type === 'cash_card' ? InterestEngine.calculateMinPayment(realLifeBalance, 'cash_card') : (parseFloat(debt.minPayment) || InterestEngine.calculateMinPayment(debt.currentBalance, debt.type)));
 
     const hintEl = document.getElementById('paymentAmountHint');
     if (hintEl) {

@@ -279,7 +279,8 @@ export const DebtModule = {
             lastInterestDate = act.date;
         }
 
-        // Final debt status & min payment for revolving debts
+        // Always auto-calculate min payment for revolving debts based on current balance
+        // This ensures minPayment reflects the true bank minimum based on BOT rules.
         const newMinPayment = isCard
             ? InterestEngine.calculateMinPayment(currentBalance, debt.type)
             : debt.minPayment;
